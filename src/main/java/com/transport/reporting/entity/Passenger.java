@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "PASSENGER")
+@Table(name = "passenger")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +14,7 @@ public class Passenger {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "passengerId")
+    @Column(name = "passenger_id")
     private Long passengerId;
 
     @Column(name = "name", length = 150)
@@ -23,10 +23,10 @@ public class Passenger {
     @Column(name = "email", length = 255)
     private String email;
 
-    @Column(name = "phoneNumber", length = 30)
+    @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
-    @Column(name = "emailVerified", nullable = false)
+    @Column(name = "email_verified", nullable = false)
     @Builder.Default
     private boolean emailVerified = false;
 }

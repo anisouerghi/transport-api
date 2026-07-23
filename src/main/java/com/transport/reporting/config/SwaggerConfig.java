@@ -17,14 +17,14 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Transport Reporting API")
-                        .description("""
-                                API de signalement transport public.
-
-                                - `/api/public/**` : Angular Voyageur
-                                - `/api/admin/**` : Angular Administration
-                                """)
+                        .description("API de signalement transport public. "
+                                + "/api/public/** : Angular Voyageur ; "
+                                + "/api/admin/** : Angular Administration")
                         .version("1.0.0")
-                        .contact(new Contact().name("Équipe Transport").email("support@transport.local")))
+                       // .contact(new Contact()
+                       //         .name("Equipe Transport")
+                       //         .email("support@transport.local"))
+                        )
                 .servers(List.of(new Server().url("/").description("Serveur local")));
     }
 }

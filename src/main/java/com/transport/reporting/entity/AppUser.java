@@ -2,11 +2,13 @@ package com.transport.reporting.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "APP_USER")
+@Table(name = "app_user")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,9 +18,10 @@ public class AppUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "userId")
+    @Column(name = "user_id")
     private Long userId;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "uuid", nullable = false, unique = true, updatable = false, length = 36)
     private UUID uuid;
 
@@ -31,7 +34,7 @@ public class AppUser {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "passwordHash", nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
     @PrePersist

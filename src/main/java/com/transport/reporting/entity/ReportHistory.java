@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "REPORT_HISTORY")
+@Table(name = "report_history")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,30 +16,30 @@ public class ReportHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "historyId")
+    @Column(name = "history_id")
     private Long historyId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "oldStatusId")
+    @JoinColumn(name = "old_status_id")
     private Status oldStatus;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "newStatusId", nullable = false)
+    @JoinColumn(name = "new_status_id", nullable = false)
     private Status newStatus;
 
     @Column(name = "comments", length = 1000)
     private String comments;
 
-    @Column(name = "actionDate", nullable = false)
+    @Column(name = "action_date", nullable = false)
     private Instant actionDate;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reportId", nullable = false)
+    @JoinColumn(name = "report_id", nullable = false)
     private Report report;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId")
-    private AppUser user;
+    @JoinColumn(name = "user_id")
+    private AppUser appUser;
 
     @PrePersist
     public void prePersist() {

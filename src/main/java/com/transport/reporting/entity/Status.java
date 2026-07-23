@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "STATUS")
+@Table(name = "report_status")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +14,7 @@ public class Status {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "statusId")
+    @Column(name = "status_id")
     private Long statusId;
 
     @Column(name = "code", nullable = false, unique = true, length = 50)
@@ -23,6 +23,6 @@ public class Status {
     @Column(name = "label", nullable = false, length = 100)
     private String label;
 
-    @Column(name = "displayOrder", nullable = false)
+    @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 }

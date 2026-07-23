@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "SUPPORT_TYPE")
+@Table(name = "support_type")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +14,7 @@ public class SupportType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "supportTypeId")
+    @Column(name = "support_type_id")
     private Long supportTypeId;
 
     @Column(name = "code", nullable = false, unique = true, length = 50)
