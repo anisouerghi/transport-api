@@ -27,6 +27,9 @@ application-local.yml
 # Environment
 .env
 
+# Uploads locaux
+uploads/
+
 # Tests reports
 surefire-reports/
 
