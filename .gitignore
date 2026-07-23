@@ -1,0 +1,35 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Configuration locale
+application-local.properties
+application-local.yml
+
+# Environment
+.env
+
+# Tests reports
+surefire-reports/
+
+# Node (si Angular sera ajouté plus tard)
+node_modules/
+dist/
