@@ -18,25 +18,14 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> ok(T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .data(data)
-                .build();
+        return ApiResponse.<T>builder().success(true).data(data).build();
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .data(data)
-                .build();
+        return ApiResponse.<T>builder().success(true).message(message).data(data).build();
     }
 
     public static <T> ApiResponse<T> created(String message, T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .data(data)
-                .build();
+        return ApiResponse.<T>builder().success(true).message(message).data(data).build();
     }
 }

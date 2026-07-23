@@ -25,43 +25,31 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request.getRequestURI(), null);
     }
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), ex.getErrors());
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
-        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::formatFieldError)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        List<String> details = ex.getBindingResult().getFieldErrors().stream()
+                .map(this::format)
                 .toList();
-        return build(HttpStatus.BAD_REQUEST, "Erreur de validation", request.getRequestURI(), errors);
+        return build(HttpStatus.BAD_REQUEST, "Validation error", request.getRequestURI(), details);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur interne du serveur", request.getRequestURI(), null);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", request.getRequestURI(), null);
     }
 
-    private String formatFieldError(FieldError error) {
+    private String format(FieldError error) {
         return error.getField() + " : " + error.getDefaultMessage();
     }
 
-    private ResponseEntity<ErrorResponse> build(
-            HttpStatus status,
-            String message,
-            String path,
-            List<String> details) {
-        ErrorResponse body = ErrorResponse.builder()
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, String path, List<String> details) {
+        return ResponseEntity.status(status).body(ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(status.value())
                 .error(status.getReasonPhrase())
                 .message(message)
                 .path(path)
                 .details(details)
-                .build();
-        return ResponseEntity.status(status).body(body);
+                .build());
     }
 }

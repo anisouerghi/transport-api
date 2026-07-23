@@ -1,108 +1,37 @@
-# Architecture Backend – Application de Signalement Transport Public
+# Architecture Backend – Transport Reporting API
 
 ## Objectif
 
-Première version de l'architecture Backend : base propre, simple et évolutive pour le travail en équipe.
+Squelette Spring Boot commun pour l'équipe.
 
-Périmètre initial :
+## Modules
 
-- structure Spring Boot (package by feature) ;
-- configuration Swagger ;
-- configuration JPA / MySQL ;
-- entités principales ;
-- repositories ;
-- services de base ;
-- premiers controllers REST.
+| Module | Rôle |
+|--------|------|
+| `user` | Utilisateurs internes — **CRUD complet (modèle)** |
+| `support` | Types et supports QR |
+| `report` | Signalements, pièces jointes, historique, réponses |
+| `passenger` | Voyageurs |
+| `status` | Statuts workflow |
+| `dashboard` | Indicateurs |
 
----
-
-## Architecture générale
-
-Application unique : **transport-api**
-
-Package racine : `com.transport.reporting`
+## Convention module
 
 ```
-com.transport.reporting
-├── config      # Configuration technique
-├── common      # DTO, réponses, exceptions, enums, utils
-├── security    # Sécurité (Basic Auth admin)
-└── modules
-    ├── signalement
-    ├── support
-    ├── voyageur
-    ├── utilisateur
-    └── dashboard
-```
-
----
-
-## Structure d'un module
-
-```
-module
+module/
 ├── controller
 ├── service
 ├── repository
 ├── entity
-├── dto
-└── mapper
+└── dto
 ```
 
-Flux obligatoire : **Request DTO → Service → Entity → Mapper → Response DTO**
+Controller → Service → Repository. Pas de logique métier dans le controller. Pas d'Entity exposée en API.
 
-Les Controllers n'exposent jamais les Entity JPA.
+## Tables MySQL (`transport_reporting`)
 
----
+`SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`
 
-## API REST
+## Swagger
 
-### Public Voyageur — `/api/public`
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/api/public/supports/{uuid}` | Identifier un support via QR Code |
-| POST | `/api/public/signalements` | Créer un signalement |
-| GET | `/api/public/signalements/{reference}` | Suivi d'un signalement |
-
-### Administration — `/api/admin`
-
-Consultation, recherche, affectation, statut, réponse, supports, utilisateurs, dashboard.
-
-Swagger : `/swagger-ui/index.html`
-
----
-
-## Entités principales
-
-### SupportTransport (`support_transport`)
-
-`id`, `uuid`, `reference`, `libelle`, `type`, `qrCodeUrl`, `qrDateCreation`, `actif`
-
-### Signalement (`signalement`)
-
-`id`, `reference`, `description`, `dateCreation`, `statut`, `type`, `support`, `voyageur`
-
-(+ champs admin évolutifs : `objet`, `serviceAffecte`, `reponse`)
-
-### Voyageur (`voyageur`)
-
-`id`, `uuid`, `nom`, `email` (facultatif), `telephone`
-
-### Utilisateur (`utilisateur`)
-
-`id`, `login`, `password`, `nom`, `email`, `role`, `actif`
-
----
-
-## Règles de développement
-
-| Couche | Responsabilité |
-|--------|----------------|
-| Controller | HTTP, validation entrée, appel service |
-| Service | Règles métier, transactions |
-| Repository | Accès données uniquement |
-| DTO | Échange Frontend |
-| Mapper | Entity ↔ DTO |
-
-Toute nouvelle fonctionnalité s'ajoute sous `modules/{nouveau-module}`.
+http://localhost:8080/swagger-ui/index.html

@@ -1,41 +1,40 @@
 # transport-api
 
-API Spring Boot de signalement transport public — première version d'architecture.
+Squelette Backend Spring Boot — signalement transport public.
 
 ## Stack
 
 - Java 17 / Spring Boot 3.3
-- Spring Data JPA + MySQL
-- Spring Security (Basic Auth admin)
-- springdoc OpenAPI (Swagger)
+- Spring Web + Data JPA + Validation
+- MySQL (`transport_reporting`)
+- Lombok / springdoc OpenAPI
 
 ## Structure
 
 ```
 com.transport.reporting
-├── config
-├── common
-├── security
-└── modules
-    ├── signalement
-    ├── support
-    ├── voyageur
-    ├── utilisateur
-    └── dashboard
+├── config          # SwaggerConfig, WebConfig, DataInitializer
+├── common          # response, exception, enums, dto
+├── modules
+│   ├── user        # CRUD complet (modèle)
+│   ├── support
+│   ├── report
+│   ├── passenger
+│   ├── status
+│   └── dashboard
+└── TransportApplication.java
 ```
 
-Chaque module : `controller` / `service` / `repository` / `entity` / `dto` / `mapper`
+Chaque module : `controller` / `service` / `repository` / `entity` / `dto`
 
-## Prérequis
-
-- JDK 17+
-- MySQL 8 (base `transport`)
+## Base MySQL
 
 ```sql
-CREATE DATABASE IF NOT EXISTS transport CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS transport_reporting
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Variables optionnelles : `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` (défaut `root`/`root`).
+Tables : `SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`
 
 ## Démarrage
 
@@ -43,32 +42,25 @@ Variables optionnelles : `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD
 mvn spring-boot:run
 ```
 
-- API : http://localhost:8080
 - Swagger : http://localhost:8080/swagger-ui/index.html
-- Compte admin démo : `admin` / `admin123`
+- Admin démo : `admin` / `admin123`
 
-## API initiale
+## API
 
-### Public — `/api/public`
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/api/public/supports/{uuid}` | Identifier un support via QR Code |
-| POST | `/api/public/signalements` | Créer un signalement |
-| GET | `/api/public/signalements/{reference}` | Suivi d'un signalement |
-
-### Admin — `/api/admin` (Basic Auth)
+### Public `/api/public`
 
 | Méthode | Endpoint |
 |---------|----------|
-| GET | `/api/admin/signalements` |
-| PUT | `/api/admin/signalements/{id}/status` |
-| PUT | `/api/admin/signalements/{id}/affectation` |
-| PUT | `/api/admin/signalements/{id}/reponse` |
+| GET | `/api/public/supports/{uuid}` |
+| POST | `/api/public/signalements` |
+| GET | `/api/public/suivi/{reference}` |
+
+### Admin `/api/admin`
+
+| Méthode | Endpoint |
+|---------|----------|
+| CRUD | `/api/admin/users` |
 | GET/POST | `/api/admin/supports` |
-| GET/POST | `/api/admin/utilisateurs` |
-| GET | `/api/admin/dashboard/stats` |
-
-## Documentation
-
-Voir [documentation/architecture-backend.md](documentation/architecture-backend.md).
+| GET | `/api/admin/signalements` |
+| GET | `/api/admin/dashboard` |
+| GET | `/api/admin/statuses` |
