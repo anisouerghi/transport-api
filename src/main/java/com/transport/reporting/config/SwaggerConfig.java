@@ -20,8 +20,8 @@ public class SwaggerConfig {
                         .description("""
                                 API de signalement transport public.
 
-                                - `/api/public` : Angular Voyageur
-                                - `/api/admin` : Angular Administration
+                                - `/api/public/**` : Angular Voyageur
+                                - `/api/admin/**` : Angular Administration
                                 """)
                         .version("1.0.0")
                         .contact(new Contact().name("Équipe Transport").email("support@transport.local")))

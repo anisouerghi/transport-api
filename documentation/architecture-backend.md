@@ -1,34 +1,49 @@
-# Architecture Backend – Transport Reporting API
+# Architecture Backend Spring Boot — Transport Reporting API
 
 ## Objectif
 
-Squelette Spring Boot commun pour l'équipe.
+Architecture Backend simple, claire et commune pour toute l'équipe.
 
-## Modules
-
-| Module | Rôle |
-|--------|------|
-| `user` | Utilisateurs internes — **CRUD complet (modèle)** |
-| `support` | Types et supports QR |
-| `report` | Signalements, pièces jointes, historique, réponses |
-| `passenger` | Voyageurs |
-| `status` | Statuts workflow |
-| `dashboard` | Indicateurs |
-
-## Convention module
+## Organisation par couches
 
 ```
-module/
+com.transport.reporting
+├── config
 ├── controller
-├── service
-├── repository
-├── entity
-└── dto
+│   ├── publicapi    # API voyageurs (/api/public)
+│   └── adminapi     # API agents (/api/admin)
+├── service          # Logique métier
+├── repository       # Spring Data JPA
+├── entity           # Entités JPA / tables MySQL
+├── dto              # Échange Angular
+├── mapper           # Entity <-> DTO
+├── exception        # Gestion globale des erreurs
+└── common           # Enums, réponses API communes
 ```
 
-Controller → Service → Repository. Pas de logique métier dans le controller. Pas d'Entity exposée en API.
+## Règles
 
-## Tables MySQL (`transport_reporting`)
+- **Controller** : requêtes HTTP uniquement, aucun traitement métier
+- **Service** : règles métier, appelle les repositories
+- **Repository** : accès base de données uniquement
+- **Entity** : mapping tables MySQL
+- **DTO** : communication Backend ↔ Frontend
+- **Mapper** : conversion Entity ↔ DTO
+
+## Module exemple : User
+
+Référence complète pour l'équipe :
+
+- `entity/AppUser`
+- `repository/UserRepository`
+- `service/UserService`
+- `controller/adminapi/UserController`
+- `dto/UserRequest` + `UserResponse`
+- `mapper/UserMapper`
+
+CRUD : `GET/POST/PUT/DELETE /api/admin/users`
+
+## Entités / tables
 
 `SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`
 

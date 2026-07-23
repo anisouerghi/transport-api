@@ -1,40 +1,40 @@
 # transport-api
 
-Squelette Backend Spring Boot — signalement transport public.
+Architecture Backend Spring Boot — signalement transport public.
 
-## Stack
-
-- Java 17 / Spring Boot 3.3
-- Spring Web + Data JPA + Validation
-- MySQL (`transport_reporting`)
-- Lombok / springdoc OpenAPI
-
-## Structure
+## Organisation (par couches)
 
 ```
 com.transport.reporting
-├── config          # SwaggerConfig, WebConfig, DataInitializer
-├── common          # response, exception, enums, dto
-├── modules
-│   ├── user        # CRUD complet (modèle)
-│   ├── support
-│   ├── report
-│   ├── passenger
-│   ├── status
-│   └── dashboard
-└── TransportApplication.java
+├── config
+├── controller
+│   ├── publicapi     # /api/public/**
+│   └── adminapi      # /api/admin/**
+├── service
+├── repository
+├── entity
+├── dto
+├── mapper
+├── exception
+└── common
 ```
 
-Chaque module : `controller` / `service` / `repository` / `entity` / `dto`
+## Règles
+
+| Couche | Responsabilité |
+|--------|----------------|
+| Controller | HTTP uniquement |
+| Service | Logique métier |
+| Repository | Accès JPA |
+| Entity | Tables MySQL |
+| DTO | Échange Angular |
+| Mapper | Entity ↔ DTO |
 
 ## Base MySQL
 
 ```sql
-CREATE DATABASE IF NOT EXISTS transport_reporting
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS transport_reporting;
 ```
-
-Tables : `SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`
 
 ## Démarrage
 
@@ -59,7 +59,7 @@ mvn spring-boot:run
 
 | Méthode | Endpoint |
 |---------|----------|
-| CRUD | `/api/admin/users` |
+| CRUD | `/api/admin/users` *(modèle complet)* |
 | GET/POST | `/api/admin/supports` |
 | GET | `/api/admin/signalements` |
 | GET | `/api/admin/dashboard` |

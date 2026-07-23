@@ -2,16 +2,16 @@ package com.transport.reporting.config;
 
 import com.transport.reporting.common.enums.QrStatus;
 import com.transport.reporting.common.enums.SupportStatus;
-import com.transport.reporting.modules.report.entity.ReportType;
-import com.transport.reporting.modules.report.repository.ReportTypeRepository;
-import com.transport.reporting.modules.status.entity.Status;
-import com.transport.reporting.modules.status.repository.StatusRepository;
-import com.transport.reporting.modules.support.entity.SupportType;
-import com.transport.reporting.modules.support.entity.TransportSupport;
-import com.transport.reporting.modules.support.repository.SupportTypeRepository;
-import com.transport.reporting.modules.support.repository.TransportSupportRepository;
-import com.transport.reporting.modules.user.entity.AppUser;
-import com.transport.reporting.modules.user.repository.UserRepository;
+import com.transport.reporting.entity.AppUser;
+import com.transport.reporting.entity.ReportType;
+import com.transport.reporting.entity.Status;
+import com.transport.reporting.entity.SupportType;
+import com.transport.reporting.entity.TransportSupport;
+import com.transport.reporting.repository.ReportTypeRepository;
+import com.transport.reporting.repository.StatusRepository;
+import com.transport.reporting.repository.SupportTypeRepository;
+import com.transport.reporting.repository.TransportSupportRepository;
+import com.transport.reporting.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -40,7 +40,6 @@ public class DataInitializer {
                 statusRepository.save(Status.builder().code("IN_PROGRESS").label("En cours").displayOrder(2).build());
                 statusRepository.save(Status.builder().code("RESOLVED").label("Résolu").displayOrder(3).build());
                 statusRepository.save(Status.builder().code("CLOSED").label("Clôturé").displayOrder(4).build());
-                log.info("Statuses initialized");
             }
 
             if (supportTypeRepository.count() == 0) {
@@ -48,7 +47,6 @@ public class DataInitializer {
                 supportTypeRepository.save(SupportType.builder().code("METRO").label("Métro").build());
                 supportTypeRepository.save(SupportType.builder().code("TRAIN").label("Train").build());
                 supportTypeRepository.save(SupportType.builder().code("STATION").label("Station").build());
-                log.info("Support types initialized");
             }
 
             if (reportTypeRepository.count() == 0) {
@@ -58,7 +56,6 @@ public class DataInitializer {
                         .code("COMPLAINT").label("Réclamation").description("Réclamation voyageur").build());
                 reportTypeRepository.save(ReportType.builder()
                         .code("SUGGESTION").label("Suggestion").description("Suggestion d'amélioration").build());
-                log.info("Report types initialized");
             }
 
             if (!userRepository.existsByUsername("admin")) {
