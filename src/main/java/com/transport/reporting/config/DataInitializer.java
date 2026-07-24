@@ -67,6 +67,7 @@ public class DataInitializer {
                         .name("Administrator")
                         .email("admin@transport.local")
                         .passwordHash(passwordEncoder.encode("admin123"))
+                        .active(true)
                         .build());
                 log.info("Admin user created (admin / admin123)");
             }

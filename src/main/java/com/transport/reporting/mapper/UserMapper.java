@@ -17,14 +17,17 @@ public class UserMapper {
                 .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(passwordHash)
+                .active(true)
                 .build();
     }
 
-    public void updateEntity(AppUser user, UserRequest request, String passwordHash) {
+    public void updateEntity(AppUser user, UserRequest request, String passwordHashOrNull) {
         user.setUsername(request.getUsername());
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordHash);
+        if (passwordHashOrNull != null) {
+            user.setPasswordHash(passwordHashOrNull);
+        }
     }
 
     public UserResponse toResponse(AppUser user) {
@@ -34,6 +37,7 @@ public class UserMapper {
                 .username(user.getUsername())
                 .name(user.getName())
                 .email(user.getEmail())
+                .active(user.isActive())
                 .build();
     }
 }

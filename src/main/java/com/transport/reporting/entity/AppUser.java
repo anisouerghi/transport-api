@@ -40,6 +40,10 @@ public class AppUser {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Builder.Default
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     @PrePersist
     public void prePersist() {
         if (uuid == null) {

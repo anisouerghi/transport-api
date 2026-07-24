@@ -7,6 +7,7 @@ import lombok.Data;
 
 /**
  * DTO requete pour creer / modifier un utilisateur.
+ * password est obligatoire a la creation ; optionnel a la modification.
  */
 @Data
 public class UserRequest {
@@ -24,7 +25,6 @@ public class UserRequest {
     @Size(max = 255)
     private String email;
 
-    @NotBlank
     @Size(min = 8, max = 100)
     private String password;
 }

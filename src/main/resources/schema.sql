@@ -56,6 +56,7 @@ CREATE TABLE app_user (
     name          VARCHAR(150) NOT NULL,
     email         VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    active        TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_app_user_uuid (uuid),
     UNIQUE KEY uk_app_user_username (username),

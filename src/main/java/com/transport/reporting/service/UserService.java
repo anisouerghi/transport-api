@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -37,6 +38,9 @@ public class UserService {
     }
 
     public UserResponse create(UserRequest request) {
+        if (!StringUtils.hasText(request.getPassword())) {
+            throw new BusinessException("Password is required");
+        }
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessException("Username already exists");
         }
@@ -59,7 +63,16 @@ public class UserService {
             throw new BusinessException("Email already exists");
         }
 
-        userMapper.updateEntity(user, request, passwordEncoder.encode(request.getPassword()));
+        String passwordHash = StringUtils.hasText(request.getPassword())
+                ? passwordEncoder.encode(request.getPassword())
+                : null;
+        userMapper.updateEntity(user, request, passwordHash);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    public UserResponse setActive(Long id, boolean active) {
+        AppUser user = getEntity(id);
+        user.setActive(active);
         return userMapper.toResponse(userRepository.save(user));
     }
 

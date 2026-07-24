@@ -52,6 +52,18 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("User updated", userService.update(id, request)));
     }
 
+    @PatchMapping("/{id}/activate")
+    @Operation(summary = "Activer un utilisateur")
+    public ResponseEntity<ApiResponse<UserResponse>> activate(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("User activated", userService.setActive(id, true)));
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    @Operation(summary = "Désactiver un utilisateur")
+    public ResponseEntity<ApiResponse<UserResponse>> deactivate(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("User deactivated", userService.setActive(id, false)));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Supprimer un utilisateur")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
