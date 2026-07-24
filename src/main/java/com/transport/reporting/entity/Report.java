@@ -9,6 +9,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Entite Signalement / reclamation - table report.
+ */
 @Entity
 @Table(name = "report")
 @Getter

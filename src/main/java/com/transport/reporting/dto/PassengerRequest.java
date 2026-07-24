@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * DTO requete voyageur.
+ */
 @Data
 public class PassengerRequest {
 

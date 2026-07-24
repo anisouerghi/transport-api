@@ -1,5 +1,8 @@
 package com.transport.reporting.exception;
 
+/**
+ * Exception metier (regle fonctionnelle non respectee).
+ */
 public class BusinessException extends RuntimeException {
 
     public BusinessException(String message) {

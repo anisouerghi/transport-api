@@ -8,6 +8,9 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * DTO reponse support de transport.
+ */
 @Data
 @Builder
 public class TransportSupportResponse {

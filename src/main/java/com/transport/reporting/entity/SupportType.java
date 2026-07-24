@@ -3,6 +3,9 @@ package com.transport.reporting.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entite Type de support (bus, metro, etc.) - table support_type.
+ */
 @Entity
 @Table(name = "support_type")
 @Getter

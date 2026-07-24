@@ -10,6 +10,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Entite Support de transport (porteur du QR Code) - table transport_support.
+ */
 @Entity
 @Table(name = "transport_support")
 @Getter

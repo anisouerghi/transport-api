@@ -7,6 +7,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
+/**
+ * Entite Piece jointe - table attachment.
+ */
 @Entity
 @Table(name = "attachment")
 @Getter

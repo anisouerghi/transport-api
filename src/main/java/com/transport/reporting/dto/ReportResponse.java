@@ -7,6 +7,9 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * DTO reponse signalement.
+ */
 @Data
 @Builder
 public class ReportResponse {

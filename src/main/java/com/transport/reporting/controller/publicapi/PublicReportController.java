@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controleur public : creation et suivi des signalements voyageur.
+ */
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Public - Reports")

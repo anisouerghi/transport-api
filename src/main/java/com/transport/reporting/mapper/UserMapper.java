@@ -5,6 +5,9 @@ import com.transport.reporting.dto.UserResponse;
 import com.transport.reporting.entity.AppUser;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper Utilisateur : conversion Entity <-> DTO.
+ */
 @Component
 public class UserMapper {
 

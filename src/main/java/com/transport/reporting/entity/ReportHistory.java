@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.time.Instant;
 
+/**
+ * Entite Historique des changements de statut - table report_history.
+ */
 @Entity
 @Table(name = "report_history")
 @Getter

@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.util.UUID;
 
+/**
+ * DTO reponse utilisateur.
+ */
 @Data
 @Builder
 public class UserResponse {

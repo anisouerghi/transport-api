@@ -9,6 +9,9 @@ import lombok.Data;
 
 import java.util.UUID;
 
+/**
+ * DTO requete de creation d'un signalement.
+ */
 @Data
 public class ReportRequest {
 

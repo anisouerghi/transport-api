@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controleur admin : gestion des supports de transport.
+ */
 @RestController
 @RequestMapping("/api/admin/supports")
 @RequiredArgsConstructor

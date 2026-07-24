@@ -3,6 +3,9 @@ package com.transport.reporting.dto;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * DTO reponse voyageur.
+ */
 @Data
 @Builder
 public class PassengerResponse {

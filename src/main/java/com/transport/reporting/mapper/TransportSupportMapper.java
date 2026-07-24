@@ -4,6 +4,9 @@ import com.transport.reporting.dto.TransportSupportResponse;
 import com.transport.reporting.entity.TransportSupport;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper Support de transport : conversion Entity <-> DTO.
+ */
 @Component
 public class TransportSupportMapper {
 

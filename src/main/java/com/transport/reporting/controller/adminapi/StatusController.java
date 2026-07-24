@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controleur admin : liste des statuts.
+ */
 @RestController
 @RequestMapping("/api/admin/statuses")
 @RequiredArgsConstructor

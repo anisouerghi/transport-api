@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Initialisation des donnees de demonstration (profil dev).
+ */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j

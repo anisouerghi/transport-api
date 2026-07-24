@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controleur admin : consultation des signalements.
+ */
 @RestController
 @RequestMapping("/api/admin/signalements")
 @RequiredArgsConstructor

@@ -7,6 +7,9 @@ import com.transport.reporting.entity.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper Signalement : conversion Entity <-> DTO.
+ */
 @Component
 @RequiredArgsConstructor
 public class ReportMapper {

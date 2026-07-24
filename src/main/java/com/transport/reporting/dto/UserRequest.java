@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * DTO requete pour creer / modifier un utilisateur.
+ */
 @Data
 public class UserRequest {
 

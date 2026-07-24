@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * CRUD User complet — modèle pour les autres développeurs.
+ * Controleur admin : CRUD utilisateurs (modele de reference).
  */
 @RestController
 @RequestMapping("/api/admin/users")

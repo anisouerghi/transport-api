@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Service metier Statut.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

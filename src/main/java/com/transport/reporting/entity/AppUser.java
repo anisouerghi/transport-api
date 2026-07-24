@@ -7,6 +7,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
+/**
+ * Entite Utilisateur interne (agent / administrateur) - table app_user.
+ */
 @Entity
 @Table(name = "app_user")
 @Getter

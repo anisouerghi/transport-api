@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Gestionnaire global des exceptions REST.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

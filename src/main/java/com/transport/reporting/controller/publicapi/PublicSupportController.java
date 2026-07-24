@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Controleur public : identification d'un support via QR Code.
+ */
 @RestController
 @RequestMapping("/api/public/supports")
 @RequiredArgsConstructor

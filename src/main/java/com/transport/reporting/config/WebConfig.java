@@ -12,6 +12,9 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Configuration web : CORS et encodeur de mot de passe.
+ */
 @Configuration
 public class WebConfig {
 

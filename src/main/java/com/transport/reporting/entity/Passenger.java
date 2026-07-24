@@ -3,6 +3,9 @@ package com.transport.reporting.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entite Voyageur (declarant) - table passenger.
+ */
 @Entity
 @Table(name = "passenger")
 @Getter

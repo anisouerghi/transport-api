@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Reponse d'erreur standardisee.
+ */
 @Data
 @Builder
 @NoArgsConstructor

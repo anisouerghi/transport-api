@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Reponse API generique envoyee au frontend.
+ */
 @Data
 @Builder
 @NoArgsConstructor

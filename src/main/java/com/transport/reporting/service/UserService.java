@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * CRUD User complet — modèle de référence pour l'équipe.
+ * Service metier Utilisateur (CRUD complet - modele de reference).
  */
 @Service
 @RequiredArgsConstructor

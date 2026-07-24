@@ -5,6 +5,9 @@ import com.transport.reporting.dto.PassengerResponse;
 import com.transport.reporting.entity.Passenger;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper Voyageur : conversion Entity <-> DTO.
+ */
 @Component
 public class PassengerMapper {
 

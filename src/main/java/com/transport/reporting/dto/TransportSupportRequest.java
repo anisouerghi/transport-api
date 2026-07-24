@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * DTO requete support de transport.
+ */
 @Data
 public class TransportSupportRequest {
 

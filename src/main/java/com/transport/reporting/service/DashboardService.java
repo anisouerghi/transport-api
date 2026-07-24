@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service metier Tableau de bord / statistiques.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -3,6 +3,9 @@ package com.transport.reporting.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entite Statut du workflow de signalement - table report_status.
+ */
 @Entity
 @Table(name = "report_status")
 @Getter

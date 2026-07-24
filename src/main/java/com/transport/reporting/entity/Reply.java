@@ -8,6 +8,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Entite Reponse au voyageur - table reply.
+ */
 @Entity
 @Table(name = "reply")
 @Getter

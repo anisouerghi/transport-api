@@ -3,6 +3,9 @@ package com.transport.reporting.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entite Type de signalement - table report_type.
+ */
 @Entity
 @Table(name = "report_type")
 @Getter
