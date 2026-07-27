@@ -19,27 +19,34 @@ import java.util.UUID;
 @Builder
 public class AppUser {
 
+    /** Identifiant technique auto-incremente de l'utilisateur. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long userId;
 
+    /** Identifiant metier unique (UUID) de l'utilisateur. */
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "uuid", nullable = false, unique = true, updatable = false, length = 36)
     private UUID uuid;
 
+    /** Identifiant de connexion unique (login). */
     @Column(name = "username", nullable = false, unique = true, length = 100)
     private String username;
 
+    /** Nom affiche de l'utilisateur. */
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
+    /** Adresse e-mail unique de l'utilisateur. */
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    /** Mot de passe hashe (BCrypt) - jamais stocke en clair. */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** Indique si le compte est actif (true) ou desactive (false). */
     @Builder.Default
     @Column(name = "active", nullable = false)
     private boolean active = true;

@@ -15,14 +15,17 @@ import lombok.*;
 @Builder
 public class SupportType {
 
+    /** Identifiant technique auto-incremente du type de support. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "support_type_id")
     private Long supportTypeId;
 
+    /** Code metier unique du type (ex. BUS, METRO). */
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
+    /** Libelle affiche du type de support. */
     @Column(name = "label", nullable = false, length = 150)
     private String label;
 }

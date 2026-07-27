@@ -21,44 +21,55 @@ import java.util.UUID;
 @Builder
 public class Report {
 
+    /** Identifiant technique auto-incremente du signalement. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_id")
     private Long reportId;
 
+    /** Identifiant metier unique (UUID) du signalement. */
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "uuid", nullable = false, unique = true, updatable = false, length = 36)
     private UUID uuid;
 
+    /** Reference publique unique pour le suivi du signalement. */
     @Column(name = "reference", nullable = false, unique = true, length = 40)
     private String reference;
 
+    /** Date/heure de creation du signalement. */
     @Column(name = "creation_date", nullable = false, updatable = false)
     private Instant creationDate;
 
+    /** Description detaillee du probleme signale. */
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    /** Priorite de traitement (LOW, MEDIUM, HIGH...). */
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", length = 30)
     @Builder.Default
     private Priority priority = Priority.MEDIUM;
 
+    /** Date/heure de cloture du signalement (null si ouvert). */
     @Column(name = "closure_date")
     private Instant closureDate;
 
+    /** Support de transport concerne par le signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "transport_support_id", nullable = false)
     private TransportSupport transportSupport;
 
+    /** Type / categorie du signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "report_type_id", nullable = false)
     private ReportType reportType;
 
+    /** Voyageur ayant depose le signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "passenger_id", nullable = false)
     private Passenger passenger;
 
+    /** Statut courant du workflow de traitement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;

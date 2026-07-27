@@ -2,7 +2,7 @@ package com.transport.reporting.controller.publicapi;
 
 import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.dto.TransportSupportResponse;
-import com.transport.reporting.service.SupportService;
+import com.transport.reporting.service.TransportSupportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +23,11 @@ import java.util.UUID;
 @Tag(name = "Public - Supports")
 public class PublicSupportController {
 
-    private final SupportService supportService;
+    private final TransportSupportService transportSupportService;
 
     @GetMapping("/{uuid}")
     @Operation(summary = "Identifier un support via UUID du QR Code")
     public ResponseEntity<ApiResponse<TransportSupportResponse>> getByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(ApiResponse.ok(supportService.findActiveByUuid(uuid)));
+        return ResponseEntity.ok(ApiResponse.ok(transportSupportService.findActiveByUuid(uuid)));
     }
 }

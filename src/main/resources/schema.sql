@@ -64,19 +64,27 @@ CREATE TABLE app_user (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE transport_support (
-    transport_support_id BIGINT NOT NULL AUTO_INCREMENT,
+    transport_support_id BIGINT       NOT NULL AUTO_INCREMENT,
     uuid                 VARCHAR(36)  NOT NULL,
     reference            VARCHAR(50)  NOT NULL,
     label                VARCHAR(150) NOT NULL,
     qr_code_url          VARCHAR(500) NULL,
+    qr_code_path         VARCHAR(500) NULL,
     qr_date_creation     DATETIME(6)  NULL,
     qr_date_impression   DATETIME(6)  NULL,
     qr_status            VARCHAR(30)  NULL,
     support_status       VARCHAR(30)  NOT NULL,
     support_type_id      BIGINT       NOT NULL,
+    created_at           DATETIME(6)  NOT NULL,
+    updated_at           DATETIME(6)  NOT NULL,
+    version              BIGINT       NOT NULL DEFAULT 0,
     PRIMARY KEY (transport_support_id),
     UNIQUE KEY uk_transport_support_uuid (uuid),
     UNIQUE KEY uk_transport_support_reference (reference),
+    KEY idx_transport_support_reference (reference),
+    KEY idx_transport_support_uuid (uuid),
+    KEY idx_transport_support_support_status (support_status),
+    KEY idx_transport_support_qr_status (qr_status),
     CONSTRAINT fk_transport_support_type
         FOREIGN KEY (support_type_id) REFERENCES support_type (support_type_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
