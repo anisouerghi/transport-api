@@ -23,10 +23,11 @@ CREATE TABLE support_type (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE report_type (
-    report_type_id BIGINT NOT NULL AUTO_INCREMENT,
+    report_type_id BIGINT       NOT NULL AUTO_INCREMENT,
     code           VARCHAR(50)  NOT NULL,
     label          VARCHAR(150) NOT NULL,
     description    VARCHAR(500) NULL,
+    active         TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (report_type_id),
     UNIQUE KEY uk_report_type_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

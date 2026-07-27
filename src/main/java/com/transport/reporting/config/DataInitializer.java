@@ -1,3 +1,4 @@
+
 package com.transport.reporting.config;
 
 import com.transport.reporting.common.enums.QrStatus;
