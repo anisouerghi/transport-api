@@ -78,8 +78,8 @@ public class DataInitializer {
             if (transportSupportRepository.count() == 0) {
                 SupportType bus = supportTypeRepository.findByCode("BUS").orElseThrow();
                 TransportSupport support = transportSupportRepository.saveAndFlush(TransportSupport.builder()
-                        .reference("BUS-L12-4521")
-                        .label("Bus Line 12 - Vehicle 4521")
+                        .reference("7500")
+                        .label("7500")
                         .qrStatus(QrStatus.ACTIVE)
                         .supportStatus(SupportStatus.ACTIVE)
                         .supportType(bus)
