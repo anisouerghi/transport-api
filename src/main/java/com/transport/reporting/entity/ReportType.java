@@ -32,4 +32,9 @@ public class ReportType {
     /** Description detaillee du type de signalement. */
     @Column(name = "description", length = 500)
     private String description;
+
+    /** Indique si le type est actif (visible / utilisable). */
+    @Builder.Default
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
 }
