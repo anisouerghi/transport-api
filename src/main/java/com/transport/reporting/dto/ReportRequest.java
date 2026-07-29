@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -22,6 +23,18 @@ public class ReportRequest {
     private Long reportTypeId;
 
     private Priority priority;
+
+    private Boolean publish;
+
+    private Instant publishDate;
+
+    private Boolean sendEmail;
+
+    private Instant sendEmailDate;
+
+    private Boolean publicResponse;
+
+    private Instant publicResponseDate;
 
     @NotBlank
     @Size(max = 5000)

@@ -21,6 +21,12 @@ public class ReportResponse {
     private String description;
     private Priority priority;
     private Instant closureDate;
+    private Boolean publish;
+    private Instant publishDate;
+    private Boolean sendEmail;
+    private Instant sendEmailDate;
+    private Boolean publicResponse;
+    private Instant publicResponseDate;
     private TransportSupportResponse transportSupport;
     private String reportTypeCode;
     private String reportTypeLabel;
