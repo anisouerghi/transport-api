@@ -18,6 +18,8 @@ public class ReplyMapper {
                 .emailSent(reply.isEmailSent())
                 .reportId(reply.getReport().getReportId())
                 .userId(reply.getAppUser() != null ? reply.getAppUser().getUserId() : null)
+                .publish(reply.getReport().getPublish())
+                .publicResponse(reply.getReport().getPublicResponse())
                 .build();
     }
 }

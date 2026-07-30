@@ -18,4 +18,6 @@ public class ReplyResponse {
     private boolean emailSent;
     private Long reportId;
     private Long userId;
+    private Boolean publish;
+    private Boolean publicResponse;
 }

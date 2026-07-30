@@ -7,12 +7,11 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Specifications JPA pour Report (signalement).
- * Convertit {@link ReportCriteria} en predicats Criteria API.
+ * Specifications JPA pour les signalements.
+ * Convertit {@link ReportCriteria} en predicates Criteria API.
  */
 public final class ReportSpecification {
 
@@ -22,47 +21,45 @@ public final class ReportSpecification {
     public static Specification<Report> fromCriteria(ReportCriteria criteria) {
         return (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-            if (criteria != null) {
-                SpecificationUtils.addLikeIgnoreCase(predicates, cb, root, "reference", criteria.getReference());
-                SpecificationUtils.addLikeIgnoreCase(predicates, cb, root, "description", criteria.getDescription());
-                SpecificationUtils.addEnumEqual(predicates, cb, root, "priority", criteria.getPriority());
 
-                if (criteria.getReportTypeId() != null) {
-                    predicates.add(cb.equal(root.join("reportType").get("reportTypeId"), criteria.getReportTypeId()));
-                }
-                if (criteria.getStatusId() != null) {
-                    predicates.add(cb.equal(root.join("status").get("statusId"), criteria.getStatusId()));
-                }
+            if (criteria == null) {
+                return cb.conjunction();
+            }
 
-                if (criteria.getSupportUuid() != null && !criteria.getSupportUuid().isBlank()) {
-                    try {
-                        UUID uuid = UUID.fromString(criteria.getSupportUuid().trim());
-                        predicates.add(cb.equal(root.join("transportSupport").get("uuid"), uuid));
-                    } catch (IllegalArgumentException ignored) {
-                        predicates.add(cb.disjunction());
-                    }
-                }
-                if (criteria.getSupportReference() != null && !criteria.getSupportReference().isBlank()) {
-                    predicates.add(cb.like(
-                            cb.lower(root.join("transportSupport").get("reference")),
-                            "%" + criteria.getSupportReference().trim().toLowerCase(Locale.ROOT) + "%"));
-                }
+            SpecificationUtils.addLikeIgnoreCase(predicates, cb, root, "reference", criteria.getReference());
+            SpecificationUtils.addLikeIgnoreCase(predicates, cb, root, "description", criteria.getDescription());
+            SpecificationUtils.addEnumEqual(predicates, cb, root, "priority", criteria.getPriority());
 
-                if (criteria.getReportType() != null && !criteria.getReportType().isBlank()) {
-                    predicates.add(cb.like(
-                            cb.lower(root.join("reportType").get("code")),
-                            "%" + criteria.getReportType().trim().toLowerCase(Locale.ROOT) + "%"));
-                }
-                if (criteria.getStatus() != null && !criteria.getStatus().isBlank()) {
-                    predicates.add(cb.like(
-                            cb.lower(root.join("status").get("code")),
-                            "%" + criteria.getStatus().trim().toLowerCase(Locale.ROOT) + "%"));
-                }
+            if (criteria.getReportTypeId() != null) {
+                predicates.add(cb.equal(root.join("reportType").get("reportTypeId"), criteria.getReportTypeId()));
+            }
+            if (criteria.getStatusId() != null) {
+                predicates.add(cb.equal(root.join("status").get("statusId"), criteria.getStatusId()));
+            }
 
-                SpecificationUtils.addInstantRange(predicates, cb, root, "creationDate",
-                        criteria.getCreationDateFrom(), criteria.getCreationDateTo());
-                SpecificationUtils.addInstantRange(predicates, cb, root, "closureDate",
-                        criteria.getClosureDateFrom(), criteria.getClosureDateTo());
+            if (criteria.getSupportUuid() != null && !criteria.getSupportUuid().isBlank()) {
+                try {
+                    UUID uuid = UUID.fromString(criteria.getSupportUuid().trim());
+                    predicates.add(cb.equal(root.join("transportSupport").get("uuid"), uuid));
+                } catch (IllegalArgumentException ignored) {
+                    predicates.add(cb.disjunction());
+                }
+            }
+
+            if (criteria.getSupportReference() != null && !criteria.getSupportReference().isBlank()) {
+                predicates.add(cb.like(
+                        cb.lower(root.join("transportSupport").get("reference")),
+                        "%" + criteria.getSupportReference().trim().toLowerCase() + "%"
+                ));
+            }
+
+            SpecificationUtils.addInstantRange(predicates, cb, root, "creationDate",
+                    criteria.getCreationDateFrom(), criteria.getCreationDateTo());
+            SpecificationUtils.addInstantRange(predicates, cb, root, "closureDate",
+                    criteria.getClosureDateFrom(), criteria.getClosureDateTo());
+
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
             }
             return SpecificationUtils.andAll(predicates, cb);
         };

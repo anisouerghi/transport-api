@@ -44,11 +44,10 @@ public class ReportService {
 
     private static final Map<String, String> SORT_FIELDS = Map.of(
             "id", "reportId",
-            "reportId", "reportId",
             "reference", "reference",
             "creationDate", "creationDate",
-            "priority", "priority",
-            "closureDate", "closureDate"
+            "closureDate", "closureDate",
+            "priority", "priority"
     );
 
     private final ReportRepository reportRepository;
@@ -73,6 +72,12 @@ public class ReportService {
                 .reference(generateReference())
                 .description(request.getDescription())
                 .priority(request.getPriority() != null ? request.getPriority() : Priority.MEDIUM)
+                .publish(request.getPublish() != null ? request.getPublish() : Boolean.FALSE)
+                .publishDate(request.getPublishDate())
+                .sendEmail(request.getSendEmail() != null ? request.getSendEmail() : Boolean.FALSE)
+                .sendEmailDate(request.getSendEmailDate())
+                .publicResponse(request.getPublicResponse() != null ? request.getPublicResponse() : Boolean.FALSE)
+                .publicResponseDate(request.getPublicResponseDate())
                 .transportSupport(support)
                 .reportType(reportType)
                 .passenger(passenger)
@@ -94,10 +99,24 @@ public class ReportService {
     }
 
     /** Recherche paginee multicritere (POST /search). */
+    // @Transactional(readOnly = true)
+    // public PageResponse<ReportResponse> search(SearchRequest<ReportCriteria> request) {
+    //     ReportCriteria criteria = request.getFilters();
+    //     Pageable pageable = PageableUtils.toPageable(request.getPageable(), "creationDate", SORT_FIELDS);
+    //     Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
+    //     Page<ReportResponse> page = reportRepository.findAll(spec, pageable)
+    //             .map(reportMapper::toResponse);
+    //     return PageResponse.from(page);
+    // }
+
     @Transactional(readOnly = true)
     public PageResponse<ReportResponse> search(SearchRequest<ReportCriteria> request) {
-        ReportCriteria criteria = request.getFilters();
-        Pageable pageable = PageableUtils.toPageable(request.getPageable(), "creationDate", SORT_FIELDS);
+        ReportCriteria criteria = request != null ? request.getFilters() : null;
+        Pageable pageable = PageableUtils.toPageable(
+                request != null ? request.getPageable() : null,
+                "reportId",
+                SORT_FIELDS
+        );
         Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
         Page<ReportResponse> page = reportRepository.findAll(spec, pageable)
                 .map(reportMapper::toResponse);

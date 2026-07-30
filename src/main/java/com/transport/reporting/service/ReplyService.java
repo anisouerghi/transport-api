@@ -62,6 +62,39 @@ public class ReplyService {
             applyStatusChange(report, request.getStatusId(), user, request.getMessage());
         }
 
+        if (request.getPublish() != null) {
+            report.setPublish(request.getPublish());
+            if (Boolean.TRUE.equals(request.getPublish())) {
+                if (report.getPublishDate() == null) {
+                    report.setPublishDate(Instant.now());
+                }
+            } else {
+                report.setPublishDate(null);
+            }
+        }
+
+        if (request.getPublicResponse() != null) {
+            report.setPublicResponse(request.getPublicResponse());
+            if (Boolean.TRUE.equals(request.getPublicResponse())) {
+                if (report.getPublicResponseDate() == null) {
+                    report.setPublicResponseDate(Instant.now());
+                }
+            } else {
+                report.setPublicResponseDate(null);
+            }
+        }
+
+        if (request.getSendEmail() != null) {
+            report.setSendEmail(request.getSendEmail());
+            if (Boolean.TRUE.equals(request.getSendEmail())) {
+                if (report.getSendEmailDate() == null) {
+                    report.setSendEmailDate(Instant.now());
+                }
+            } else {
+                report.setSendEmailDate(null);
+            }
+        }
+
         boolean emailSent = Boolean.TRUE.equals(request.getSendEmail());
         if (emailSent) {
             log.info("Email notification requested for report {} (sending not implemented yet)", reportId);

@@ -26,4 +26,8 @@ public class ReplyRequest {
 
     /** Reserve (non persiste pour le moment). */
     private Boolean publish;
+
+    /** Reserve (non persiste pour le moment). */
+    private Boolean publicResponse;
+
 }

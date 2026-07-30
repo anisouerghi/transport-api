@@ -54,6 +54,33 @@ public class Report {
     @Column(name = "closure_date")
     private Instant closureDate;
 
+    /** Indique si le signalement est publie (0/1). */
+    @Column(name = "publish", nullable = false)
+    @Builder.Default
+    private Boolean publish = Boolean.FALSE;
+
+    /** Date de publication du signalement. */
+    @Column(name = "publish_date")
+    private Instant publishDate;
+
+    /** Indique si un email doit etre envoye (0/1). */
+    @Column(name = "send_email", nullable = false)
+    @Builder.Default
+    private Boolean sendEmail = Boolean.FALSE;
+
+    /** Date d'envoi de l'email. */
+    @Column(name = "send_email_date")
+    private Instant sendEmailDate;
+
+    /** Indique si une reponse publique a ete envoyee (0/1). */
+    @Column(name = "public_response", nullable = false)
+    @Builder.Default
+    private Boolean publicResponse = Boolean.FALSE;
+
+    /** Date de la reponse publique. */
+    @Column(name = "public_response_date")
+    private Instant publicResponseDate;
+
     /** Support de transport concerne par le signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "transport_support_id", nullable = false)

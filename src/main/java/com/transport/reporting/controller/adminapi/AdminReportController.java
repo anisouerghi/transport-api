@@ -37,7 +37,7 @@ public class AdminReportController {
     }
 
     @PostMapping("/search")
-    @Operation(summary = "Recherche paginee multicritere des signalements")
+    @Operation(summary = "Rechercher les signalements selon des critères")
     public ResponseEntity<ApiResponse<PageResponse<ReportResponse>>> search(
             @RequestBody SearchRequest<ReportCriteria> request) {
         return ResponseEntity.ok(ApiResponse.ok(reportService.search(request)));
