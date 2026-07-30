@@ -1,7 +1,11 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.dto.SearchRequest;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.SupportStatus;
+import com.transport.reporting.common.response.PageResponse;
+import com.transport.reporting.common.util.PageableUtils;
+import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.entity.Passenger;
@@ -14,13 +18,18 @@ import com.transport.reporting.mapper.ReportMapper;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
+import com.transport.reporting.specification.ReportSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -32,6 +41,15 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ReportService {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    private static final Map<String, String> SORT_FIELDS = Map.of(
+            "id", "reportId",
+            "reportId", "reportId",
+            "reference", "reference",
+            "creationDate", "creationDate",
+            "priority", "priority",
+            "closureDate", "closureDate"
+    );
 
     private final ReportRepository reportRepository;
     private final ReportTypeRepository reportTypeRepository;
@@ -73,6 +91,17 @@ public class ReportService {
     @Transactional(readOnly = true)
     public List<ReportResponse> findAll() {
         return reportRepository.findAll().stream().map(reportMapper::toResponse).toList();
+    }
+
+    /** Recherche paginee multicritere (POST /search). */
+    @Transactional(readOnly = true)
+    public PageResponse<ReportResponse> search(SearchRequest<ReportCriteria> request) {
+        ReportCriteria criteria = request.getFilters();
+        Pageable pageable = PageableUtils.toPageable(request.getPageable(), "creationDate", SORT_FIELDS);
+        Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
+        Page<ReportResponse> page = reportRepository.findAll(spec, pageable)
+                .map(reportMapper::toResponse);
+        return PageResponse.from(page);
     }
 
     @Transactional(readOnly = true)
