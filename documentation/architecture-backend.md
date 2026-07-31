@@ -8,15 +8,16 @@ Architecture Backend simple, claire et commune pour toute l'équipe.
 
 ```
 com.transport.reporting
-├── config
+├── config           # Propriétés (QR, upload, CORS…)
 ├── controller
 │   ├── publicapi    # API voyageurs (/api/public)
 │   └── adminapi     # API agents (/api/admin)
-├── service          # Logique métier
+├── service          # Logique métier + stockage fichiers
 ├── repository       # Spring Data JPA
 ├── entity           # Entités JPA / tables MySQL
 ├── dto              # Échange Angular
 ├── mapper           # Entity <-> DTO
+├── specification    # Critères de recherche JPA
 ├── exception        # Gestion globale des erreurs
 └── common           # Enums, réponses API communes
 ```
@@ -24,7 +25,7 @@ com.transport.reporting
 ## Règles
 
 - **Controller** : requêtes HTTP uniquement, aucun traitement métier
-- **Service** : règles métier, appelle les repositories
+- **Service** : règles métier, appelle les repositories / stockage
 - **Repository** : accès base de données uniquement
 - **Entity** : mapping tables MySQL
 - **DTO** : communication Backend ↔ Frontend
@@ -42,6 +43,21 @@ Référence complète pour l'équipe :
 - `mapper/UserMapper`
 
 CRUD : `GET/POST/PUT/DELETE /api/admin/users`
+
+## Module pièces jointes (Attachment)
+
+Réutilise l'entité existante `Attachment` (table `attachment`).
+
+| Élément | Rôle |
+|---------|------|
+| `config/UploadProperties` | `app.upload.path` |
+| `service/FileStorageService` | Validation + écriture disque (UUID) |
+| `service/AttachmentService` | Persistence + lecture contenu |
+| `mapper/AttachmentMapper` | Entity → `AttachmentResponse` |
+| `controller/publicapi/PublicReportController` | Création multipart |
+| `controller/adminapi/AdminAttachmentController` | Liste / view / download |
+
+Détails fonctionnels et contraintes : [`attachments.md`](attachments.md).
 
 ## Entités / tables
 

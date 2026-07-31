@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controleur public : types de signalement actifs (formulaire voyageur).
+ * Contrôleur public exposant les types de signalement actifs
+ * pour le formulaire voyageur (scan QR).
  */
 @RestController
 @RequestMapping("/api/public/report-types")
@@ -24,6 +25,9 @@ public class PublicReportTypeController {
 
     private final ReportTypeService reportTypeService;
 
+    /**
+     * Liste uniquement les types dont le flag {@code active} est vrai.
+     */
     @GetMapping
     @Operation(summary = "Lister les types de signalement actifs")
     public ResponseEntity<ApiResponse<List<ReportTypeResponse>>> findAllActive() {

@@ -8,12 +8,16 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.Instant;
 import java.util.List;
 
 /**
  * Gestionnaire global des exceptions REST.
+ * <p>
+ * Couvre notamment les erreurs métier, la validation Bean Validation
+ * et le dépassement des limites multipart ({@link MaxUploadSizeExceededException}).
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,6 +38,16 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + " : " + error.getDefaultMessage())
                 .toList();
         return build(HttpStatus.BAD_REQUEST, "Validation error", request.getRequestURI(), details);
+    }
+
+    /**
+     * Dépassement des limites Spring {@code spring.servlet.multipart.max-*-size}.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUpload(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        return build(HttpStatus.PAYLOAD_TOO_LARGE,
+                "Fichier trop volumineux. Maximum 10 Mo par fichier et 25 Mo au total.",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(Exception.class)

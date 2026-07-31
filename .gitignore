@@ -29,6 +29,8 @@ application-local.yml
 
 # Uploads locaux
 uploads/
+data/attachments/
+data/qr-codes/
 
 # Tests reports
 surefire-reports/

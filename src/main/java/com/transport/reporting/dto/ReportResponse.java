@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -32,4 +33,6 @@ public class ReportResponse {
     private String reportTypeLabel;
     private PassengerResponse passenger;
     private StatusResponse status;
+    /** Pièces jointes associées (renseignées sur détail / création / suivi). */
+    private List<AttachmentResponse> attachments;
 }

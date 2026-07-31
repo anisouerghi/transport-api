@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Service metier Signalement.
+ * Service métier Signalement (création publique, recherche admin, détail).
  */
 @Service
 @RequiredArgsConstructor
@@ -56,8 +57,29 @@ public class ReportService {
     private final PassengerService passengerService;
     private final StatusService statusService;
     private final ReportMapper reportMapper;
+    private final AttachmentService attachmentService;
+    private final FileStorageService fileStorageService;
 
+    /**
+     * Crée un signalement sans pièce jointe (compatibilité appels internes / JSON pur).
+     */
     public ReportResponse create(ReportRequest request) {
+        return create(request, null);
+    }
+
+    /**
+     * Crée un signalement puis rattache éventuellement des pièces jointes.
+     * <p>
+     * Les fichiers sont validés <strong>avant</strong> la persistence du signalement
+     * afin d'éviter un enregistrement orphelin en cas de rejet d'upload.
+     *
+     * @param request données métier du signalement
+     * @param files   fichiers multipart optionnels (max 5)
+     */
+    public ReportResponse create(ReportRequest request, MultipartFile[] files) {
+        // Valider les fichiers avant toute persistence
+        fileStorageService.validateBatch(files);
+
         TransportSupport support = transportSupportRepository.findByUuid(request.getSupportUuid())
                 .filter(s -> s.getSupportStatus() == SupportStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active TransportSupport", request.getSupportUuid()));
@@ -84,30 +106,23 @@ public class ReportService {
                 .status(initialStatus)
                 .build();
 
-        return reportMapper.toResponse(reportRepository.save(report));
+        report = reportRepository.save(report);
+        ReportResponse response = reportMapper.toResponse(report);
+        response.setAttachments(attachmentService.saveForReport(report, files));
+        return response;
     }
 
     @Transactional(readOnly = true)
     public ReportResponse findByReference(String reference) {
-        return reportMapper.toResponse(reportRepository.findByReference(reference)
-                .orElseThrow(() -> new ResourceNotFoundException("Report", reference)));
+        Report report = reportRepository.findByReference(reference)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", reference));
+        return toResponseWithAttachments(report);
     }
 
     @Transactional(readOnly = true)
     public List<ReportResponse> findAll() {
         return reportRepository.findAll().stream().map(reportMapper::toResponse).toList();
     }
-
-    /** Recherche paginee multicritere (POST /search). */
-    // @Transactional(readOnly = true)
-    // public PageResponse<ReportResponse> search(SearchRequest<ReportCriteria> request) {
-    //     ReportCriteria criteria = request.getFilters();
-    //     Pageable pageable = PageableUtils.toPageable(request.getPageable(), "creationDate", SORT_FIELDS);
-    //     Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
-    //     Page<ReportResponse> page = reportRepository.findAll(spec, pageable)
-    //             .map(reportMapper::toResponse);
-    //     return PageResponse.from(page);
-    // }
 
     @Transactional(readOnly = true)
     public PageResponse<ReportResponse> search(SearchRequest<ReportCriteria> request) {
@@ -125,10 +140,18 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public ReportResponse findById(Long id) {
-        return reportMapper.toResponse(reportRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Report", id)));
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        return toResponseWithAttachments(report);
     }
 
+    private ReportResponse toResponseWithAttachments(Report report) {
+        ReportResponse response = reportMapper.toResponse(report);
+        response.setAttachments(attachmentService.findByReportId(report.getReportId()));
+        return response;
+    }
+
+    /** Génère une référence unique du type {@code SIG-yyyyMMdd-xxxxxx}. */
     private String generateReference() {
         String reference;
         do {
