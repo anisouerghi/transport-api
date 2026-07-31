@@ -1,8 +1,12 @@
 package com.transport.reporting.service;
 
 import com.transport.reporting.common.dto.SearchRequest;
+import com.transport.reporting.common.enums.AuditAction;
+import com.transport.reporting.common.enums.AuditModule;
 import com.transport.reporting.common.response.PageResponse;
+import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
+import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.SupportTypeCriteria;
 import com.transport.reporting.dto.SupportTypeRequest;
 import com.transport.reporting.dto.SupportTypeResponse;
@@ -24,20 +28,12 @@ import java.util.Map;
 
 /**
  * Service metier SupportType (CRUD + recherche paginee serveur).
- * <p>
- * Pattern de recherche :
- * <ol>
- *   <li>Construire un {@link Pageable} depuis la requete</li>
- *   <li>Construire une {@link Specification} depuis les criteres</li>
- *   <li>Executer findAll(spec, pageable) puis mapper en DTO</li>
- * </ol>
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class SupportTypeService {
 
-    /** Mapping nom logique frontend -> attribut JPA autorise pour le tri. */
     private static final Map<String, String> SORT_FIELDS = Map.of(
             "id", "supportTypeId",
             "code", "code",
@@ -46,8 +42,8 @@ public class SupportTypeService {
 
     private final SupportTypeRepository supportTypeRepository;
     private final SupportTypeMapper supportTypeMapper;
+    private final AuditLogService auditLogService;
 
-    /** Liste complete (sans pagination) — utile pour les listes deroulantes. */
     @Transactional(readOnly = true)
     public List<SupportTypeResponse> findAll() {
         return supportTypeRepository.findAll().stream()
@@ -55,18 +51,11 @@ public class SupportTypeService {
                 .toList();
     }
 
-    /** Consultation par identifiant technique. */
     @Transactional(readOnly = true)
     public SupportTypeResponse findById(Long id) {
         return supportTypeMapper.toResponse(getEntity(id));
     }
 
-    /**
-     * Recherche paginee multicritere.
-     *
-     * @param request contient filters + pageable
-     * @return page de resultats enveloppee dans PageResponse
-     */
     @Transactional(readOnly = true)
     public PageResponse<SupportTypeResponse> search(SearchRequest<SupportTypeCriteria> request) {
         SupportTypeCriteria criteria = request.getFilters();
@@ -77,35 +66,66 @@ public class SupportTypeService {
         return PageResponse.from(page);
     }
 
-    /** Creation : verifie l'unicite du code avant insertion. */
     public SupportTypeResponse create(SupportTypeRequest request) {
         if (supportTypeRepository.existsByCode(request.getCode())) {
             throw new BusinessException("Support type code already exists");
         }
-        SupportType entity = supportTypeMapper.toEntity(request);
-        return supportTypeMapper.toResponse(supportTypeRepository.save(entity));
+        SupportType entity = supportTypeRepository.save(supportTypeMapper.toEntity(request));
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.CREATE)
+                .module(AuditModule.SUPPORT_TYPES)
+                .entityName("SupportType")
+                .entityId(String.valueOf(entity.getSupportTypeId()))
+                .newValue(snapshot(entity))
+                .description("Création du type de support " + entity.getCode())
+                .build());
+        return supportTypeMapper.toResponse(entity);
     }
 
-    /** Modification : verifie l'unicite du code si celui-ci change. */
     public SupportTypeResponse update(Long id, SupportTypeRequest request) {
         SupportType entity = getEntity(id);
+        String oldValue = snapshot(entity);
         if (!entity.getCode().equals(request.getCode())
                 && supportTypeRepository.existsByCode(request.getCode())) {
             throw new BusinessException("Support type code already exists");
         }
         supportTypeMapper.updateEntity(entity, request);
-        return supportTypeMapper.toResponse(supportTypeRepository.save(entity));
+        entity = supportTypeRepository.save(entity);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.SUPPORT_TYPES)
+                .entityName("SupportType")
+                .entityId(String.valueOf(entity.getSupportTypeId()))
+                .oldValue(oldValue)
+                .newValue(snapshot(entity))
+                .description("Modification du type de support " + entity.getCode())
+                .build());
+        return supportTypeMapper.toResponse(entity);
     }
 
-    /** Suppression physique. Echoue si l'id n'existe pas. */
     public void delete(Long id) {
         SupportType entity = getEntity(id);
+        String oldValue = snapshot(entity);
         supportTypeRepository.delete(entity);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.DELETE)
+                .module(AuditModule.SUPPORT_TYPES)
+                .entityName("SupportType")
+                .entityId(String.valueOf(id))
+                .oldValue(oldValue)
+                .description("Suppression du type de support " + entity.getCode())
+                .build());
     }
 
-    /** Charge l'entite ou leve ResourceNotFoundException. */
     SupportType getEntity(Long id) {
         return supportTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SupportType", id));
+    }
+
+    private static String snapshot(SupportType entity) {
+        return "code=" + entity.getCode() + ";label=" + entity.getLabel();
     }
 }

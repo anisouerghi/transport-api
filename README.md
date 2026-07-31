@@ -81,6 +81,11 @@ mvn spring-boot:run
 | GET/POST | `/api/admin/reports/{id}/replies` |
 | GET | `/api/admin/dashboard` |
 | GET | `/api/admin/statuses` ou `/api/admin/status` |
+| POST search / GET | `/api/admin/audit-logs` |
+
+## Journal d'audit
+
+Voir : [`documentation/audit-logs.md`](documentation/audit-logs.md).
 
 ## Pièces jointes
 

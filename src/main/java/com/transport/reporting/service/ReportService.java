@@ -1,10 +1,13 @@
 package com.transport.reporting.service;
 
 import com.transport.reporting.common.dto.SearchRequest;
+import com.transport.reporting.common.enums.AuditAction;
+import com.transport.reporting.common.enums.AuditModule;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.SupportStatus;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.common.util.PageableUtils;
+import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
@@ -59,6 +62,7 @@ public class ReportService {
     private final ReportMapper reportMapper;
     private final AttachmentService attachmentService;
     private final FileStorageService fileStorageService;
+    private final AuditLogService auditLogService;
 
     /**
      * Crée un signalement sans pièce jointe (compatibilité appels internes / JSON pur).
@@ -109,6 +113,21 @@ public class ReportService {
         report = reportRepository.save(report);
         ReportResponse response = reportMapper.toResponse(report);
         response.setAttachments(attachmentService.saveForReport(report, files));
+
+        String passengerName = passenger.getName() != null ? passenger.getName() : "voyageur";
+        auditLogService.record(AuditLogEvent.builder()
+                .username("PUBLIC")
+                .userFullName(passengerName)
+                .actionType(AuditAction.CREATE)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(report.getReportId()))
+                .newValue("reference=" + report.getReference()
+                        + ";priority=" + report.getPriority()
+                        + ";reportTypeId=" + reportType.getReportTypeId())
+                .description("Création publique du signalement " + report.getReference())
+                .build());
+
         return response;
     }
 

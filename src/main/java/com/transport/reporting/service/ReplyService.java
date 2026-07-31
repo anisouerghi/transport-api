@@ -1,5 +1,8 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.enums.AuditAction;
+import com.transport.reporting.common.enums.AuditModule;
+import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.ReplyRequest;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.entity.AppUser;
@@ -41,6 +44,7 @@ public class ReplyService {
     private final UserRepository userRepository;
     private final StatusRepository statusRepository;
     private final ReplyMapper replyMapper;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<ReplyResponse> findByReportId(Long reportId) {
@@ -107,7 +111,21 @@ public class ReplyService {
                 .appUser(user)
                 .build();
 
-        return replyMapper.toResponse(replyRepository.save(reply));
+        reply = replyRepository.save(reply);
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .userFullName(user.getName())
+                .actionType(AuditAction.REPLY)
+                .module(AuditModule.REPLIES)
+                .entityName("Reply")
+                .entityId(String.valueOf(reply.getReplyId()))
+                .newValue("reportId=" + reportId + ";emailSent=" + emailSent)
+                .description("Réponse agent sur le signalement " + report.getReference())
+                .build());
+
+        return replyMapper.toResponse(reply);
     }
 
     private void applyStatusChange(Report report, Long newStatusId, AppUser user, String comments) {
@@ -115,6 +133,7 @@ public class ReplyService {
                 .orElseThrow(() -> new ResourceNotFoundException("Status", newStatusId));
 
         Status oldStatus = report.getStatus();
+        String oldCode = oldStatus != null ? oldStatus.getCode() : null;
         report.setStatus(newStatus);
 
         if (CLOSED_STATUS_CODES.contains(newStatus.getCode()) && report.getClosureDate() == null) {
@@ -130,6 +149,19 @@ public class ReplyService {
                 .comments(comments != null && comments.length() > 1000 ? comments.substring(0, 1000) : comments)
                 .report(report)
                 .appUser(user)
+                .build());
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .userFullName(user.getName())
+                .actionType(AuditAction.STATUS_CHANGE)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(report.getReportId()))
+                .oldValue("status=" + oldCode)
+                .newValue("status=" + newStatus.getCode())
+                .description("Changement de statut du signalement " + report.getReference())
                 .build());
     }
 

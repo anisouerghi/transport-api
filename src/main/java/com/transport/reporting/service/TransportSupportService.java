@@ -1,10 +1,14 @@
 package com.transport.reporting.service;
 
 import com.transport.reporting.common.dto.SearchRequest;
+import com.transport.reporting.common.enums.AuditAction;
+import com.transport.reporting.common.enums.AuditModule;
 import com.transport.reporting.common.enums.QrStatus;
 import com.transport.reporting.common.enums.SupportStatus;
 import com.transport.reporting.common.response.PageResponse;
+import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
+import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.TransportSupportCriteria;
 import com.transport.reporting.dto.TransportSupportRequest;
 import com.transport.reporting.dto.TransportSupportResponse;
@@ -60,6 +64,7 @@ public class TransportSupportService {
     private final SupportTypeRepository supportTypeRepository;
     private final TransportSupportMapper transportSupportMapper;
     private final QrCodeService qrCodeService;
+    private final AuditLogService auditLogService;
 
     /**
      * Consultation publique par UUID : uniquement si le support est ACTIVE.
@@ -120,6 +125,16 @@ public class TransportSupportService {
         applyQrCode(support);
         support = transportSupportRepository.save(support);
 
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.CREATE)
+                .module(AuditModule.TRANSPORT_SUPPORTS)
+                .entityName("TransportSupport")
+                .entityId(String.valueOf(support.getTransportSupportId()))
+                .newValue(snapshot(support))
+                .description("Création du support " + support.getReference())
+                .build());
+
         return transportSupportMapper.toResponse(support);
     }
 
@@ -129,6 +144,7 @@ public class TransportSupportService {
      */
     public TransportSupportResponse update(Long id, TransportSupportRequest request) {
         TransportSupport support = getEntity(id);
+        String oldValue = snapshot(support);
 
         if (!support.getReference().equals(request.getReference())
                 && transportSupportRepository.existsByReferenceAndTransportSupportIdNot(
@@ -138,8 +154,20 @@ public class TransportSupportService {
 
         SupportType supportType = resolveSupportType(request.getSupportTypeId());
         transportSupportMapper.updateEntity(support, request, supportType);
+        support = transportSupportRepository.save(support);
 
-        return transportSupportMapper.toResponse(transportSupportRepository.save(support));
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.TRANSPORT_SUPPORTS)
+                .entityName("TransportSupport")
+                .entityId(String.valueOf(support.getTransportSupportId()))
+                .oldValue(oldValue)
+                .newValue(snapshot(support))
+                .description("Modification du support " + support.getReference())
+                .build());
+
+        return transportSupportMapper.toResponse(support);
     }
 
     /** Regenere l'image QR et remet qrStatus a GENERATED. */
@@ -148,7 +176,17 @@ public class TransportSupportService {
         applyQrCode(support);
         support.setQrDateCreation(Instant.now());
         support.setQrStatus(QrStatus.GENERATED);
-        return transportSupportMapper.toResponse(transportSupportRepository.save(support));
+        support = transportSupportRepository.save(support);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.TRANSPORT_SUPPORTS)
+                .entityName("TransportSupport")
+                .entityId(String.valueOf(support.getTransportSupportId()))
+                .newValue("qrStatus=" + support.getQrStatus() + ";qrCodeUrl=" + support.getQrCodeUrl())
+                .description("Régénération du QR du support " + support.getReference())
+                .build());
+        return transportSupportMapper.toResponse(support);
     }
 
     /** Retourne les octets de l'image PNG du QR Code. */
@@ -160,10 +198,25 @@ public class TransportSupportService {
 
     /** Suppression physique du support. */
     public void delete(Long id) {
-        if (!transportSupportRepository.existsById(id)) {
-            throw new ResourceNotFoundException("TransportSupport", id);
-        }
+        TransportSupport support = getEntity(id);
+        String oldValue = snapshot(support);
         transportSupportRepository.deleteById(id);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.DELETE)
+                .module(AuditModule.TRANSPORT_SUPPORTS)
+                .entityName("TransportSupport")
+                .entityId(String.valueOf(id))
+                .oldValue(oldValue)
+                .description("Suppression du support " + support.getReference())
+                .build());
+    }
+
+    private static String snapshot(TransportSupport support) {
+        return "reference=" + support.getReference()
+                + ";label=" + support.getLabel()
+                + ";supportStatus=" + support.getSupportStatus()
+                + ";qrStatus=" + support.getQrStatus();
     }
 
     /**

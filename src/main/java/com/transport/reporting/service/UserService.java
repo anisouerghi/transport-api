@@ -1,5 +1,9 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.enums.AuditAction;
+import com.transport.reporting.common.enums.AuditModule;
+import com.transport.reporting.common.util.AuditActors;
+import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.UserRequest;
 import com.transport.reporting.dto.UserResponse;
 import com.transport.reporting.entity.AppUser;
@@ -26,6 +30,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
@@ -48,11 +53,22 @@ public class UserService {
             throw new BusinessException("Email already exists");
         }
         AppUser user = userMapper.toEntity(request, passwordEncoder.encode(request.getPassword()));
-        return userMapper.toResponse(userRepository.save(user));
+        user = userRepository.save(user);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.CREATE)
+                .module(AuditModule.USERS)
+                .entityName("AppUser")
+                .entityId(String.valueOf(user.getUserId()))
+                .newValue(snapshot(user))
+                .description("Création de l'utilisateur " + user.getUsername())
+                .build());
+        return userMapper.toResponse(user);
     }
 
     public UserResponse update(Long id, UserRequest request) {
         AppUser user = getEntity(id);
+        String oldValue = snapshot(user);
 
         if (!user.getUsername().equals(request.getUsername())
                 && userRepository.existsByUsername(request.getUsername())) {
@@ -67,24 +83,62 @@ public class UserService {
                 ? passwordEncoder.encode(request.getPassword())
                 : null;
         userMapper.updateEntity(user, request, passwordHash);
-        return userMapper.toResponse(userRepository.save(user));
+        user = userRepository.save(user);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.USERS)
+                .entityName("AppUser")
+                .entityId(String.valueOf(user.getUserId()))
+                .oldValue(oldValue)
+                .newValue(snapshot(user))
+                .description("Modification de l'utilisateur " + user.getUsername())
+                .build());
+        return userMapper.toResponse(user);
     }
 
     public UserResponse setActive(Long id, boolean active) {
         AppUser user = getEntity(id);
+        String oldValue = "active=" + user.isActive();
         user.setActive(active);
-        return userMapper.toResponse(userRepository.save(user));
+        user = userRepository.save(user);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.USERS)
+                .entityName("AppUser")
+                .entityId(String.valueOf(user.getUserId()))
+                .oldValue(oldValue)
+                .newValue("active=" + user.isActive())
+                .description((active ? "Activation" : "Désactivation") + " de l'utilisateur " + user.getUsername())
+                .build());
+        return userMapper.toResponse(user);
     }
 
     public void delete(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User", id);
-        }
+        AppUser user = getEntity(id);
+        String snapshot = snapshot(user);
         userRepository.deleteById(id);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.DELETE)
+                .module(AuditModule.USERS)
+                .entityName("AppUser")
+                .entityId(String.valueOf(id))
+                .oldValue(snapshot)
+                .description("Suppression de l'utilisateur " + user.getUsername())
+                .build());
     }
 
     private AppUser getEntity(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
+    }
+
+    private static String snapshot(AppUser user) {
+        return "username=" + user.getUsername()
+                + ";name=" + user.getName()
+                + ";email=" + user.getEmail()
+                + ";active=" + user.isActive();
     }
 }

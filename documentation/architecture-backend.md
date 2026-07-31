@@ -59,9 +59,23 @@ Réutilise l'entité existante `Attachment` (table `attachment`).
 
 Détails fonctionnels et contraintes : [`attachments.md`](attachments.md).
 
+## Module Journal d'audit (AuditLog)
+
+| Élément | Rôle |
+|---------|------|
+| `entity/AuditLog` | Table `audit_log` |
+| `common/enums/AuditAction`, `AuditModule`, `AuditResult` | Types extensibles |
+| `service/AuditLogService` | Recherche + `record()` (REQUIRES_NEW) |
+| `controller/adminapi/AdminAuditLogController` | `POST /search`, `GET /{id}` |
+| `dto/AuditLogCriteria`, `AuditLogResponse`, `AuditLogEvent` | Recherche / réponse / événement |
+| `specification/AuditLogSpecification` | Filtres JPA |
+
+Les services métier appellent `AuditLogService.record` (pas les contrôleurs).  
+Détails : [`audit-logs.md`](audit-logs.md).
+
 ## Entités / tables
 
-`SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`
+`SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`, `AUDIT_LOG`
 
 ## Swagger
 

@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS report_type;
 DROP TABLE IF EXISTS passenger;
 DROP TABLE IF EXISTS report_status;
 DROP TABLE IF EXISTS support_type;
+DROP TABLE IF EXISTS audit_log;
 DROP TABLE IF EXISTS app_user;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -166,5 +167,33 @@ CREATE TABLE reply (
     CONSTRAINT fk_reply_report
         FOREIGN KEY (report_id) REFERENCES report (report_id),
     CONSTRAINT fk_reply_user
+        FOREIGN KEY (user_id) REFERENCES app_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE audit_log (
+    audit_log_id      BIGINT       NOT NULL AUTO_INCREMENT,
+    action_date       DATETIME(6)  NOT NULL,
+    user_id           BIGINT       NULL,
+    username          VARCHAR(100) NULL,
+    user_full_name    VARCHAR(150) NULL,
+    ip_address        VARCHAR(64)  NULL,
+    action_type       VARCHAR(40)  NOT NULL,
+    module            VARCHAR(40)  NOT NULL,
+    entity_name       VARCHAR(100) NULL,
+    entity_id         VARCHAR(100) NULL,
+    old_value         TEXT         NULL,
+    new_value         TEXT         NULL,
+    description       VARCHAR(2000) NULL,
+    user_agent        VARCHAR(500) NULL,
+    browser           VARCHAR(120) NULL,
+    operating_system  VARCHAR(120) NULL,
+    result            VARCHAR(20)  NOT NULL,
+    PRIMARY KEY (audit_log_id),
+    KEY idx_audit_log_action_date (action_date),
+    KEY idx_audit_log_module (module),
+    KEY idx_audit_log_action_type (action_type),
+    KEY idx_audit_log_user_id (user_id),
+    KEY idx_audit_log_result (result),
+    CONSTRAINT fk_audit_log_user
         FOREIGN KEY (user_id) REFERENCES app_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
