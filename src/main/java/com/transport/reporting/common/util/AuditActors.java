@@ -1,21 +1,21 @@
 package com.transport.reporting.common.util;
 
+import com.transport.reporting.security.SecurityUtils;
+
 /**
  * Acteur courant pour le journal d'audit.
- * <p>
- * Tant qu'aucune authentification JWT n'est branchée, les opérations admin
- * sont attribuées à l'utilisateur seed {@code userId = 1}.
- * Remplacer cette logique par {@code SecurityContextHolder} le moment venu.
+ * Utilise le JWT / SecurityContext lorsque disponible.
  */
 public final class AuditActors {
 
-    /** Identifiant de l'administrateur seed (DataInitializer). */
+    /** Identifiant de l'administrateur seed (fallback hors contexte HTTP). */
     public static final Long DEFAULT_ADMIN_USER_ID = 1L;
 
     private AuditActors() {
     }
 
     public static Long currentAdminUserId() {
-        return DEFAULT_ADMIN_USER_ID;
+        Long id = SecurityUtils.currentUserIdOrNull();
+        return id != null ? id : DEFAULT_ADMIN_USER_ID;
     }
 }

@@ -10,6 +10,7 @@ import com.transport.reporting.entity.Reply;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportHistory;
 import com.transport.reporting.entity.Status;
+import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.ReplyMapper;
 import com.transport.reporting.repository.ReplyRepository;
@@ -17,6 +18,8 @@ import com.transport.reporting.repository.ReportHistoryRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.StatusRepository;
 import com.transport.reporting.repository.UserRepository;
+import com.transport.reporting.security.PermissionChecker;
+import com.transport.reporting.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,7 @@ public class ReplyService {
     private final StatusRepository statusRepository;
     private final ReplyMapper replyMapper;
     private final AuditLogService auditLogService;
+    private final PermissionChecker permissionChecker;
 
     @Transactional(readOnly = true)
     public List<ReplyResponse> findByReportId(Long reportId) {
@@ -58,11 +62,13 @@ public class ReplyService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
 
-        AppUser user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.getUserId()));
+        AppUser user = resolveActor(request.getUserId());
 
         if (request.getStatusId() != null
                 && (report.getStatus() == null || !Objects.equals(report.getStatus().getStatusId(), request.getStatusId()))) {
+            if (!permissionChecker.has("REPORT", "CLOSE") && !permissionChecker.has("REPORT", "EDIT")) {
+                throw new BusinessException("Permission REPORT_CLOSE or REPORT_EDIT required to change status");
+            }
             applyStatusChange(report, request.getStatusId(), user, request.getMessage());
         }
 
@@ -163,6 +169,15 @@ public class ReplyService {
                 .newValue("status=" + newStatus.getCode())
                 .description("Changement de statut du signalement " + report.getReference())
                 .build());
+    }
+
+    private AppUser resolveActor(Long requestedUserId) {
+        Long userId = requestedUserId != null ? requestedUserId : SecurityUtils.currentUserIdOrNull();
+        if (userId == null) {
+            throw new BusinessException("Authenticated user is required to reply");
+        }
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     private void ensureReportExists(Long reportId) {

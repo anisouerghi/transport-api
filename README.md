@@ -82,6 +82,16 @@ mvn spring-boot:run
 | GET | `/api/admin/dashboard` |
 | GET | `/api/admin/statuses` ou `/api/admin/status` |
 | POST search / GET | `/api/admin/audit-logs` |
+| CRUD | `/api/admin/roles` |
+| GET | `/api/admin/permissions` |
+| POST | `/api/auth/login` |
+| GET | `/api/auth/me` |
+
+## Sécurité
+
+Voir : [`documentation/security.md`](documentation/security.md).
+
+Compte seed : `admin` / `admin123`
 
 ## Journal d'audit
 

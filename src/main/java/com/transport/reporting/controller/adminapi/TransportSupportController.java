@@ -15,14 +15,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controleur admin : CRUD supports de transport + gestion QR.
- * Base URL : {@code /api/admin/transport-supports}
- */
 @RestController
 @RequestMapping("/api/admin/transport-supports")
 @RequiredArgsConstructor
@@ -31,36 +28,30 @@ public class TransportSupportController {
 
     private final TransportSupportService transportSupportService;
 
-    /** GET / — liste complete. */
     @GetMapping
+    @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'VIEW')")
     @Operation(summary = "Lister tous les supports de transport")
     public ResponseEntity<ApiResponse<List<TransportSupportResponse>>> findAll() {
         return ResponseEntity.ok(ApiResponse.ok(transportSupportService.findAll()));
     }
 
-    /** GET /{id} — detail d'un support. */
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'VIEW')")
     @Operation(summary = "Recuperer un support par id")
     public ResponseEntity<ApiResponse<TransportSupportResponse>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(transportSupportService.findById(id)));
     }
 
-    /**
-     * POST /search — recherche paginee multicritere.
-     * Filtres : reference, label, uuid, qrStatus, supportStatus, supportTypeId, plages de dates.
-     */
     @PostMapping("/search")
+    @PreAuthorize("@perm.hasAny('TRANSPORT_SUPPORT', 'SEARCH', 'VIEW')")
     @Operation(summary = "Recherche paginee multicritere des supports")
     public ResponseEntity<ApiResponse<PageResponse<TransportSupportResponse>>> search(
             @RequestBody SearchRequest<TransportSupportCriteria> request) {
         return ResponseEntity.ok(ApiResponse.ok(transportSupportService.search(request)));
     }
 
-    /**
-     * POST / — creation.
-     * Le QR Code (URL + image) est genere automatiquement cote serveur.
-     */
     @PostMapping
+    @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'ADD')")
     @Operation(summary = "Creer un support de transport (QR genere automatiquement)")
     public ResponseEntity<ApiResponse<TransportSupportResponse>> create(
             @Valid @RequestBody TransportSupportRequest request) {
@@ -68,8 +59,8 @@ public class TransportSupportController {
                 .body(ApiResponse.created("Transport support created", transportSupportService.create(request)));
     }
 
-    /** PUT /{id} — modification des champs metier (pas de regeneration QR). */
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'EDIT')")
     @Operation(summary = "Modifier un support de transport")
     public ResponseEntity<ApiResponse<TransportSupportResponse>> update(
             @PathVariable Long id,
@@ -78,16 +69,16 @@ public class TransportSupportController {
                 transportSupportService.update(id, request)));
     }
 
-    /** POST /{id}/generate-qr — regenere l'image et l'URL du QR. */
     @PostMapping("/{id}/generate-qr")
+    @PreAuthorize("@perm.hasAny('TRANSPORT_SUPPORT', 'EDIT', 'PRINT')")
     @Operation(summary = "Regenerer le QR Code d'un support")
     public ResponseEntity<ApiResponse<TransportSupportResponse>> regenerateQr(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok("QR code regenerated",
                 transportSupportService.regenerateQr(id)));
     }
 
-    /** GET /{id}/qr — telecharge l'image PNG (Content-Type: image/png). */
     @GetMapping("/{id}/qr")
+    @PreAuthorize("@perm.hasAny('TRANSPORT_SUPPORT', 'PRINT', 'VIEW')")
     @Operation(summary = "Telecharger l'image QR Code d'un support")
     public ResponseEntity<byte[]> getQrImage(@PathVariable Long id) {
         byte[] image = transportSupportService.getQrImage(id);
@@ -97,8 +88,8 @@ public class TransportSupportController {
                 .body(image);
     }
 
-    /** DELETE /{id} — suppression (HTTP 204). */
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'DELETE')")
     @Operation(summary = "Supprimer un support de transport")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         transportSupportService.delete(id);

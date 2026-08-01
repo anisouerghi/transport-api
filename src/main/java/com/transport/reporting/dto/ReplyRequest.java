@@ -1,7 +1,6 @@
 package com.transport.reporting.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -15,7 +14,7 @@ public class ReplyRequest {
     @Size(max = 2000)
     private String message;
 
-    @NotNull
+    /** Optionnel : si absent, utilise l'utilisateur authentifié (JWT). */
     private Long userId;
 
     /** Nouveau statut optionnel du signalement. */

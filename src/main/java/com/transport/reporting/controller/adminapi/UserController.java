@@ -10,34 +10,35 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controleur admin : CRUD utilisateurs (modele de reference).
- */
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@Tag(name = "Admin - Users", description = "CRUD utilisateurs internes (modèle de référence)")
+@Tag(name = "Admin - Users")
 public class UserController {
 
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("@perm.has('USER', 'VIEW')")
     @Operation(summary = "Lister tous les utilisateurs")
     public ResponseEntity<ApiResponse<List<UserResponse>>> findAll() {
         return ResponseEntity.ok(ApiResponse.ok(userService.findAll()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.has('USER', 'VIEW')")
     @Operation(summary = "Récupérer un utilisateur par id")
     public ResponseEntity<ApiResponse<UserResponse>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(userService.findById(id)));
     }
 
     @PostMapping
+    @PreAuthorize("@perm.has('USER', 'ADD')")
     @Operation(summary = "Créer un utilisateur")
     public ResponseEntity<ApiResponse<UserResponse>> create(@Valid @RequestBody UserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -45,6 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('USER', 'EDIT')")
     @Operation(summary = "Modifier un utilisateur")
     public ResponseEntity<ApiResponse<UserResponse>> update(
             @PathVariable Long id,
@@ -53,18 +55,21 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("@perm.has('USER', 'ACTIVATE')")
     @Operation(summary = "Activer un utilisateur")
     public ResponseEntity<ApiResponse<UserResponse>> activate(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok("User activated", userService.setActive(id, true)));
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("@perm.has('USER', 'DEACTIVATE')")
     @Operation(summary = "Désactiver un utilisateur")
     public ResponseEntity<ApiResponse<UserResponse>> deactivate(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok("User deactivated", userService.setActive(id, false)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.has('USER', 'DELETE')")
     @Operation(summary = "Supprimer un utilisateur")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.delete(id);

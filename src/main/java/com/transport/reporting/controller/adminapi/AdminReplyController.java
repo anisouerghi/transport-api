@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,10 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * Controleur admin : reponses agents sur les signalements.
- * Base URL : {@code /api/admin/reports/{reportId}/replies}
- */
 @RestController
 @RequestMapping("/api/admin/reports/{reportId}/replies")
 @RequiredArgsConstructor
@@ -32,12 +29,14 @@ public class AdminReplyController {
     private final ReplyService replyService;
 
     @GetMapping
+    @PreAuthorize("@perm.has('REPORT', 'VIEW')")
     @Operation(summary = "Lister les reponses d'un signalement")
     public ResponseEntity<ApiResponse<List<ReplyResponse>>> findByReportId(@PathVariable Long reportId) {
         return ResponseEntity.ok(ApiResponse.ok(replyService.findByReportId(reportId)));
     }
 
     @PostMapping
+    @PreAuthorize("@perm.has('REPORT', 'REPLY')")
     @Operation(summary = "Creer une reponse sur un signalement")
     public ResponseEntity<ApiResponse<ReplyResponse>> create(
             @PathVariable Long reportId,

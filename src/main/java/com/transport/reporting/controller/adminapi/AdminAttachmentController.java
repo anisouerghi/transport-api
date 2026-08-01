@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,13 +20,6 @@ import java.util.List;
 
 /**
  * Contrôleur admin dédié aux pièces jointes des signalements.
- * <p>
- * Exposition :
- * <ul>
- *   <li>liste par signalement ;</li>
- *   <li>téléchargement ({@code Content-Disposition: attachment}) ;</li>
- *   <li>visualisation inline (images / PDF dans le navigateur).</li>
- * </ul>
  */
 @RestController
 @RequiredArgsConstructor
@@ -34,19 +28,15 @@ public class AdminAttachmentController {
 
     private final AttachmentService attachmentService;
 
-    /**
-     * Retourne les métadonnées des pièces jointes d'un signalement.
-     */
     @GetMapping("/api/admin/signalements/{reportId}/attachments")
+    @PreAuthorize("@perm.has('REPORT', 'VIEW')")
     @Operation(summary = "Lister les pièces jointes d'un signalement")
     public ResponseEntity<ApiResponse<List<AttachmentResponse>>> listByReport(@PathVariable Long reportId) {
         return ResponseEntity.ok(ApiResponse.ok(attachmentService.findByReportId(reportId)));
     }
 
-    /**
-     * Force le téléchargement du fichier (en-tête {@code attachment}).
-     */
     @GetMapping("/api/admin/attachments/{id}/download")
+    @PreAuthorize("@perm.has('REPORT', 'VIEW')")
     @Operation(summary = "Télécharger une pièce jointe")
     public ResponseEntity<byte[]> download(@PathVariable Long id) {
         Attachment attachment = attachmentService.getEntity(id);
@@ -61,6 +51,7 @@ public class AdminAttachmentController {
      * Sert le fichier pour affichage navigateur (en-tête {@code inline}).
      */
     @GetMapping("/api/admin/attachments/{id}/view")
+    @PreAuthorize("@perm.has('REPORT', 'VIEW')")
     @Operation(summary = "Afficher une pièce jointe (inline)")
     public ResponseEntity<byte[]> view(@PathVariable Long id) {
         Attachment attachment = attachmentService.getEntity(id);

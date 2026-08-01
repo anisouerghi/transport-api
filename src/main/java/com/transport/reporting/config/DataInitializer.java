@@ -3,7 +3,6 @@ package com.transport.reporting.config;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.QrStatus;
 import com.transport.reporting.common.enums.SupportStatus;
-import com.transport.reporting.entity.AppUser;
 import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportType;
@@ -16,7 +15,6 @@ import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.StatusRepository;
 import com.transport.reporting.repository.SupportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
-import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.service.QrCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +22,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -50,10 +47,8 @@ public class DataInitializer {
             SupportTypeRepository supportTypeRepository,
             ReportTypeRepository reportTypeRepository,
             TransportSupportRepository transportSupportRepository,
-            UserRepository userRepository,
             PassengerRepository passengerRepository,
-            ReportRepository reportRepository,
-            PasswordEncoder passwordEncoder) {
+            ReportRepository reportRepository) {
         return args -> {
             if (statusRepository.count() == 0) {
                 statusRepository.save(Status.builder().code("NEW").label("Nouveau").displayOrder(1).build());
@@ -78,17 +73,7 @@ public class DataInitializer {
                         .code("SUGGESTION").label("Suggestion").description("Suggestion d'amélioration").build());
             }
 
-            if (!userRepository.existsByUsername("admin")) {
-                userRepository.save(AppUser.builder()
-                        .username("admin")
-                        .name("Administrator")
-                        .email("admin@transport.transtu.tn")
-                        .passwordHash(passwordEncoder.encode("admin123"))
-                        .active(true)
-                        .build());
-                log.info("Admin user created (admin / admin123)");
-            }
-
+            // Admin user + roles : SecurityDataInitializer
             if (transportSupportRepository.count() == 0) {
                 SupportType bus = supportTypeRepository.findByCode("BUS").orElseThrow();
                 TransportSupport support = transportSupportRepository.saveAndFlush(TransportSupport.builder()

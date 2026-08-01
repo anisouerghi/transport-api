@@ -13,14 +13,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controleur admin : CRUD types de support.
- * Base URL : {@code /api/admin/support-types}
- */
 @RestController
 @RequestMapping("/api/admin/support-types")
 @RequiredArgsConstructor
@@ -29,33 +26,30 @@ public class SupportTypeController {
 
     private final SupportTypeService supportTypeService;
 
-    /** GET / — liste complete (dropdowns frontend). */
     @GetMapping
+    @PreAuthorize("@perm.has('SUPPORT_TYPE', 'VIEW')")
     @Operation(summary = "Lister tous les types de support")
     public ResponseEntity<ApiResponse<List<SupportTypeResponse>>> findAll() {
         return ResponseEntity.ok(ApiResponse.ok(supportTypeService.findAll()));
     }
 
-    /** GET /{id} — consultation par id. */
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.has('SUPPORT_TYPE', 'VIEW')")
     @Operation(summary = "Recuperer un type de support par id")
     public ResponseEntity<ApiResponse<SupportTypeResponse>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(supportTypeService.findById(id)));
     }
 
-    /**
-     * POST /search — recherche paginee.
-     * Body : {@code { "filters": { "code", "label" }, "pageable": { ... } }}
-     */
     @PostMapping("/search")
+    @PreAuthorize("@perm.hasAny('SUPPORT_TYPE', 'SEARCH', 'VIEW')")
     @Operation(summary = "Recherche paginee multicritere des types de support")
     public ResponseEntity<ApiResponse<PageResponse<SupportTypeResponse>>> search(
             @RequestBody SearchRequest<SupportTypeCriteria> request) {
         return ResponseEntity.ok(ApiResponse.ok(supportTypeService.search(request)));
     }
 
-    /** POST / — creation (HTTP 201). */
     @PostMapping
+    @PreAuthorize("@perm.has('SUPPORT_TYPE', 'ADD')")
     @Operation(summary = "Creer un type de support")
     public ResponseEntity<ApiResponse<SupportTypeResponse>> create(
             @Valid @RequestBody SupportTypeRequest request) {
@@ -63,8 +57,8 @@ public class SupportTypeController {
                 .body(ApiResponse.created("Support type created", supportTypeService.create(request)));
     }
 
-    /** PUT /{id} — modification. */
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('SUPPORT_TYPE', 'EDIT')")
     @Operation(summary = "Modifier un type de support")
     public ResponseEntity<ApiResponse<SupportTypeResponse>> update(
             @PathVariable Long id,
@@ -72,8 +66,8 @@ public class SupportTypeController {
         return ResponseEntity.ok(ApiResponse.ok("Support type updated", supportTypeService.update(id, request)));
     }
 
-    /** DELETE /{id} — suppression (HTTP 204, pas de body). */
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.has('SUPPORT_TYPE', 'DELETE')")
     @Operation(summary = "Supprimer un type de support")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         supportTypeService.delete(id);

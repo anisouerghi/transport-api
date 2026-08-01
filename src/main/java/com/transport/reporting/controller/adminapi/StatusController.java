@@ -10,53 +10,52 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Contrôleur Admin : CRUD des statuts.
- */
 @RestController
 @RequestMapping("/api/admin/status")
 @RequiredArgsConstructor
-@Tag(name = "Admin - Status", description = "Gestion des statuts")
+@Tag(name = "Admin - Status")
 public class StatusController {
 
     private final StatusService statusService;
 
     @GetMapping
+    @PreAuthorize("@perm.has('STATUS', 'VIEW') or @perm.hasAny('REPORT', 'VIEW', 'REPLY')")
     @Operation(summary = "Lister tous les statuts")
     public ResponseEntity<ApiResponse<List<StatusResponse>>> findAll() {
         return ResponseEntity.ok(ApiResponse.ok(statusService.findAll()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.has('STATUS', 'VIEW')")
     @Operation(summary = "Récupérer un statut par son ID")
     public ResponseEntity<ApiResponse<StatusResponse>> findById(@PathVariable long id) {
         return ResponseEntity.ok(ApiResponse.ok(statusService.findById(id)));
     }
 
     @PostMapping
+    @PreAuthorize("@perm.has('STATUS', 'ADD')")
     @Operation(summary = "Créer un statut")
-    public ResponseEntity<ApiResponse<StatusResponse>> create(
-            @Valid @RequestBody StatusRequest request) {
-
+    public ResponseEntity<ApiResponse<StatusResponse>> create(@Valid @RequestBody StatusRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Status created", statusService.create(request)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('STATUS', 'EDIT')")
     @Operation(summary = "Modifier un statut")
     public ResponseEntity<ApiResponse<StatusResponse>> update(
-            @PathVariable long  id,
+            @PathVariable long id,
             @Valid @RequestBody StatusRequest request) {
-
-        return ResponseEntity.ok(
-                ApiResponse.ok("Status updated", statusService.update(id, request)));
+        return ResponseEntity.ok(ApiResponse.ok("Status updated", statusService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.has('STATUS', 'DELETE')")
     @Operation(summary = "Supprimer un statut")
     public ResponseEntity<Void> delete(@PathVariable long id) {
         statusService.delete(id);

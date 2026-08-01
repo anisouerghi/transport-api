@@ -73,9 +73,15 @@ Détails fonctionnels et contraintes : [`attachments.md`](attachments.md).
 Les services métier appellent `AuditLogService.record` (pas les contrôleurs).  
 Détails : [`audit-logs.md`](audit-logs.md).
 
+## Sécurité (JWT + RBAC)
+
+Voir [`security.md`](security.md).
+
+Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuthorize`.
+
 ## Entités / tables
 
-`SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`, `AUDIT_LOG`
+`SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `ROLE`, `PERMISSION`, `USER_ROLE`, `ROLE_PERMISSION`, `APP_MENU`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`, `AUDIT_LOG`
 
 ## Swagger
 

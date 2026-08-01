@@ -11,6 +11,11 @@ DROP TABLE IF EXISTS passenger;
 DROP TABLE IF EXISTS report_status;
 DROP TABLE IF EXISTS support_type;
 DROP TABLE IF EXISTS audit_log;
+DROP TABLE IF EXISTS user_role;
+DROP TABLE IF EXISTS role_permission;
+DROP TABLE IF EXISTS app_menu;
+DROP TABLE IF EXISTS permission;
+DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS app_user;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -59,10 +64,65 @@ CREATE TABLE app_user (
     email         VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     active        TINYINT(1)   NOT NULL DEFAULT 1,
+    created_date  DATETIME(6)  NOT NULL,
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_app_user_uuid (uuid),
     UNIQUE KEY uk_app_user_username (username),
     UNIQUE KEY uk_app_user_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE role (
+    role_id     BIGINT       NOT NULL AUTO_INCREMENT,
+    code        VARCHAR(50)  NOT NULL,
+    label       VARCHAR(150) NOT NULL,
+    description VARCHAR(500) NULL,
+    active      TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (role_id),
+    UNIQUE KEY uk_role_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE permission (
+    permission_id BIGINT       NOT NULL AUTO_INCREMENT,
+    code          VARCHAR(80)  NOT NULL,
+    label         VARCHAR(150) NOT NULL,
+    description   VARCHAR(500) NULL,
+    module_code   VARCHAR(80)  NOT NULL,
+    module_label  VARCHAR(150) NOT NULL,
+    action_code   VARCHAR(40)  NOT NULL,
+    active        TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (permission_id),
+    UNIQUE KEY uk_permission_code (code),
+    UNIQUE KEY uk_permission_module_action (module_code, action_code),
+    KEY idx_permission_module (module_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES app_user (user_id),
+    CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES role (role_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE role_permission (
+    role_id       BIGINT NOT NULL,
+    permission_id BIGINT NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES role (role_id),
+    CONSTRAINT fk_role_permission_permission FOREIGN KEY (permission_id) REFERENCES permission (permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE app_menu (
+    menu_id         BIGINT       NOT NULL AUTO_INCREMENT,
+    code            VARCHAR(50)  NOT NULL,
+    label           VARCHAR(150) NOT NULL,
+    url             VARCHAR(255) NOT NULL,
+    icon            VARCHAR(80)  NULL,
+    display_order   INT          NOT NULL DEFAULT 0,
+    permission_code VARCHAR(80)  NULL,
+    active          TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (menu_id),
+    UNIQUE KEY uk_app_menu_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE transport_support (

@@ -3,7 +3,10 @@ package com.transport.reporting.mapper;
 import com.transport.reporting.dto.UserRequest;
 import com.transport.reporting.dto.UserResponse;
 import com.transport.reporting.entity.AppUser;
+import com.transport.reporting.entity.Role;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Mapper Utilisateur : conversion Entity <-> DTO.
@@ -31,6 +34,9 @@ public class UserMapper {
     }
 
     public UserResponse toResponse(AppUser user) {
+        List<String> roles = user.getRoles() == null
+                ? List.of()
+                : user.getRoles().stream().map(Role::getCode).sorted().toList();
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .uuid(user.getUuid())
@@ -38,6 +44,8 @@ public class UserMapper {
                 .name(user.getName())
                 .email(user.getEmail())
                 .active(user.isActive())
+                .createdDate(user.getCreatedDate())
+                .roles(roles)
                 .build();
     }
 }

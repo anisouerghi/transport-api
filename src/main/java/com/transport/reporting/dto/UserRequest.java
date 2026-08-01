@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * DTO requete pour creer / modifier un utilisateur.
  * password est obligatoire a la creation ; optionnel a la modification.
@@ -27,4 +30,7 @@ public class UserRequest {
 
     @Size(min = 8, max = 100)
     private String password;
+
+    /** Identifiants des rôles à affecter. */
+    private Set<Long> roleIds = new HashSet<>();
 }
