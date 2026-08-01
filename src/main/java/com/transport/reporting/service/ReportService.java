@@ -6,21 +6,28 @@ import com.transport.reporting.common.enums.AuditModule;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.SupportStatus;
 import com.transport.reporting.common.response.PageResponse;
+import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
 import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
+import com.transport.reporting.entity.AppUser;
 import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.entity.Report;
+import com.transport.reporting.entity.ReportHistory;
 import com.transport.reporting.entity.ReportType;
 import com.transport.reporting.entity.Status;
 import com.transport.reporting.entity.TransportSupport;
+import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.ReportMapper;
+import com.transport.reporting.repository.ReportHistoryRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
+import com.transport.reporting.repository.UserRepository;
+import com.transport.reporting.security.SecurityUtils;
 import com.transport.reporting.specification.ReportSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -57,6 +64,8 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final ReportTypeRepository reportTypeRepository;
     private final TransportSupportRepository transportSupportRepository;
+    private final ReportHistoryRepository reportHistoryRepository;
+    private final UserRepository userRepository;
     private final PassengerService passengerService;
     private final StatusService statusService;
     private final ReportMapper reportMapper;
@@ -97,7 +106,8 @@ public class ReportService {
         Report report = Report.builder()
                 .reference(generateReference())
                 .description(request.getDescription())
-                .priority(request.getPriority() != null ? request.getPriority() : Priority.MEDIUM)
+                // Priorité interne : défaut métier (à évaluer / normale). Jamais saisie par le voyageur.
+                .priority(Priority.MEDIUM)
                 .publish(request.getPublish() != null ? request.getPublish() : Boolean.FALSE)
                 .publishDate(request.getPublishDate())
                 .sendEmail(request.getSendEmail() != null ? request.getSendEmail() : Boolean.FALSE)
@@ -113,6 +123,8 @@ public class ReportService {
         report = reportRepository.save(report);
         ReportResponse response = reportMapper.toResponse(report);
         response.setAttachments(attachmentService.saveForReport(report, files));
+        // Ne pas exposer la priorité au canal public
+        response.setPriority(null);
 
         String passengerName = passenger.getName() != null ? passenger.getName() : "voyageur";
         auditLogService.record(AuditLogEvent.builder()
@@ -123,7 +135,6 @@ public class ReportService {
                 .entityName("Report")
                 .entityId(String.valueOf(report.getReportId()))
                 .newValue("reference=" + report.getReference()
-                        + ";priority=" + report.getPriority()
                         + ";reportTypeId=" + reportType.getReportTypeId())
                 .description("Création publique du signalement " + report.getReference())
                 .build());
@@ -131,11 +142,73 @@ public class ReportService {
         return response;
     }
 
+    /**
+     * Met à jour la priorité interne d'un signalement (agents / administrateurs).
+     * Trace l'action dans {@code report_history} et le journal d'audit.
+     */
+    public ReportResponse updatePriority(Long id, Priority newPriority) {
+        if (newPriority == null) {
+            throw new BusinessException("Priority is required");
+        }
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+
+        Priority previous = report.getPriority();
+        if (previous == newPriority) {
+            return toResponseWithAttachments(report);
+        }
+
+        report.setPriority(newPriority);
+        report = reportRepository.save(report);
+
+        AppUser actor = resolveCurrentUser();
+        Status currentStatus = report.getStatus();
+        if (currentStatus == null) {
+            currentStatus = statusService.findByCode("NEW");
+        }
+        String comment = "Priorité : "
+                + (previous != null ? previous.name() : "null")
+                + " → " + newPriority.name();
+        reportHistoryRepository.save(ReportHistory.builder()
+                .oldStatus(currentStatus)
+                .newStatus(currentStatus)
+                .comments(comment)
+                .report(report)
+                .appUser(actor)
+                .build());
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(actor != null ? actor.getUserId() : AuditActors.currentAdminUserId())
+                .username(actor != null ? actor.getUsername() : null)
+                .userFullName(actor != null ? actor.getName() : null)
+                .actionType(AuditAction.PRIORITY_CHANGE)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(id))
+                .oldValue("priority=" + previous)
+                .newValue("priority=" + newPriority)
+                .description("Modification de priorité du signalement " + report.getReference())
+                .build());
+
+        return toResponseWithAttachments(report);
+    }
+
+    private AppUser resolveCurrentUser() {
+        Long userId = SecurityUtils.currentUserIdOrNull();
+        if (userId == null) {
+            return null;
+        }
+        return userRepository.findById(userId).orElse(null);
+    }
+
     @Transactional(readOnly = true)
     public ReportResponse findByReference(String reference) {
         Report report = reportRepository.findByReference(reference)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reference));
-        return toResponseWithAttachments(report);
+        ReportResponse response = toResponseWithAttachments(report);
+        // Priorité réservée au traitement interne
+        response.setPriority(null);
+        return response;
     }
 
     @Transactional(readOnly = true)

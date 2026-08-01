@@ -53,7 +53,10 @@ CREATE TABLE passenger (
     email          VARCHAR(255) NULL,
     phone_number   VARCHAR(30)  NULL,
     email_verified BIT(1)       NOT NULL DEFAULT 0,
-    PRIMARY KEY (passenger_id)
+    active         TINYINT(1)   NOT NULL DEFAULT 1,
+    PRIMARY KEY (passenger_id),
+    KEY idx_passenger_active (active),
+    KEY idx_passenger_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE app_user (

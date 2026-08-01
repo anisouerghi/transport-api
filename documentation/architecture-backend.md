@@ -79,6 +79,33 @@ Voir [`security.md`](security.md).
 
 Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuthorize`.
 
+## Module Signalements — priorité interne
+
+- Création publique : pas de champ priorité ; défaut métier `MEDIUM`
+- Admin : `PATCH /api/admin/signalements/{id}/priority` (`REPORT_UPDATE_PRIORITY`)
+- Historique : entrée `report_history` (commentaire) + audit `PRIORITY_CHANGE`
+- API publique (création / suivi) : priorité non exposée dans la réponse
+
+| Élément | Rôle |
+|---------|------|
+| `entity/Passenger` | Table `passenger` (+ `active`) |
+| `dto/PassengerCriteria`, `PassengerResponse` | Recherche / réponse |
+| `specification/PassengerSpecification` | Filtres (dont état actif) |
+| `service/PassengerService` | `search`, `findById`, `setActive`, `findOrCreate` |
+| `controller/adminapi/AdminPassengerController` | `POST /search`, `GET /{id}`, `PATCH …/activate\|deactivate` |
+
+Permissions : `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE`.
+
+## Module Rapports & Statistiques (squelette)
+
+| Élément | Rôle |
+|---------|------|
+| `dto/StatisticsOverviewResponse` | Indicateurs de base |
+| `service/StatisticsService` | Agrégats (extensible) |
+| `controller/adminapi/AdminStatisticsController` | `GET /api/admin/statistics/overview` |
+
+Permission : `REPORT_STATISTICS_VIEW`.
+
 ## Entités / tables
 
 `SUPPORT_TYPE`, `TRANSPORT_SUPPORT`, `REPORT_TYPE`, `PASSENGER`, `STATUS`, `APP_USER`, `ROLE`, `PERMISSION`, `USER_ROLE`, `ROLE_PERMISSION`, `APP_MENU`, `REPORT`, `ATTACHMENT`, `REPORT_HISTORY`, `REPLY`, `AUDIT_LOG`

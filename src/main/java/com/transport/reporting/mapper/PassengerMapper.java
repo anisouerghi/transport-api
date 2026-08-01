@@ -5,9 +5,6 @@ import com.transport.reporting.dto.PassengerResponse;
 import com.transport.reporting.entity.Passenger;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper Voyageur : conversion Entity <-> DTO.
- */
 @Component
 public class PassengerMapper {
 
@@ -17,6 +14,7 @@ public class PassengerMapper {
                 .email(request.getEmail())
                 .phoneNumber(request.getPhoneNumber())
                 .emailVerified(false)
+                .active(true)
                 .build();
     }
 
@@ -27,6 +25,7 @@ public class PassengerMapper {
                 .email(passenger.getEmail())
                 .phoneNumber(passenger.getPhoneNumber())
                 .emailVerified(passenger.isEmailVerified())
+                .active(passenger.isActive())
                 .build();
     }
 }

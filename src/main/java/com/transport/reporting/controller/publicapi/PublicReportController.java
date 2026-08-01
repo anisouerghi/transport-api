@@ -44,6 +44,7 @@ public class PublicReportController {
     @PostMapping(value = "/api/public/signalements", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Créer un signalement (avec pièces jointes optionnelles)",
+            description = "La priorité n'est pas acceptée côté voyageur : elle est initialisée automatiquement (MEDIUM) et gérée ensuite par les agents.",
             requestBody = @RequestBody(content = @Content(
                     mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                     encoding = {

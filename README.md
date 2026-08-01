@@ -80,6 +80,9 @@ mvn spring-boot:run
 | GET | `/api/admin/attachments/{id}/download` |
 | GET/POST | `/api/admin/reports/{id}/replies` |
 | GET | `/api/admin/dashboard` |
+| GET | `/api/admin/statistics/overview` | Rapports & Statistiques (squelette) |
+| POST search / GET / PATCH activate|deactivate | `/api/admin/passengers` | Voyageurs |
+| PATCH | `/api/admin/signalements/{id}/priority` | Priorité interne (`REPORT_UPDATE_PRIORITY`) |
 | GET | `/api/admin/statuses` ou `/api/admin/status` |
 | POST search / GET | `/api/admin/audit-logs` |
 | CRUD | `/api/admin/roles` |

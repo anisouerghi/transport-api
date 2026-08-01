@@ -15,6 +15,7 @@ public enum AuditAction {
     SEARCH,
     REPLY,
     STATUS_CHANGE,
+    PRIORITY_CHANGE,
     UPLOAD,
     OTHER
 }

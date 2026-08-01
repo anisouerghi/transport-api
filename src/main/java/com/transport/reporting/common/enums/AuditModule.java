@@ -13,6 +13,8 @@ public enum AuditModule {
     REPLIES,
     ATTACHMENTS,
     STATUSES,
+    PASSENGERS,
+    STATISTICS,
     AUTH,
     SYSTEM,
     OTHER
