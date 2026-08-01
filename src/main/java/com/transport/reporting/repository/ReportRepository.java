@@ -4,7 +4,9 @@ import com.transport.reporting.entity.Report;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository JPA des signalements.
@@ -12,6 +14,8 @@ import java.util.Optional;
 public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecificationExecutor<Report> {
 
     Optional<Report> findByReference(String reference);
+
+    Optional<Report> findByUuid(UUID uuid);
 
     boolean existsByReference(String reference);
 }

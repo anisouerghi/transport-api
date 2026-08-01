@@ -18,6 +18,8 @@ public class ApiResponse<T> {
 
     private boolean success;
     private String message;
+    /** Code d'erreur métier optionnel (ex. EMAIL_SMTP_AUTH). */
+    private String errorCode;
     private T data;
 
     public static <T> ApiResponse<T> ok(T data) {
@@ -30,5 +32,14 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> created(String message, T data) {
         return ApiResponse.<T>builder().success(true).message(message).data(data).build();
+    }
+
+    public static <T> ApiResponse<T> of(boolean success, String message, String errorCode, T data) {
+        return ApiResponse.<T>builder()
+                .success(success)
+                .message(message)
+                .errorCode(errorCode)
+                .data(data)
+                .build();
     }
 }

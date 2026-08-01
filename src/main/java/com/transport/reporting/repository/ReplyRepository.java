@@ -11,4 +11,7 @@ import java.util.List;
 public interface ReplyRepository extends JpaRepository<Reply, Long> {
 
     List<Reply> findByReport_ReportIdOrderByReplyDateAsc(Long reportId);
+
+    /** Réponses visibles dans le suivi voyageur. */
+    List<Reply> findByReport_ReportIdAndPublicResponseTrueOrderByReplyDateAsc(Long reportId);
 }

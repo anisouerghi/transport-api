@@ -1,6 +1,7 @@
 package com.transport.reporting.controller.adminapi;
 
 import com.transport.reporting.common.response.ApiResponse;
+import com.transport.reporting.dto.ReplyCreateResult;
 import com.transport.reporting.dto.ReplyRequest;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.service.ReplyService;
@@ -40,13 +41,18 @@ public class AdminReplyController {
     @Operation(
             summary = "Créer une réponse sur un signalement",
             description = "Enregistre la réponse agent. "
-                    + "publicResponse (défaut true) contrôle la visibilité dans le suivi voyageur. "
-                    + "sendEmail envoie une notification si le voyageur a une adresse e-mail."
+                    + "Si sendEmail=true, tente l'envoi SMTP. "
+                    + "En cas d'échec e-mail : success=false, errorCode renseigné, data contient quand même la réponse enregistrée."
     )
     public ResponseEntity<ApiResponse<ReplyResponse>> create(
             @PathVariable Long reportId,
             @Valid @RequestBody ReplyRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("Reply created", replyService.create(reportId, request)));
+        ReplyCreateResult result = replyService.create(reportId, request);
+        HttpStatus status = result.isReplySaved() ? HttpStatus.CREATED : HttpStatus.UNPROCESSABLE_ENTITY;
+        return ResponseEntity.status(status).body(ApiResponse.of(
+                result.isSuccess(),
+                result.getMessage(),
+                result.getErrorCode(),
+                result.getReply()));
     }
 }

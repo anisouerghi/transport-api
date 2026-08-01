@@ -122,7 +122,7 @@ public class DataInitializer {
 
         Passenger p1 = passengerRepository.save(Passenger.builder()
                 .name("Anis Ouerghi")
-                .email("anis.ourghi@transtu.tn")
+                .email("anis.benezzin@gmail.com")
                 .phoneNumber("+2169988745")
                 .emailVerified(true)
                 .build());

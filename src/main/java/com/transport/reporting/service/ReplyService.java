@@ -2,7 +2,10 @@ package com.transport.reporting.service;
 
 import com.transport.reporting.common.enums.AuditAction;
 import com.transport.reporting.common.enums.AuditModule;
+import com.transport.reporting.common.enums.AuditResult;
 import com.transport.reporting.dto.AuditLogEvent;
+import com.transport.reporting.dto.EmailSendResult;
+import com.transport.reporting.dto.ReplyCreateResult;
 import com.transport.reporting.dto.ReplyRequest;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.entity.AppUser;
@@ -51,6 +54,8 @@ public class ReplyService {
     private final ReplyMapper replyMapper;
     private final AuditLogService auditLogService;
     private final PermissionChecker permissionChecker;
+    private final EmailService emailService;
+    private final ReplyEmailComposer replyEmailComposer;
 
     @Transactional(readOnly = true)
     public List<ReplyResponse> findByReportId(Long reportId) {
@@ -61,13 +66,14 @@ public class ReplyService {
     }
 
     /**
-     * Crée une réponse agent.
-     * <ul>
-     *   <li>{@code publicResponse} : visibilité suivi voyageur (défaut true)</li>
-     *   <li>{@code sendEmail} : notification e-mail si le voyageur a une adresse</li>
-     * </ul>
+     * Crée une réponse agent et envoie éventuellement un e-mail au voyageur
+     * (lien de suivi sécurisé par UUID).
+     * <p>
+     * La réponse est toujours persistée. Si l'envoi e-mail demandé échoue,
+     * le résultat indique {@code success=false} avec un message utilisateur
+     * et un {@code errorCode}, sans exception technique.
      */
-    public ReplyResponse create(Long reportId, ReplyRequest request) {
+    public ReplyCreateResult create(Long reportId, ReplyRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
 
@@ -87,32 +93,33 @@ public class ReplyService {
         }
 
         boolean publicResponse = request.getPublicResponse() == null || Boolean.TRUE.equals(request.getPublicResponse());
-        // Miroir legacy sur le signalement (compatibilité écrans existants)
         report.setPublicResponse(publicResponse);
         report.setPublicResponseDate(publicResponse ? Instant.now() : null);
 
         String passengerEmail = resolvePassengerEmail(report);
         boolean emailRequested = Boolean.TRUE.equals(request.getSendEmail());
-        boolean emailSent = emailRequested && StringUtils.hasText(passengerEmail);
-        if (emailRequested && !StringUtils.hasText(passengerEmail)) {
-            log.warn("sendEmail requested for report {} but passenger has no email", reportId);
-        }
-        if (emailSent) {
-            report.setSendEmail(true);
-            report.setSendEmailDate(Instant.now());
-            log.info("Email notification requested for report {} to {} (sending not implemented yet)",
-                    reportId, passengerEmail);
-        }
+        boolean canSendEmail = emailRequested && StringUtils.hasText(passengerEmail);
 
         Reply reply = Reply.builder()
                 .message(request.getMessage().trim())
-                .emailSent(emailSent)
+                .emailSent(false)
                 .publicResponse(publicResponse)
                 .report(report)
                 .appUser(user)
                 .build();
 
         reply = replyRepository.save(reply);
+
+        EmailSendResult emailResult = null;
+        if (canSendEmail) {
+            emailResult = sendReplyEmail(report, reply, user, passengerEmail);
+        } else if (emailRequested) {
+            emailResult = EmailSendResult.fail("EMAIL_NO_RECIPIENT",
+                    "La réponse a été enregistrée, mais aucun e-mail voyageur n'est renseigné : aucun envoi effectué.");
+            log.warn("sendEmail requested for report {} but passenger has no email", reportId);
+            auditEmail(user, report, passengerEmail, false, emailResult.getMessage());
+        }
+
         reportRepository.save(report);
 
         auditLogService.record(AuditLogEvent.builder()
@@ -124,12 +131,84 @@ public class ReplyService {
                 .entityName("Reply")
                 .entityId(String.valueOf(reply.getReplyId()))
                 .newValue("reportId=" + reportId
-                        + ";emailSent=" + emailSent
+                        + ";emailSent=" + reply.isEmailSent()
                         + ";publicResponse=" + publicResponse)
                 .description("Réponse agent sur le signalement " + report.getReference())
                 .build());
 
-        return replyMapper.toResponse(reply);
+        ReplyResponse response = replyMapper.toResponse(reply);
+        response.setEmailRequested(emailRequested);
+
+        if (emailResult == null) {
+            response.setEmailMessage("Réponse enregistrée (aucun envoi e-mail demandé).");
+            return ReplyCreateResult.builder()
+                    .reply(response)
+                    .replySaved(true)
+                    .success(true)
+                    .message("Réponse enregistrée avec succès.")
+                    .build();
+        }
+
+        response.setEmailMessage(emailResult.getMessage());
+        response.setEmailErrorCode(emailResult.getErrorCode());
+        response.setEmailSent(emailResult.isSuccess());
+
+        if (emailResult.isSuccess()) {
+            return ReplyCreateResult.builder()
+                    .reply(response)
+                    .replySaved(true)
+                    .success(true)
+                    .message("Réponse enregistrée et e-mail envoyé avec succès.")
+                    .build();
+        }
+
+        return ReplyCreateResult.builder()
+                .reply(response)
+                .replySaved(true)
+                .success(false)
+                .message("Réponse enregistrée, mais l'e-mail n'a pas pu être envoyé. " + emailResult.getMessage())
+                .errorCode(emailResult.getErrorCode())
+                .build();
+    }
+
+    private EmailSendResult sendReplyEmail(Report report, Reply reply, AppUser user, String passengerEmail) {
+        String html = replyEmailComposer.buildHtml(report, reply);
+        EmailSendResult result = emailService.sendHtml(passengerEmail, replyEmailComposer.subject(), html);
+        reply.setEmailSent(result.isSuccess());
+        replyRepository.save(reply);
+        if (result.isSuccess()) {
+            report.setSendEmail(true);
+            report.setSendEmailDate(Instant.now());
+        }
+        auditEmail(user, report, passengerEmail, result.isSuccess(),
+                result.isSuccess() ? null : result.getMessage());
+        return result;
+    }
+
+    private void auditEmail(AppUser user, Report report, String recipient, boolean success, String errorMessage) {
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(user != null ? user.getUserId() : null)
+                .username(user != null ? user.getUsername() : null)
+                .userFullName(user != null ? user.getName() : null)
+                .actionType(AuditAction.EMAIL_SEND)
+                .module(AuditModule.REPLIES)
+                .entityName("Report")
+                .entityId(String.valueOf(report.getReportId()))
+                .result(success ? AuditResult.SUCCESS : AuditResult.FAILURE)
+                .newValue("to=" + (recipient != null ? recipient : "")
+                        + ";sentAt=" + Instant.now()
+                        + (errorMessage != null ? ";error=" + truncate(errorMessage, 400) : ""))
+                .description(success
+                        ? "E-mail de réponse envoyé pour " + report.getReference()
+                        : "Échec envoi e-mail pour " + report.getReference())
+                .build());
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= max ? value : value.substring(0, max);
     }
 
     private static String resolvePassengerEmail(Report report) {

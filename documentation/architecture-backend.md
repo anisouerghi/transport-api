@@ -99,6 +99,8 @@ Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuth
 - `sendEmail` : notification si le voyageur a une adresse e-mail
 - `PassengerResponse.anonymous` : sans nom / e-mail / téléphone
 
+E-mails de réponse + suivi UUID : [`email-tracking.md`](email-tracking.md).
+
 ## Module Voyageurs (Passenger) — admin
 
 | Élément | Rôle |

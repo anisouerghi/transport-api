@@ -24,4 +24,11 @@ public class ReplyResponse {
     private Long userId;
     /** Flag publication accueil (niveau signalement, legacy). */
     private Boolean publish;
+
+    /** true si un envoi e-mail a été demandé. */
+    private Boolean emailRequested;
+    /** Résultat lisible de l'envoi e-mail (succès ou cause d'échec). */
+    private String emailMessage;
+    /** Code d'erreur e-mail optionnel. */
+    private String emailErrorCode;
 }

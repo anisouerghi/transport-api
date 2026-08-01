@@ -53,6 +53,7 @@ mvn spring-boot:run
 | `app.qr.base-url` | Base URL des QR (`{base}/report/{uuid}`) |
 | `app.qr.storage-path` | Images QR générées |
 | `app.upload.path` | Répertoire des pièces jointes |
+| `app.frontend.public-base-url` | Base URL frontend public (liens e-mail `/suivi/{uuid}`) |
 | `spring.servlet.multipart.max-file-size` | 10MB |
 | `spring.servlet.multipart.max-request-size` | 30MB |
 
@@ -65,7 +66,7 @@ mvn spring-boot:run
 | GET | `/api/public/supports/{uuid}` | Support actif via QR |
 | GET | `/api/public/report-types` | Types actifs |
 | POST | `/api/public/signalements` | **multipart** : part `report` (JSON) + `files` (optionnel) |
-| GET | `/api/public/suivi/{reference}` | Suivi voyageur |
+| GET | `/api/public/suivi/{uuid}` | Suivi sécurisé par UUID (+ réponses publiques) |
 
 ### Admin `/api/admin`
 
