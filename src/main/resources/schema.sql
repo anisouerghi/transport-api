@@ -218,13 +218,14 @@ CREATE TABLE report_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE reply (
-    reply_id   BIGINT NOT NULL AUTO_INCREMENT,
-    uuid       VARCHAR(36) NOT NULL,
-    message    TEXT        NOT NULL,
-    reply_date DATETIME(6) NOT NULL,
-    email_sent BIT(1)      NOT NULL DEFAULT 0,
-    report_id  BIGINT      NOT NULL,
-    user_id    BIGINT      NULL,
+    reply_id         BIGINT NOT NULL AUTO_INCREMENT,
+    uuid             VARCHAR(36) NOT NULL,
+    message          TEXT        NOT NULL,
+    reply_date       DATETIME(6) NOT NULL,
+    email_sent       BIT(1)      NOT NULL DEFAULT 0,
+    public_response  TINYINT(1)  NOT NULL DEFAULT 1,
+    report_id        BIGINT      NOT NULL,
+    user_id          BIGINT      NULL,
     PRIMARY KEY (reply_id),
     UNIQUE KEY uk_reply_uuid (uuid),
     CONSTRAINT fk_reply_report

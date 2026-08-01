@@ -86,6 +86,21 @@ Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuth
 - Historique : entrée `report_history` (commentaire) + audit `PRIORITY_CHANGE`
 - API publique (création / suivi) : priorité non exposée dans la réponse
 
+## Module Réponses agents (Reply)
+
+| Élément | Rôle |
+|---------|------|
+| `entity/Reply` | Table `reply` (`email_sent`, `public_response`) |
+| `dto/ReplyRequest`, `ReplyResponse` | Création / lecture |
+| `service/ReplyService` | Réponse + statut + e-mail + visibilité suivi |
+| `AdminReplyController` | `GET/POST /api/admin/reports/{id}/replies` |
+
+- `publicResponse` (défaut `true`) : visible dans le suivi voyageur
+- `sendEmail` : notification si le voyageur a une adresse e-mail
+- `PassengerResponse.anonymous` : sans nom / e-mail / téléphone
+
+## Module Voyageurs (Passenger) — admin
+
 | Élément | Rôle |
 |---------|------|
 | `entity/Passenger` | Table `passenger` (+ `active`) |

@@ -5,7 +5,7 @@ import com.transport.reporting.entity.Reply;
 import org.springframework.stereotype.Component;
 
 /**
- * Mapper Reply : conversion Entity -> DTO.
+ * Mapper Reply : conversion Entity → DTO.
  */
 @Component
 public class ReplyMapper {
@@ -16,10 +16,10 @@ public class ReplyMapper {
                 .message(reply.getMessage())
                 .replyDate(reply.getReplyDate())
                 .emailSent(reply.isEmailSent())
+                .publicResponse(reply.isPublicResponse())
                 .reportId(reply.getReport().getReportId())
                 .userId(reply.getAppUser() != null ? reply.getAppUser().getUserId() : null)
-                .publish(reply.getReport().getPublish())
-                .publicResponse(reply.getReport().getPublicResponse())
+                .publish(reply.getReport() != null ? reply.getReport().getPublish() : null)
                 .build();
     }
 }

@@ -13,4 +13,9 @@ public class PassengerResponse {
     private String phoneNumber;
     private boolean emailVerified;
     private boolean active;
+    /**
+     * True si aucune identité renseignée (nom / e-mail / téléphone absents).
+     * Correspond au type « Voyageur anonyme » côté administration.
+     */
+    private boolean anonymous;
 }

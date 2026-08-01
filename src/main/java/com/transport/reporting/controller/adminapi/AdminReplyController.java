@@ -37,7 +37,12 @@ public class AdminReplyController {
 
     @PostMapping
     @PreAuthorize("@perm.has('REPORT', 'REPLY')")
-    @Operation(summary = "Creer une reponse sur un signalement")
+    @Operation(
+            summary = "Créer une réponse sur un signalement",
+            description = "Enregistre la réponse agent. "
+                    + "publicResponse (défaut true) contrôle la visibilité dans le suivi voyageur. "
+                    + "sendEmail envoie une notification si le voyageur a une adresse e-mail."
+    )
     public ResponseEntity<ApiResponse<ReplyResponse>> create(
             @PathVariable Long reportId,
             @Valid @RequestBody ReplyRequest request) {

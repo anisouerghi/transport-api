@@ -6,6 +6,7 @@ import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.ReplyRequest;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.entity.AppUser;
+import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.entity.Reply;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportHistory;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Service metier des reponses agents sur les signalements.
+ * Service métier des réponses agents sur les signalements.
  */
 @Service
 @RequiredArgsConstructor
@@ -58,6 +60,13 @@ public class ReplyService {
                 .toList();
     }
 
+    /**
+     * Crée une réponse agent.
+     * <ul>
+     *   <li>{@code publicResponse} : visibilité suivi voyageur (défaut true)</li>
+     *   <li>{@code sendEmail} : notification e-mail si le voyageur a une adresse</li>
+     * </ul>
+     */
     public ReplyResponse create(Long reportId, ReplyRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
@@ -74,50 +83,37 @@ public class ReplyService {
 
         if (request.getPublish() != null) {
             report.setPublish(request.getPublish());
-            if (Boolean.TRUE.equals(request.getPublish())) {
-                if (report.getPublishDate() == null) {
-                    report.setPublishDate(Instant.now());
-                }
-            } else {
-                report.setPublishDate(null);
-            }
+            report.setPublishDate(Boolean.TRUE.equals(request.getPublish()) ? Instant.now() : null);
         }
 
-        if (request.getPublicResponse() != null) {
-            report.setPublicResponse(request.getPublicResponse());
-            if (Boolean.TRUE.equals(request.getPublicResponse())) {
-                if (report.getPublicResponseDate() == null) {
-                    report.setPublicResponseDate(Instant.now());
-                }
-            } else {
-                report.setPublicResponseDate(null);
-            }
-        }
+        boolean publicResponse = request.getPublicResponse() == null || Boolean.TRUE.equals(request.getPublicResponse());
+        // Miroir legacy sur le signalement (compatibilité écrans existants)
+        report.setPublicResponse(publicResponse);
+        report.setPublicResponseDate(publicResponse ? Instant.now() : null);
 
-        if (request.getSendEmail() != null) {
-            report.setSendEmail(request.getSendEmail());
-            if (Boolean.TRUE.equals(request.getSendEmail())) {
-                if (report.getSendEmailDate() == null) {
-                    report.setSendEmailDate(Instant.now());
-                }
-            } else {
-                report.setSendEmailDate(null);
-            }
+        String passengerEmail = resolvePassengerEmail(report);
+        boolean emailRequested = Boolean.TRUE.equals(request.getSendEmail());
+        boolean emailSent = emailRequested && StringUtils.hasText(passengerEmail);
+        if (emailRequested && !StringUtils.hasText(passengerEmail)) {
+            log.warn("sendEmail requested for report {} but passenger has no email", reportId);
         }
-
-        boolean emailSent = Boolean.TRUE.equals(request.getSendEmail());
         if (emailSent) {
-            log.info("Email notification requested for report {} (sending not implemented yet)", reportId);
+            report.setSendEmail(true);
+            report.setSendEmailDate(Instant.now());
+            log.info("Email notification requested for report {} to {} (sending not implemented yet)",
+                    reportId, passengerEmail);
         }
 
         Reply reply = Reply.builder()
                 .message(request.getMessage().trim())
                 .emailSent(emailSent)
+                .publicResponse(publicResponse)
                 .report(report)
                 .appUser(user)
                 .build();
 
         reply = replyRepository.save(reply);
+        reportRepository.save(report);
 
         auditLogService.record(AuditLogEvent.builder()
                 .userId(user.getUserId())
@@ -127,11 +123,21 @@ public class ReplyService {
                 .module(AuditModule.REPLIES)
                 .entityName("Reply")
                 .entityId(String.valueOf(reply.getReplyId()))
-                .newValue("reportId=" + reportId + ";emailSent=" + emailSent)
+                .newValue("reportId=" + reportId
+                        + ";emailSent=" + emailSent
+                        + ";publicResponse=" + publicResponse)
                 .description("Réponse agent sur le signalement " + report.getReference())
                 .build());
 
         return replyMapper.toResponse(reply);
+    }
+
+    private static String resolvePassengerEmail(Report report) {
+        Passenger passenger = report.getPassenger();
+        if (passenger == null) {
+            return null;
+        }
+        return StringUtils.hasText(passenger.getEmail()) ? passenger.getEmail().trim() : null;
     }
 
     private void applyStatusChange(Report report, Long newStatusId, AppUser user, String comments) {
