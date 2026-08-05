@@ -77,6 +77,14 @@ public class TransportSupportController {
                 transportSupportService.regenerateQr(id)));
     }
 
+    @PostMapping("/generate-qr")
+    @PreAuthorize("@perm.hasAny('TRANSPORT_SUPPORT', 'EDIT', 'PRINT')")
+    @Operation(summary = "Regenerer le QR Code de tous les supports")
+    public ResponseEntity<ApiResponse<List<TransportSupportResponse>>> regenerateQrAll() {
+        return ResponseEntity.ok(ApiResponse.ok("All QR codes regenerated",
+                transportSupportService.regenerateQrAll()));
+    }
+
     @GetMapping("/{id}/qr")
     @PreAuthorize("@perm.hasAny('TRANSPORT_SUPPORT', 'PRINT', 'VIEW')")
     @Operation(summary = "Telecharger l'image QR Code d'un support")

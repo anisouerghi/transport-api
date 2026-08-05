@@ -189,6 +189,30 @@ public class TransportSupportService {
         return transportSupportMapper.toResponse(support);
     }
 
+    /** Regenerer l'image QR pour tous les supports et mettre a jour leur statut. */
+    public List<TransportSupportResponse> regenerateQrAll() {
+        List<TransportSupport> supports = transportSupportRepository.findAll();
+        Instant now = Instant.now();
+        for (TransportSupport support : supports) {
+            applyQrCode(support);
+            support.setQrDateCreation(now);
+            support.setQrStatus(QrStatus.GENERATED);
+        }
+        transportSupportRepository.saveAll(supports);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.TRANSPORT_SUPPORTS)
+                .entityName("TransportSupport")
+                .entityId("ALL")
+                .newValue("qrCount=" + supports.size())
+                .description("Régénération des QR Codes de tous les supports")
+                .build());
+        return supports.stream()
+                .map(transportSupportMapper::toResponse)
+                .toList();
+    }
+
     /** Retourne les octets de l'image PNG du QR Code. */
     @Transactional(readOnly = true)
     public byte[] getQrImage(Long id) {
