@@ -1,5 +1,7 @@
 package com.transport.reporting.security;
 
+import com.transport.reporting.entity.Passenger;
+import com.transport.reporting.repository.PassengerRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,8 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtre JWT : valide le Bearer token et peupple le {@link SecurityContextHolder}.
- * Les permissions sont rechargées depuis la base à chaque requête (dynamiques).
+ * Filtre JWT : agents ({@code typ=ADMIN}) et voyageurs ({@code typ=PASSENGER}).
  */
 @Component
 @RequiredArgsConstructor
@@ -25,6 +26,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final PassengerRepository passengerRepository;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
 
     @Override
     protected void doFilterInternal(
@@ -40,14 +47,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
-            String username = jwtService.extractUsername(token);
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserPrincipal principal = (UserPrincipal) userDetailsService.loadUserByUsername(username);
-                if (jwtService.isTokenValid(token, principal)) {
-                    var authentication = new UsernamePasswordAuthenticationToken(
-                            principal, null, principal.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                String typ = jwtService.extractTokenType(token);
+                if (JwtService.TYPE_PASSENGER.equals(typ)) {
+                    authenticatePassenger(token, request);
+                } else {
+                    authenticateAdmin(token, request);
                 }
             }
         } catch (Exception ignored) {
@@ -55,5 +60,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateAdmin(String token, HttpServletRequest request) {
+        String username = jwtService.extractUsername(token);
+        if (username == null) {
+            return;
+        }
+        UserPrincipal principal = (UserPrincipal) userDetailsService.loadUserByUsername(username);
+        if (jwtService.isTokenValid(token, principal)) {
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    principal, null, principal.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+    }
+
+    private void authenticatePassenger(String token, HttpServletRequest request) {
+        Long passengerId = jwtService.extractPassengerId(token);
+        if (passengerId == null) {
+            return;
+        }
+        Passenger passenger = passengerRepository.findById(passengerId).orElse(null);
+        if (passenger == null || !passenger.isActive()) {
+            return;
+        }
+        PassengerPrincipal principal = new PassengerPrincipal(
+                passenger.getPassengerId(),
+                passenger.getEmail(),
+                passenger.getName(),
+                passenger.getPhoneNumber(),
+                passenger.isActive());
+        if (jwtService.isPassengerTokenValid(token, principal)) {
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    principal, null, principal.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
     }
 }

@@ -54,6 +54,7 @@ CREATE TABLE passenger (
     phone_number   VARCHAR(30)  NULL,
     email_verified BIT(1)       NOT NULL DEFAULT 0,
     active         TINYINT(1)   NOT NULL DEFAULT 1,
+    password_hash  VARCHAR(255) NULL,
     PRIMARY KEY (passenger_id),
     KEY idx_passenger_active (active),
     KEY idx_passenger_email (email)

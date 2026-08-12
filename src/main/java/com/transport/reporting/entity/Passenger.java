@@ -37,4 +37,10 @@ public class Passenger {
     @Column(name = "active", nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    /**
+     * Mot de passe BCrypt. {@code null} = contact anonyme sans compte.
+     */
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 }
