@@ -3,12 +3,14 @@ package com.transport.reporting.service;
 import com.transport.reporting.common.dto.SearchRequest;
 import com.transport.reporting.common.enums.AuditAction;
 import com.transport.reporting.common.enums.AuditModule;
+import com.transport.reporting.common.enums.AuditResult;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.SupportStatus;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
 import com.transport.reporting.dto.AuditLogEvent;
+import com.transport.reporting.dto.EmailSendResult;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
@@ -29,12 +31,12 @@ import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.security.SecurityUtils;
 import com.transport.reporting.specification.ReportSpecification;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -42,12 +44,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Service métier Signalement (création publique, recherche admin, détail).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ReportService {
 
@@ -72,6 +74,24 @@ public class ReportService {
     private final AttachmentService attachmentService;
     private final FileStorageService fileStorageService;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
+    private final ReplyEmailComposer replyEmailComposer;
+    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer) {
+        this.reportRepository = reportRepository;
+        this.reportTypeRepository = reportTypeRepository;
+        this.transportSupportRepository = transportSupportRepository;
+        this.reportHistoryRepository = reportHistoryRepository;
+        this.userRepository = userRepository;
+        this.passengerService = passengerService;
+        this.statusService = statusService;
+        this.reportMapper = reportMapper;
+        this.attachmentService = attachmentService;
+        this.fileStorageService = fileStorageService;
+        this.auditLogService = auditLogService;
+        this.emailService = emailService;
+        this.replyEmailComposer = replyEmailComposer;
+    }
+
 
     /**
      * Crée un signalement sans pièce jointe (compatibilité appels internes / JSON pur).
@@ -106,14 +126,10 @@ public class ReportService {
         Report report = Report.builder()
                 .reference(generateReference())
                 .description(request.getDescription())
-                // Priorité interne : défaut métier (à évaluer / normale). Jamais saisie par le voyageur.
                 .priority(Priority.MEDIUM)
-                .publish(request.getPublish() != null ? request.getPublish() : Boolean.FALSE)
-                .publishDate(request.getPublishDate())
-                .sendEmail(request.getSendEmail() != null ? request.getSendEmail() : Boolean.FALSE)
-                .sendEmailDate(request.getSendEmailDate())
-                .publicResponse(request.getPublicResponse() != null ? request.getPublicResponse() : Boolean.FALSE)
-                .publicResponseDate(request.getPublicResponseDate())
+                .publish(Boolean.FALSE)
+                .sendEmail(Boolean.FALSE)
+                .publicResponse(Boolean.FALSE)
                 .transportSupport(support)
                 .reportType(reportType)
                 .passenger(passenger)
@@ -123,8 +139,8 @@ public class ReportService {
         report = reportRepository.save(report);
         ReportResponse response = reportMapper.toResponse(report);
         response.setAttachments(attachmentService.saveForReport(report, files));
-        // Ne pas exposer la priorité au canal public
-        response.setPriority(null);
+        sendCreationEmailIfPossible(report, passenger);
+        sanitizePublicCreateResponse(response);
 
         String passengerName = passenger.getName() != null ? passenger.getName() : "voyageur";
         auditLogService.record(AuditLogEvent.builder()
@@ -213,7 +229,7 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<ReportResponse> findAll() {
-        return reportRepository.findAll().stream().map(reportMapper::toResponse).toList();
+        return reportRepository.findAll().stream().map(reportMapper::toResponse).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -251,5 +267,54 @@ public class ReportService {
             reference = "SIG-" + LocalDate.now().format(DATE_FORMAT) + "-" + random;
         } while (reportRepository.existsByReference(reference));
         return reference;
+    }
+
+    /**
+     * Envoie le lien de suivi au voyageur dès la création, si un e-mail est renseigné.
+     * L'échec SMTP n'empêche pas l'enregistrement du signalement.
+     */
+    private void sendCreationEmailIfPossible(Report report, Passenger passenger) {
+        if (passenger == null || !StringUtils.hasText(passenger.getEmail())) {
+            return;
+        }
+        String to = passenger.getEmail().trim();
+        EmailSendResult result = emailService.sendHtml(
+                to,
+                replyEmailComposer.confirmationSubject(),
+                replyEmailComposer.buildConfirmationHtml(report));
+        if (result.isSuccess()) {
+            report.setSendEmail(true);
+            report.setSendEmailDate(java.time.Instant.now());
+            reportRepository.save(report);
+        }
+        auditLogService.record(AuditLogEvent.builder()
+                .username("PUBLIC")
+                .userFullName(passenger.getName())
+                .actionType(AuditAction.EMAIL_SEND)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(report.getReportId()))
+                .result(result.isSuccess() ? AuditResult.SUCCESS : AuditResult.FAILURE)
+                .newValue("to=" + to + (result.isSuccess() ? "" : ";error=" + result.getMessage()))
+                .description(result.isSuccess()
+                        ? "E-mail de confirmation envoyé pour " + report.getReference()
+                        : "Échec e-mail de confirmation pour " + report.getReference())
+                .build());
+    }
+
+    /**
+     * Masque les identifiants sensibles (UUID, ID interne) dans la réponse publique de création.
+     * Le suivi détaillé n'est accessible que via le lien e-mail sécurisé.
+     */
+    private static void sanitizePublicCreateResponse(ReportResponse response) {
+        response.setReportId(null);
+        response.setUuid(null);
+        response.setPriority(null);
+        response.setPublish(null);
+        response.setPublishDate(null);
+        response.setSendEmail(null);
+        response.setSendEmailDate(null);
+        response.setPublicResponse(null);
+        response.setPublicResponseDate(null);
     }
 }

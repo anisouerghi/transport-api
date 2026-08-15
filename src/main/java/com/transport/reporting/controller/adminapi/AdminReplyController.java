@@ -8,7 +8,6 @@ import com.transport.reporting.service.ReplyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,11 +22,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/reports/{reportId}/replies")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Report Replies")
 public class AdminReplyController {
 
     private final ReplyService replyService;
+    public AdminReplyController(ReplyService replyService) {
+        this.replyService = replyService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('REPORT', 'VIEW')")

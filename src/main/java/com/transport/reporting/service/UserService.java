@@ -13,7 +13,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.UserMapper;
 import com.transport.reporting.repository.RoleRepository;
 import com.transport.reporting.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +21,12 @@ import org.springframework.util.StringUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service metier Utilisateur (CRUD + rôles dynamiques).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class UserService {
 
@@ -36,12 +35,20 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, AuditLogService auditLogService) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
+    }
+
 
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
         return userRepository.findAllWithRoles().stream()
                 .map(userMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

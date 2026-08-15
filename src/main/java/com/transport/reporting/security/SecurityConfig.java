@@ -1,6 +1,5 @@
 package com.transport.reporting.security;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,13 +27,19 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsServiceImpl userDetailsService;
     private final SecurityExceptionHandler securityExceptionHandler;
     private final PasswordEncoder passwordEncoder;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsServiceImpl userDetailsService, SecurityExceptionHandler securityExceptionHandler, PasswordEncoder passwordEncoder) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.userDetailsService = userDetailsService;
+        this.securityExceptionHandler = securityExceptionHandler;
+        this.passwordEncoder = passwordEncoder;
+    }
+
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;

@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +29,16 @@ import java.util.UUID;
  * Contrôleur public : création et suivi des signalements voyageur.
  */
 @RestController
-@RequiredArgsConstructor
 @Tag(name = "Public - Reports")
 public class PublicReportController {
 
     private final ReportService reportService;
     private final PublicTrackingService publicTrackingService;
+    public PublicReportController(ReportService reportService, PublicTrackingService publicTrackingService) {
+        this.reportService = reportService;
+        this.publicTrackingService = publicTrackingService;
+    }
+
 
     @PostMapping(value = "/api/public/signalements", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
@@ -60,14 +63,26 @@ public class PublicReportController {
     /**
      * Suivi sécurisé par UUID (lien e-mail). N'expose que les réponses publiques.
      */
+    @GetMapping("/api/public/signalements/{uuid}/follow-up")
+    @Operation(
+            summary = "Suivi sécurisé d'un signalement (UUID)",
+            description = "Accès public via lien e-mail (UUID non prévisible). "
+                    + "Retourne uniquement les informations destinées au voyageur et les réponses visibles."
+    )
+    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> followUpByUuid(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid)));
+    }
+
+    /**
+     * @deprecated Préférer {@link #followUpByUuid(UUID)} — conservé pour compatibilité.
+     */
+    @Deprecated
     @GetMapping("/api/public/suivi/{uuid}")
     @Operation(
-            summary = "Consulter le suivi d'un signalement par UUID",
-            description = "Accès public sécurisé via UUID (non prévisible). "
-                    + "Retourne uniquement les réponses marquées visibles pour l'auteur. "
-                    + "N'expose pas les priorités, agents ni IDs internes."
+            summary = "[Déprécié] Consulter le suivi d'un signalement par UUID",
+            description = "Alias de GET /api/public/signalements/{uuid}/follow-up"
     )
     public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> suiviByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid)));
+        return followUpByUuid(uuid);
     }
 }

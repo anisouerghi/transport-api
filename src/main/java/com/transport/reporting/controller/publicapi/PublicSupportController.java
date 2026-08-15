@@ -5,7 +5,6 @@ import com.transport.reporting.dto.TransportSupportResponse;
 import com.transport.reporting.service.TransportSupportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,11 +18,14 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/public/supports")
-@RequiredArgsConstructor
 @Tag(name = "Public - Supports")
 public class PublicSupportController {
 
     private final TransportSupportService transportSupportService;
+    public PublicSupportController(TransportSupportService transportSupportService) {
+        this.transportSupportService = transportSupportService;
+    }
+
 
     @GetMapping("/{uuid}")
     @Operation(summary = "Identifier un support via UUID du QR Code")

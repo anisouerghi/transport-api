@@ -10,7 +10,6 @@ import com.transport.reporting.service.ReportTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,11 +19,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/report-types")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Report Types")
 public class ReportTypeController {
 
     private final ReportTypeService reportTypeService;
+    public ReportTypeController(ReportTypeService reportTypeService) {
+        this.reportTypeService = reportTypeService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('REPORT_TYPE', 'VIEW')")

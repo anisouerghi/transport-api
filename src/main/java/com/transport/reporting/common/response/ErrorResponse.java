@@ -1,10 +1,6 @@
 package com.transport.reporting.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
@@ -12,10 +8,6 @@ import java.util.List;
 /**
  * Reponse d'erreur standardisee.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
 
@@ -25,4 +17,66 @@ public class ErrorResponse {
     private String message;
     private String path;
     private List<String> details;
+
+    public ErrorResponse() {
+    }
+
+    public static ErrorResponse of(int status, String error, String message, String path, List<String> details) {
+        ErrorResponse body = new ErrorResponse();
+        body.timestamp = Instant.now();
+        body.status = status;
+        body.error = error;
+        body.message = message;
+        body.path = path;
+        body.details = details;
+        return body;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public List<String> getDetails() {
+        return details;
+    }
+
+    public void setDetails(List<String> details) {
+        this.details = details;
+    }
 }

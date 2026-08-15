@@ -6,7 +6,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,12 +20,17 @@ import java.io.IOException;
  * Filtre JWT : agents ({@code typ=ADMIN}) et voyageurs ({@code typ=PASSENGER}).
  */
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
     private final PassengerRepository passengerRepository;
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService, PassengerRepository passengerRepository) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+        this.passengerRepository = passengerRepository;
+    }
+
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

@@ -1,45 +1,73 @@
 package com.transport.reporting.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Reponse API generique envoyee au frontend.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
     private boolean success;
     private String message;
-    /** Code d'erreur métier optionnel (ex. EMAIL_SMTP_AUTH). */
     private String errorCode;
     private T data;
 
+    public ApiResponse() {
+    }
+
+    public ApiResponse(boolean success, String message, String errorCode, T data) {
+        this.success = success;
+        this.message = message;
+        this.errorCode = errorCode;
+        this.data = data;
+    }
+
     public static <T> ApiResponse<T> ok(T data) {
-        return ApiResponse.<T>builder().success(true).data(data).build();
+        return new ApiResponse<>(true, null, null, data);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return ApiResponse.<T>builder().success(true).message(message).data(data).build();
+        return new ApiResponse<>(true, message, null, data);
     }
 
     public static <T> ApiResponse<T> created(String message, T data) {
-        return ApiResponse.<T>builder().success(true).message(message).data(data).build();
+        return new ApiResponse<>(true, message, null, data);
     }
 
     public static <T> ApiResponse<T> of(boolean success, String message, String errorCode, T data) {
-        return ApiResponse.<T>builder()
-                .success(success)
-                .message(message)
-                .errorCode(errorCode)
-                .data(data)
-                .build();
+        return new ApiResponse<>(success, message, errorCode, data);
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
     }
 }

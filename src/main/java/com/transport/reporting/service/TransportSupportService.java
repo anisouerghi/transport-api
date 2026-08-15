@@ -20,7 +20,6 @@ import com.transport.reporting.mapper.TransportSupportMapper;
 import com.transport.reporting.repository.SupportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.specification.TransportSupportSpecification;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,6 +30,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service metier TransportSupport (CRUD + recherche + generation QR).
@@ -43,7 +43,6 @@ import java.util.UUID;
  * </ol>
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class TransportSupportService {
 
@@ -65,6 +64,14 @@ public class TransportSupportService {
     private final TransportSupportMapper transportSupportMapper;
     private final QrCodeService qrCodeService;
     private final AuditLogService auditLogService;
+    public TransportSupportService(TransportSupportRepository transportSupportRepository, SupportTypeRepository supportTypeRepository, TransportSupportMapper transportSupportMapper, QrCodeService qrCodeService, AuditLogService auditLogService) {
+        this.transportSupportRepository = transportSupportRepository;
+        this.supportTypeRepository = supportTypeRepository;
+        this.transportSupportMapper = transportSupportMapper;
+        this.qrCodeService = qrCodeService;
+        this.auditLogService = auditLogService;
+    }
+
 
     /**
      * Consultation publique par UUID : uniquement si le support est ACTIVE.
@@ -85,7 +92,7 @@ public class TransportSupportService {
     public List<TransportSupportResponse> findAll() {
         return transportSupportRepository.findAll().stream()
                 .map(transportSupportMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /** Consultation detaillee par id technique. */
@@ -210,7 +217,7 @@ public class TransportSupportService {
                 .build());
         return supports.stream()
                 .map(transportSupportMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /** Retourne les octets de l'image PNG du QR Code. */

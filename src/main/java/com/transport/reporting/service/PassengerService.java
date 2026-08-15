@@ -15,7 +15,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.PassengerMapper;
 import com.transport.reporting.repository.PassengerRepository;
 import com.transport.reporting.specification.PassengerSpecification;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,7 +28,6 @@ import java.util.Map;
  * Service métier Voyageur (création publique + administration).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PassengerService {
 
@@ -45,6 +43,12 @@ public class PassengerService {
     private final PassengerRepository passengerRepository;
     private final PassengerMapper passengerMapper;
     private final AuditLogService auditLogService;
+    public PassengerService(PassengerRepository passengerRepository, PassengerMapper passengerMapper, AuditLogService auditLogService) {
+        this.passengerRepository = passengerRepository;
+        this.passengerMapper = passengerMapper;
+        this.auditLogService = auditLogService;
+    }
+
 
     public Passenger findOrCreate(PassengerRequest request) {
         if (StringUtils.hasText(request.getEmail())) {

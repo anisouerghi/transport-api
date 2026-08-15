@@ -15,10 +15,10 @@ public final class SecurityUtils {
 
     public static Optional<UserPrincipal> currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
             return Optional.empty();
         }
-        return Optional.of(principal);
+        return Optional.of((UserPrincipal) authentication.getPrincipal());
     }
 
     public static Long currentUserIdOrNull() {

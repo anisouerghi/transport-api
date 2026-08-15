@@ -16,7 +16,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.SupportTypeMapper;
 import com.transport.reporting.repository.SupportTypeRepository;
 import com.transport.reporting.specification.SupportTypeSpecification;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,12 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service metier SupportType (CRUD + recherche paginee serveur).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class SupportTypeService {
 
@@ -43,12 +42,18 @@ public class SupportTypeService {
     private final SupportTypeRepository supportTypeRepository;
     private final SupportTypeMapper supportTypeMapper;
     private final AuditLogService auditLogService;
+    public SupportTypeService(SupportTypeRepository supportTypeRepository, SupportTypeMapper supportTypeMapper, AuditLogService auditLogService) {
+        this.supportTypeRepository = supportTypeRepository;
+        this.supportTypeMapper = supportTypeMapper;
+        this.auditLogService = auditLogService;
+    }
+
 
     @Transactional(readOnly = true)
     public List<SupportTypeResponse> findAll() {
         return supportTypeRepository.findAll().stream()
                 .map(supportTypeMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

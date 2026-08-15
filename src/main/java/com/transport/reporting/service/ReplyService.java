@@ -24,7 +24,6 @@ import com.transport.reporting.repository.StatusRepository;
 import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.security.PermissionChecker;
 import com.transport.reporting.security.SecurityUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,12 +33,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service métier des réponses agents sur les signalements.
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 @Slf4j
 public class ReplyService {
@@ -56,13 +55,26 @@ public class ReplyService {
     private final PermissionChecker permissionChecker;
     private final EmailService emailService;
     private final ReplyEmailComposer replyEmailComposer;
+    public ReplyService(ReplyRepository replyRepository, ReportRepository reportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, StatusRepository statusRepository, ReplyMapper replyMapper, AuditLogService auditLogService, PermissionChecker permissionChecker, EmailService emailService, ReplyEmailComposer replyEmailComposer) {
+        this.replyRepository = replyRepository;
+        this.reportRepository = reportRepository;
+        this.reportHistoryRepository = reportHistoryRepository;
+        this.userRepository = userRepository;
+        this.statusRepository = statusRepository;
+        this.replyMapper = replyMapper;
+        this.auditLogService = auditLogService;
+        this.permissionChecker = permissionChecker;
+        this.emailService = emailService;
+        this.replyEmailComposer = replyEmailComposer;
+    }
+
 
     @Transactional(readOnly = true)
     public List<ReplyResponse> findByReportId(Long reportId) {
         ensureReportExists(reportId);
         return replyRepository.findByReport_ReportIdOrderByReplyDateAsc(reportId).stream()
                 .map(replyMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /**
@@ -74,7 +86,7 @@ public class ReplyService {
      * et un {@code errorCode}, sans exception technique.
      */
     public ReplyCreateResult create(Long reportId, ReplyRequest request) {
-        Report report = reportRepository.findById(reportId)
+        Report report = reportRepository.findByIdWithPassenger(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
 
         AppUser user = resolveActor(request.getUserId());
@@ -98,7 +110,8 @@ public class ReplyService {
 
         String passengerEmail = resolvePassengerEmail(report);
         boolean emailRequested = Boolean.TRUE.equals(request.getSendEmail());
-        boolean canSendEmail = emailRequested && StringUtils.hasText(passengerEmail);
+        // Sécurité : on n'envoie un e-mail au voyageur que si la réponse est visible pour lui.
+        boolean canSendEmail = emailRequested && publicResponse && StringUtils.hasText(passengerEmail);
 
         Reply reply = Reply.builder()
                 .message(request.getMessage().trim())
@@ -112,7 +125,21 @@ public class ReplyService {
 
         EmailSendResult emailResult = null;
         if (canSendEmail) {
-            emailResult = sendReplyEmail(report, reply, user, passengerEmail);
+            try {
+                emailResult = sendReplyEmail(report, reply, user, passengerEmail);
+            } catch (Exception ex) {
+                log.error("Echec technique envoi e-mail pour report {}", reportId, ex);
+                emailResult = EmailSendResult.fail("EMAIL_SEND_FAILED",
+                        "L'e-mail n'a pas pu être envoyé. Détail : " + ex.getMessage());
+            }
+        } else if (emailRequested && !publicResponse) {
+            // Réponse interne : jamais de lien e-mail, et jamais publiée dans le suivi voyageur.
+            emailResult = EmailSendResult.fail(
+                    "EMAIL_NOT_PUBLIC",
+                    "Réponse enregistrée, mais l'e-mail n'a pas été envoyé car la visibilité voyageur est désactivée."
+            );
+            log.info("sendEmail requested for report {} but publicResponse=false", reportId);
+            auditEmail(user, report, passengerEmail, false, emailResult.getMessage());
         } else if (emailRequested) {
             emailResult = EmailSendResult.fail("EMAIL_NO_RECIPIENT",
                     "La réponse a été enregistrée, mais aucun e-mail voyageur n'est renseigné : aucun envoi effectué.");
@@ -158,7 +185,8 @@ public class ReplyService {
                     .reply(response)
                     .replySaved(true)
                     .success(true)
-                    .message("Réponse enregistrée et e-mail envoyé avec succès.")
+                    .message("Réponse enregistrée. E-mail envoyé à " + passengerEmail
+                            + " (accepté par le serveur SMTP — vérifiez aussi les indésirables).")
                     .build();
         }
 

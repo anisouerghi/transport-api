@@ -8,7 +8,6 @@ import com.transport.reporting.dto.AuditLogResponse;
 import com.transport.reporting.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/audit-logs")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Audit Logs")
 public class AdminAuditLogController {
 
     private final AuditLogService auditLogService;
+    public AdminAuditLogController(AuditLogService auditLogService) {
+        this.auditLogService = auditLogService;
+    }
+
 
     @PostMapping("/search")
     @PreAuthorize("@perm.hasAny('AUDIT', 'SEARCH', 'VIEW')")

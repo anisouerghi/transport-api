@@ -6,7 +6,6 @@ import com.transport.reporting.entity.Attachment;
 import com.transport.reporting.service.AttachmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +21,15 @@ import java.util.List;
  * Contrôleur admin dédié aux pièces jointes des signalements.
  */
 @RestController
-@RequiredArgsConstructor
 @Tag(name = "Admin - Attachments")
 public class AdminAttachmentController {
 
     private final AttachmentService attachmentService;
+
+    public AdminAttachmentController(AttachmentService attachmentService) {
+        this.attachmentService = attachmentService;
+    }
+
 
     @GetMapping("/api/admin/signalements/{reportId}/attachments")
     @PreAuthorize("@perm.has('REPORT', 'VIEW')")
@@ -64,7 +67,7 @@ public class AdminAttachmentController {
 
     /** Convertit le MIME stocké en {@link MediaType}, avec repli octet-stream. */
     private MediaType resolveMediaType(String fileType) {
-        if (fileType == null || fileType.isBlank()) {
+        if (fileType == null || fileType.trim().isEmpty()) {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
         try {

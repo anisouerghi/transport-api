@@ -16,8 +16,8 @@ import com.transport.reporting.repository.StatusRepository;
 import com.transport.reporting.repository.SupportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.service.QrCodeService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,13 +32,17 @@ import java.time.temporal.ChronoUnit;
  * Initialisation des donnees de demonstration (profil dev).
  */
 @Configuration
-@RequiredArgsConstructor
-@Slf4j
+@Profile("dev")
 public class DataInitializer {
 
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final QrCodeService qrCodeService;
+
+    public DataInitializer(QrCodeService qrCodeService) {
+        this.qrCodeService = qrCodeService;
+    }
 
     @Bean
     @Profile("dev")
@@ -76,13 +80,13 @@ public class DataInitializer {
             // Admin user + roles : SecurityDataInitializer
             if (transportSupportRepository.count() == 0) {
                 SupportType bus = supportTypeRepository.findByCode("BUS").orElseThrow();
-                TransportSupport support = transportSupportRepository.saveAndFlush(TransportSupport.builder()
-                        .reference("7500")
-                        .label("7500")
-                        .qrStatus(QrStatus.ACTIVE)
-                        .supportStatus(SupportStatus.ACTIVE)
-                        .supportType(bus)
-                        .build());
+                TransportSupport support = new TransportSupport();
+                support.setReference("7500");
+                support.setLabel("7500");
+                support.setQrStatus(QrStatus.ACTIVE);
+                support.setSupportStatus(SupportStatus.ACTIVE);
+                support.setSupportType(bus);
+                support = transportSupportRepository.saveAndFlush(support);
                 support.setQrCodeUrl(qrCodeService.buildPublicUrl(support));
                 support.setQrCodePath(qrCodeService.generateAndStore(support));
                 transportSupportRepository.save(support);

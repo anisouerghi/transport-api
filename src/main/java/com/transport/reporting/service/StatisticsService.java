@@ -5,7 +5,6 @@ import com.transport.reporting.repository.PassengerRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
  * Les indicateurs métier avancés seront ajoutés progressivement.
  */
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StatisticsService {
 
@@ -22,6 +20,13 @@ public class StatisticsService {
     private final TransportSupportRepository transportSupportRepository;
     private final UserRepository userRepository;
     private final PassengerRepository passengerRepository;
+    public StatisticsService(ReportRepository reportRepository, TransportSupportRepository transportSupportRepository, UserRepository userRepository, PassengerRepository passengerRepository) {
+        this.reportRepository = reportRepository;
+        this.transportSupportRepository = transportSupportRepository;
+        this.userRepository = userRepository;
+        this.passengerRepository = passengerRepository;
+    }
+
 
     /**
      * Vue d'ensemble minimale — base pour les futurs tableaux de bord.

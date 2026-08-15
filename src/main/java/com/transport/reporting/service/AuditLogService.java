@@ -16,7 +16,6 @@ import com.transport.reporting.mapper.AuditLogMapper;
 import com.transport.reporting.repository.AuditLogRepository;
 import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.specification.AuditLogSpecification;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,6 @@ import java.util.Map;
  * ({@code REQUIRES_NEW}) afin de ne pas perturber la transaction métier.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuditLogService {
 
@@ -53,6 +51,12 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
     private final AuditLogMapper auditLogMapper;
     private final UserRepository userRepository;
+    public AuditLogService(AuditLogRepository auditLogRepository, AuditLogMapper auditLogMapper, UserRepository userRepository) {
+        this.auditLogRepository = auditLogRepository;
+        this.auditLogMapper = auditLogMapper;
+        this.userRepository = userRepository;
+    }
+
 
     /**
      * Recherche paginée multicritère (POST /search).

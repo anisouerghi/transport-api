@@ -6,13 +6,13 @@ import com.transport.reporting.entity.Report;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.AttachmentMapper;
 import com.transport.reporting.repository.AttachmentRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service métier des pièces jointes rattachées aux signalements.
@@ -21,13 +21,18 @@ import java.util.List;
  * et la persistence JPA ({@link Attachment}).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final FileStorageService fileStorageService;
     private final AttachmentMapper attachmentMapper;
+    public AttachmentService(AttachmentRepository attachmentRepository, FileStorageService fileStorageService, AttachmentMapper attachmentMapper) {
+        this.attachmentRepository = attachmentRepository;
+        this.fileStorageService = fileStorageService;
+        this.attachmentMapper = attachmentMapper;
+    }
+
 
     /**
      * Enregistre les fichiers uploadés pour un signalement déjà persisté.
@@ -48,12 +53,11 @@ public class AttachmentService {
                 continue;
             }
             FileStorageService.StoredFile stored = fileStorageService.store(file);
-            Attachment attachment = Attachment.builder()
-                    .fileName(stored.originalFileName())
-                    .filePath(stored.absolutePath())
-                    .fileType(stored.mimeType())
-                    .report(report)
-                    .build();
+            Attachment attachment = new Attachment();
+            attachment.setFileName(stored.originalFileName());
+            attachment.setFilePath(stored.absolutePath());
+            attachment.setFileType(stored.mimeType());
+            attachment.setReport(report);
             saved.add(attachmentMapper.toResponse(attachmentRepository.save(attachment)));
         }
         return saved;
@@ -66,7 +70,7 @@ public class AttachmentService {
     public List<AttachmentResponse> findByReportId(Long reportId) {
         return attachmentRepository.findByReport_ReportId(reportId).stream()
                 .map(attachmentMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /**

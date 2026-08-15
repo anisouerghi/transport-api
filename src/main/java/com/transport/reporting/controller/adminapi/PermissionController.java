@@ -6,7 +6,6 @@ import com.transport.reporting.dto.PermissionResponse;
 import com.transport.reporting.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,11 +16,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/permissions")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Permissions")
 public class PermissionController {
 
     private final RoleService roleService;
+    public PermissionController(RoleService roleService) {
+        this.roleService = roleService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.hasAny('PERMISSION', 'VIEW', 'SEARCH') or @perm.hasAny('ROLE', 'VIEW', 'EDIT', 'ADD') or @perm.has('USER', 'EDIT')")

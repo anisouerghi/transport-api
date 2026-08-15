@@ -10,7 +10,6 @@ import com.transport.reporting.service.TransportSupportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,11 +21,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/transport-supports")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Transport Supports")
 public class TransportSupportController {
 
     private final TransportSupportService transportSupportService;
+    public TransportSupportController(TransportSupportService transportSupportService) {
+        this.transportSupportService = transportSupportService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('TRANSPORT_SUPPORT', 'VIEW')")

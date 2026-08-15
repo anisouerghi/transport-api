@@ -6,25 +6,29 @@ import com.transport.reporting.entity.Status;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.StatusMapper;
 import com.transport.reporting.repository.StatusRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StatusService {
 
     private final StatusRepository statusRepository;
     private final StatusMapper statusMapper;
+    public StatusService(StatusRepository statusRepository, StatusMapper statusMapper) {
+        this.statusRepository = statusRepository;
+        this.statusMapper = statusMapper;
+    }
+
 
     public List<StatusResponse> findAll() {
         return statusRepository.findAllByOrderByDisplayOrderAsc()
                 .stream()
                 .map(statusMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public StatusResponse findById(Long id) {

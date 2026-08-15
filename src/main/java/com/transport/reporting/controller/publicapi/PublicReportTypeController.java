@@ -5,7 +5,6 @@ import com.transport.reporting.dto.ReportTypeResponse;
 import com.transport.reporting.service.ReportTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +18,14 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/public/report-types")
-@RequiredArgsConstructor
 @Tag(name = "Public - Report Types")
 public class PublicReportTypeController {
 
     private final ReportTypeService reportTypeService;
+    public PublicReportTypeController(ReportTypeService reportTypeService) {
+        this.reportTypeService = reportTypeService;
+    }
+
 
     /**
      * Liste uniquement les types dont le flag {@code active} est vrai.

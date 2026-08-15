@@ -21,25 +21,12 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
-    @Query("""
-            SELECT DISTINCT u FROM AppUser u
-            LEFT JOIN FETCH u.roles
-            """)
+    @Query("SELECT DISTINCT u FROM AppUser u LEFT JOIN FETCH u.roles")
     List<AppUser> findAllWithRoles();
 
-    @Query("""
-            SELECT DISTINCT u FROM AppUser u
-            LEFT JOIN FETCH u.roles r
-            LEFT JOIN FETCH r.permissions
-            WHERE u.username = :username
-            """)
+    @Query("SELECT DISTINCT u FROM AppUser u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions WHERE u.username = :username")
     Optional<AppUser> findByUsernameWithRolesAndPermissions(String username);
 
-    @Query("""
-            SELECT DISTINCT u FROM AppUser u
-            LEFT JOIN FETCH u.roles r
-            LEFT JOIN FETCH r.permissions
-            WHERE u.userId = :id
-            """)
+    @Query("SELECT DISTINCT u FROM AppUser u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions WHERE u.userId = :id")
     Optional<AppUser> findByIdWithRolesAndPermissions(Long id);
 }

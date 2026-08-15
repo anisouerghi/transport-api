@@ -7,7 +7,6 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.transport.reporting.config.QrProperties;
 import com.transport.reporting.entity.TransportSupport;
 import com.transport.reporting.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,6 @@ import java.nio.file.Paths;
  * URL encodee dans le QR : {@code {baseUrl}/report/{uuid}}
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class QrCodeService {
 
@@ -34,6 +32,10 @@ public class QrCodeService {
     private static final int QR_SIZE = 300;
 
     private final QrProperties qrProperties;
+    public QrCodeService(QrProperties qrProperties) {
+        this.qrProperties = qrProperties;
+    }
+
 
     /**
      * Construit l'URL publique de signalement pour un support.

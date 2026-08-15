@@ -17,17 +17,17 @@ public class FrontendProperties {
     /**
      * Base URL de l'application publique (sans slash final).
      * Ex. {@code http://localhost:4200} ou {@code https://signalement.transport.tn}.
-     * Utilisée pour construire les liens de suivi sécurisés : {@code {base}/suivi/{uuid}}.
+     * Utilisée pour construire les liens de suivi sécurisés : {@code {base}/report-followup/{uuid}}.
      */
     private String publicBaseUrl = "http://localhost:4200";
 
-    /** URL absolue de suivi pour un signalement (UUID). */
+    /** URL absolue de suivi sécurisé pour un signalement (UUID, lien e-mail). */
     public String buildTrackingUrl(String reportUuid) {
         String base = publicBaseUrl == null ? "" : publicBaseUrl.trim();
         while (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }
-        return base + "/suivi/" + reportUuid;
+        return base + "/report-followup/" + reportUuid;
     }
 
     /** URL absolue du logo TRANSTU servi par le frontend public. */

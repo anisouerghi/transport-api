@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * Envoi d'e-mails HTML via {@link JavaMailSender}.
- * Les exceptions techniques sont interceptées et converties en {@link EmailSendResult}.
+ * Expéditeur unique = {@code spring.mail.from} (reclamations@transtu.tn).
  */
 @Service
 public class EmailService {
@@ -37,6 +37,7 @@ public class EmailService {
     private final String mailUsername;
     private final String mailPassword;
     private final String fromAddress;
+    private final String fromName;
 
     public EmailService(
             JavaMailSender mailSender,
@@ -44,23 +45,20 @@ public class EmailService {
             @Value("${spring.mail.port:0}") int mailPort,
             @Value("${spring.mail.username:}") String mailUsername,
             @Value("${spring.mail.password:}") String mailPassword,
-            @Value("${spring.mail.from:${spring.mail.username:}}") String fromAddress) {
+            @Value("${spring.mail.from:${spring.mail.username:}}") String fromAddress,
+            @Value("${app.mail.from-name:}") String fromName) {
         this.mailSender = mailSender;
         this.mailHost = mailHost;
         this.mailPort = mailPort;
         this.mailUsername = mailUsername;
         this.mailPassword = stripOptionalQuotes(mailPassword);
         this.fromAddress = fromAddress;
-        log.info("SMTP config chargee: host={}, port={}, username={}, from={}, passwordLength={}",
-                this.mailHost, this.mailPort, this.mailUsername, this.fromAddress,
+        this.fromName = fromName;
+        log.info("SMTP config chargee: host={}, port={}, username={}, from={}, fromName={}, passwordLength={}",
+                this.mailHost, this.mailPort, this.mailUsername, this.fromAddress, this.fromName,
                 this.mailPassword != null ? this.mailPassword.length() : 0);
     }
 
-    /**
-     * Vérifie que la configuration SMTP minimale est présente.
-     *
-     * @return liste des propriétés manquantes (vide si OK)
-     */
     public List<String> missingConfigurationProperties() {
         List<String> missing = new ArrayList<>();
         if (!StringUtils.hasText(mailHost)) {
@@ -81,9 +79,6 @@ public class EmailService {
         return missing;
     }
 
-    /**
-     * Envoie un e-mail HTML. Ne propage jamais d'exception technique.
-     */
     public EmailSendResult sendHtml(String to, String subject, String htmlBody) {
         if (!StringUtils.hasText(to)) {
             return EmailSendResult.fail("EMAIL_NO_RECIPIENT",
@@ -101,14 +96,18 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            helper.setFrom(fromAddress.trim());
+            applyFromAndReplyTo(helper);
             helper.setTo(to.trim());
             helper.setSubject(subject);
+            helper.setSentDate(new java.util.Date());
             helper.setText(htmlBody, true);
             attachInlineLogo(helper);
             mailSender.send(message);
-            log.info("E-mail envoyé avec succès à {}", to);
-            return EmailSendResult.ok("E-mail envoyé avec succès à " + to.trim() + ".");
+            String messageId = message.getMessageID();
+            log.info("E-mail accepté par SMTP from={} to={} host={} (Message-ID: {})",
+                    fromAddress, to, mailHost, messageId != null ? messageId : "n/a");
+            return EmailSendResult.ok("E-mail accepté par le serveur SMTP pour " + to.trim()
+                    + ". Vérifiez la boîte de réception et les indésirables ; l'arrivée peut prendre quelques minutes.");
         } catch (Exception ex) {
             EmailSendResult mapped = mapException(ex);
             log.error("Échec envoi e-mail à {} [{}]: {}", to, mapped.getErrorCode(), ex.getMessage(), ex);
@@ -116,9 +115,17 @@ public class EmailService {
         }
     }
 
-    /**
-     * Embarque le logo TRANSTU en inline (CID) pour qu'il s'affiche sans dépendre de localhost / URL externe.
-     */
+    private void applyFromAndReplyTo(MimeMessageHelper helper)
+            throws MessagingException, java.io.UnsupportedEncodingException {
+        String from = fromAddress.trim();
+        if (StringUtils.hasText(fromName)) {
+            helper.setFrom(from, fromName.trim());
+        } else {
+            helper.setFrom(from);
+        }
+        helper.setReplyTo(from);
+    }
+
     private void attachInlineLogo(MimeMessageHelper helper) {
         try {
             ClassPathResource logo = new ClassPathResource(LOGO_CLASSPATH);
@@ -175,7 +182,6 @@ public class EmailService {
                 "L'e-mail n'a pas pu être envoyé. Détail : " + (raw.isEmpty() ? "erreur technique" : raw));
     }
 
-    /** Message d'erreur technique tronqué, sans secret. */
     private static String safeDetail(Throwable root) {
         if (root == null || root.getMessage() == null) {
             return root != null ? root.getClass().getSimpleName() : "inconnu";
@@ -192,7 +198,6 @@ public class EmailService {
         return current;
     }
 
-    /** Enlève les guillemets éventuels autour d'une valeur .properties. */
     private static String stripOptionalQuotes(String value) {
         if (value == null) {
             return null;

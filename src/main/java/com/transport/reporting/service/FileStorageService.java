@@ -2,8 +2,8 @@ package com.transport.reporting.service;
 
 import com.transport.reporting.config.UploadProperties;
 import com.transport.reporting.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -31,9 +31,9 @@ import java.util.UUID;
  * Le nom d'origine fourni par le client n'est jamais utilisé comme nom de stockage.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class FileStorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
 
     /** Nombre maximum de pièces jointes par signalement. */
     public static final int MAX_FILES = 5;
@@ -60,6 +60,10 @@ public class FileStorageService {
     );
 
     private final UploadProperties uploadProperties;
+
+    public FileStorageService(UploadProperties uploadProperties) {
+        this.uploadProperties = uploadProperties;
+    }
 
     /**
      * Valide puis enregistre un fichier sur disque.
@@ -206,12 +210,34 @@ public class FileStorageService {
 
     /**
      * Résultat du stockage d'un fichier sur disque.
-     *
-     * @param originalFileName nom affiché (client)
-     * @param absolutePath     chemin physique unique sur le serveur
-     * @param mimeType         type MIME validé
-     * @param size             taille en octets
      */
-    public record StoredFile(String originalFileName, String absolutePath, String mimeType, long size) {
+    public static final class StoredFile {
+        private final String originalFileName;
+        private final String absolutePath;
+        private final String mimeType;
+        private final long size;
+
+        public StoredFile(String originalFileName, String absolutePath, String mimeType, long size) {
+            this.originalFileName = originalFileName;
+            this.absolutePath = absolutePath;
+            this.mimeType = mimeType;
+            this.size = size;
+        }
+
+        public String originalFileName() {
+            return originalFileName;
+        }
+
+        public String absolutePath() {
+            return absolutePath;
+        }
+
+        public String mimeType() {
+            return mimeType;
+        }
+
+        public long size() {
+            return size;
+        }
     }
 }

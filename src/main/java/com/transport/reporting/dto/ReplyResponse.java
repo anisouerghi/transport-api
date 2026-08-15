@@ -1,8 +1,10 @@
 package com.transport.reporting.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
@@ -11,6 +13,8 @@ import java.time.Instant;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Réponse agent")
 public class ReplyResponse {
 

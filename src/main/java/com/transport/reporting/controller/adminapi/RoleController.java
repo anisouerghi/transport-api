@@ -9,7 +9,6 @@ import com.transport.reporting.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,11 +18,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/roles")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Roles")
 public class RoleController {
 
     private final RoleService roleService;
+    public RoleController(RoleService roleService) {
+        this.roleService = roleService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('ROLE', 'VIEW')")

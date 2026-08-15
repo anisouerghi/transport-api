@@ -34,8 +34,8 @@ public final class RequestMetadata {
 
     private static HttpServletRequest currentRequest() {
         var attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs instanceof ServletRequestAttributes servletAttrs) {
-            return servletAttrs.getRequest();
+        if (attrs instanceof ServletRequestAttributes) {
+            return ((ServletRequestAttributes) attrs).getRequest();
         }
         return null;
     }

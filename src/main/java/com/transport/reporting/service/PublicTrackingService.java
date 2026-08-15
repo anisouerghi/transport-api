@@ -6,23 +6,27 @@ import com.transport.reporting.entity.Report;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Suivi public sécurisé des signalements (accès par UUID uniquement).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PublicTrackingService {
 
     private final ReportRepository reportRepository;
     private final ReplyRepository replyRepository;
+    public PublicTrackingService(ReportRepository reportRepository, ReplyRepository replyRepository) {
+        this.reportRepository = reportRepository;
+        this.replyRepository = replyRepository;
+    }
+
 
     /**
      * Charge le détail public d'un signalement et les réponses visibles au voyageur.
@@ -35,7 +39,7 @@ public class PublicTrackingService {
                 replyRepository.findByReport_ReportIdAndPublicResponseTrueOrderByReplyDateAsc(report.getReportId())
                         .stream()
                         .map(this::toPublicReply)
-                        .toList();
+                        .collect(Collectors.toList());
 
         String supportLabel = null;
         if (report.getTransportSupport() != null) {

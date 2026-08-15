@@ -7,6 +7,7 @@ import com.transport.reporting.entity.Role;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Mapper Utilisateur : conversion Entity <-> DTO.
@@ -36,7 +37,7 @@ public class UserMapper {
     public UserResponse toResponse(AppUser user) {
         List<String> roles = user.getRoles() == null
                 ? List.of()
-                : user.getRoles().stream().map(Role::getCode).sorted().toList();
+                : user.getRoles().stream().map(Role::getCode).sorted().collect(Collectors.toList());
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .uuid(user.getUuid())

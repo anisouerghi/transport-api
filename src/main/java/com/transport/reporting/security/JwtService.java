@@ -77,8 +77,8 @@ public class JwtService {
 
     public Long extractPassengerId(String token) {
         Object pid = parseClaims(token).get("pid");
-        if (pid instanceof Number number) {
-            return number.longValue();
+        if (pid instanceof Number) {
+            return ((Number) pid).longValue();
         }
         return pid != null ? Long.valueOf(pid.toString()) : null;
     }

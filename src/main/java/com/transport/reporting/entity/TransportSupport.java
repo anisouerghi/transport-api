@@ -5,7 +5,6 @@ import com.transport.reporting.common.enums.SupportStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -22,11 +21,6 @@ import java.util.UUID;
         @Index(name = "idx_transport_support_support_status", columnList = "support_status"),
         @Index(name = "idx_transport_support_qr_status", columnList = "qr_status")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class TransportSupport {
 
     /** Identifiant technique auto-incremente du support. */
@@ -76,7 +70,6 @@ public class TransportSupport {
     /** Etat operationnel du support (ACTIVE, INACTIVE...). */
     @Enumerated(EnumType.STRING)
     @Column(name = "support_status", nullable = false, length = 30)
-    @Builder.Default
     private SupportStatus supportStatus = SupportStatus.ACTIVE;
 
     /** Type de support (bus, metro, arret, etc.). */
@@ -121,5 +114,117 @@ public class TransportSupport {
     @PreUpdate
     public void preUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public Long getTransportSupportId() {
+        return transportSupportId;
+    }
+
+    public void setTransportSupportId(Long transportSupportId) {
+        this.transportSupportId = transportSupportId;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getQrCodeUrl() {
+        return qrCodeUrl;
+    }
+
+    public void setQrCodeUrl(String qrCodeUrl) {
+        this.qrCodeUrl = qrCodeUrl;
+    }
+
+    public String getQrCodePath() {
+        return qrCodePath;
+    }
+
+    public void setQrCodePath(String qrCodePath) {
+        this.qrCodePath = qrCodePath;
+    }
+
+    public Instant getQrDateCreation() {
+        return qrDateCreation;
+    }
+
+    public void setQrDateCreation(Instant qrDateCreation) {
+        this.qrDateCreation = qrDateCreation;
+    }
+
+    public Instant getQrDateImpression() {
+        return qrDateImpression;
+    }
+
+    public void setQrDateImpression(Instant qrDateImpression) {
+        this.qrDateImpression = qrDateImpression;
+    }
+
+    public QrStatus getQrStatus() {
+        return qrStatus;
+    }
+
+    public void setQrStatus(QrStatus qrStatus) {
+        this.qrStatus = qrStatus;
+    }
+
+    public SupportStatus getSupportStatus() {
+        return supportStatus;
+    }
+
+    public void setSupportStatus(SupportStatus supportStatus) {
+        this.supportStatus = supportStatus;
+    }
+
+    public SupportType getSupportType() {
+        return supportType;
+    }
+
+    public void setSupportType(SupportType supportType) {
+        this.supportType = supportType;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

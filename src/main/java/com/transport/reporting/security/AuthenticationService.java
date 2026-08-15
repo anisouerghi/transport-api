@@ -6,7 +6,6 @@ import com.transport.reporting.dto.MenuItemResponse;
 import com.transport.reporting.entity.AppMenu;
 import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.repository.AppMenuRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -15,17 +14,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Authentification login : JWT + rôles / permissions / menus dynamiques.
  */
 @Service
-@RequiredArgsConstructor
 public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final AppMenuRepository appMenuRepository;
+    public AuthenticationService(AuthenticationManager authenticationManager, JwtService jwtService, AppMenuRepository appMenuRepository) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.appMenuRepository = appMenuRepository;
+    }
+
 
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
@@ -57,7 +62,7 @@ public class AuthenticationService {
                         .icon(menu.getIcon())
                         .permission(menu.getPermissionCode())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private LoginResponse toLoginResponse(UserPrincipal principal, String token) {

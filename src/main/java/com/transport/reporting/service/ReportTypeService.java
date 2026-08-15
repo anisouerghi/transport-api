@@ -16,7 +16,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.ReportTypeMapper;
 import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.specification.ReportTypeSpecification;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,12 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service metier ReportType (CRUD + recherche paginee + activation).
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ReportTypeService {
 
@@ -45,12 +44,18 @@ public class ReportTypeService {
     private final ReportTypeRepository reportTypeRepository;
     private final ReportTypeMapper reportTypeMapper;
     private final AuditLogService auditLogService;
+    public ReportTypeService(ReportTypeRepository reportTypeRepository, ReportTypeMapper reportTypeMapper, AuditLogService auditLogService) {
+        this.reportTypeRepository = reportTypeRepository;
+        this.reportTypeMapper = reportTypeMapper;
+        this.auditLogService = auditLogService;
+    }
+
 
     @Transactional(readOnly = true)
     public List<ReportTypeResponse> findAll() {
         return reportTypeRepository.findAll().stream()
                 .map(reportTypeMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +64,7 @@ public class ReportTypeService {
         criteria.setActive(true);
         return reportTypeRepository.findAll(ReportTypeSpecification.fromCriteria(criteria)).stream()
                 .map(reportTypeMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

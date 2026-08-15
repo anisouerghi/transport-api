@@ -8,8 +8,8 @@ import com.transport.reporting.repository.AppMenuRepository;
 import com.transport.reporting.repository.PermissionRepository;
 import com.transport.reporting.repository.RoleRepository;
 import com.transport.reporting.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
  * Les permissions / menus manquants sont ajoutés même si la base n'est pas vide.
  */
 @Configuration
-@RequiredArgsConstructor
-@Slf4j
 public class SecurityDataInitializer {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityDataInitializer.class);
 
     @Bean
     @Order(1)

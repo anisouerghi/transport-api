@@ -11,7 +11,6 @@ import com.transport.reporting.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,14 +24,18 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/signalements")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Reports")
 public class AdminReportController {
 
     private final ReportService reportService;
+    public AdminReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('REPORT', 'VIEW')")
@@ -55,7 +58,7 @@ public class AdminReportController {
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> priorities() {
         List<Map<String, String>> values = Arrays.stream(Priority.values())
                 .map(p -> Map.of("code", p.name(), "label", priorityLabel(p)))
-                .toList();
+                .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.ok(values));
     }
 

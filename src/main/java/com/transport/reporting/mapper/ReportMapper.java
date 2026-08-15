@@ -4,18 +4,21 @@ import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.dto.StatusResponse;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.Status;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Mapper Signalement : conversion Entity <-> DTO.
  */
 @Component
-@RequiredArgsConstructor
 public class ReportMapper {
 
     private final TransportSupportMapper transportSupportMapper;
     private final PassengerMapper passengerMapper;
+    public ReportMapper(TransportSupportMapper transportSupportMapper, PassengerMapper passengerMapper) {
+        this.transportSupportMapper = transportSupportMapper;
+        this.passengerMapper = passengerMapper;
+    }
+
 
     public ReportResponse toResponse(Report report) {
         return ReportResponse.builder()

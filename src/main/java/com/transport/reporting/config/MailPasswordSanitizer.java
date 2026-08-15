@@ -18,16 +18,21 @@ public class MailPasswordSanitizer implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (bean instanceof JavaMailSenderImpl sender) {
+        if (bean instanceof JavaMailSenderImpl) {
+            JavaMailSenderImpl sender = (JavaMailSenderImpl) bean;
             String password = sender.getPassword();
             String cleaned = stripOptionalQuotes(password);
+            if (cleaned != null) {
+                cleaned = cleaned.replace(" ", "");
+            }
             if (password != null && !password.equals(cleaned)) {
                 sender.setPassword(cleaned);
-                log.info("SMTP password sanitized (quotes removed), length={}",
+                log.info("SMTP password sanitized (quotes removed): bean={}, host={}, port={}, username={}, length={}",
+                        beanName, sender.getHost(), sender.getPort(), sender.getUsername(),
                         cleaned != null ? cleaned.length() : 0);
             } else {
-                log.info("SMTP JavaMailSender ready: host={}, port={}, username={}, passwordLength={}",
-                        sender.getHost(), sender.getPort(), sender.getUsername(),
+                log.info("SMTP JavaMailSender ready: bean={}, host={}, port={}, username={}, passwordLength={}",
+                        beanName, sender.getHost(), sender.getPort(), sender.getUsername(),
                         password != null ? password.length() : 0);
             }
         }

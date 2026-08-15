@@ -11,7 +11,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.RoleMapper;
 import com.transport.reporting.repository.PermissionRepository;
 import com.transport.reporting.repository.RoleRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,21 +21,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RoleMapper roleMapper;
+    public RoleService(RoleRepository roleRepository, PermissionRepository permissionRepository, RoleMapper roleMapper) {
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+        this.roleMapper = roleMapper;
+    }
+
 
     @Transactional(readOnly = true)
     public List<RoleResponse> findAll() {
         return roleRepository.findAllWithPermissions().stream()
                 .map(roleMapper::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +88,7 @@ public class RoleService {
     public List<PermissionResponse> findAllPermissions() {
         return permissionRepository.findAllByOrderByModuleCodeAscActionCodeAsc().stream()
                 .map(roleMapper::toPermissionResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /**
@@ -102,7 +107,7 @@ public class RoleService {
         }
         List<String> usedActions = actionOrder.stream()
                 .filter(a -> all.stream().anyMatch(p -> a.equals(p.getActionCode())))
-                .toList();
+                .collect(Collectors.toList());
 
         Map<String, String> moduleLabels = new LinkedHashMap<>();
         Map<String, Map<String, PermissionMatrixResponse.PermissionCell>> cellsByModule = new LinkedHashMap<>();

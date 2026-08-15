@@ -7,7 +7,6 @@ import com.transport.reporting.service.StatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,11 +16,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/status")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Status")
 public class StatusController {
 
     private final StatusService statusService;
+    public StatusController(StatusService statusService) {
+        this.statusService = statusService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('STATUS', 'VIEW') or @perm.hasAny('REPORT', 'VIEW', 'REPLY')")

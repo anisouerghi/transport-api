@@ -10,7 +10,6 @@ import com.transport.reporting.service.SupportTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,11 +19,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/support-types")
-@RequiredArgsConstructor
 @Tag(name = "Admin - Support Types")
 public class SupportTypeController {
 
     private final SupportTypeService supportTypeService;
+    public SupportTypeController(SupportTypeService supportTypeService) {
+        this.supportTypeService = supportTypeService;
+    }
+
 
     @GetMapping
     @PreAuthorize("@perm.has('SUPPORT_TYPE', 'VIEW')")

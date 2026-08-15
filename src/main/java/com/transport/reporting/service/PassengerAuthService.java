@@ -9,7 +9,6 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.repository.PassengerRepository;
 import com.transport.reporting.security.JwtService;
 import com.transport.reporting.security.PassengerPrincipal;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +19,18 @@ import org.springframework.util.StringUtils;
  * {@code password_hash == null} → contact anonyme ; renseigné → compte inscrit.
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PassengerAuthService {
 
     private final PassengerRepository passengerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    public PassengerAuthService(PassengerRepository passengerRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+        this.passengerRepository = passengerRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+    }
+
 
     public PassengerAuthResponse register(PassengerRegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
