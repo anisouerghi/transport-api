@@ -1,5 +1,7 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.response.PageResponse;
+import com.transport.reporting.dto.PublicHomepageReplyResponse;
 import com.transport.reporting.dto.PublicReportListItemResponse;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
 import com.transport.reporting.entity.Reply;
@@ -23,6 +25,9 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class PublicTrackingService {
+
+    private static final int HOMEPAGE_REPLY_LIMIT = 15;
+    private static final int HOMEPAGE_PAGE_SIZE = 5;
 
     private final ReportRepository reportRepository;
     private final ReplyRepository replyRepository;
@@ -80,6 +85,46 @@ public class PublicTrackingService {
                 .limit(15)
                 .map(this::toListItem)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Accueil public : 15 dernières réponses des signalements {@code publish} (case « Visible à l'accueil »),
+     * paginées par 5, plus récentes d'abord. Aucune donnée personnelle.
+     */
+    public PageResponse<PublicHomepageReplyResponse> listHomepageReplies(int page, int size) {
+        int safeSize = size <= 0 ? HOMEPAGE_PAGE_SIZE : Math.min(size, HOMEPAGE_PAGE_SIZE);
+        List<Reply> latest = replyRepository.findTop15ByReport_PublishTrueOrderByReplyDateDesc();
+        int total = Math.min(latest.size(), HOMEPAGE_REPLY_LIMIT);
+        int totalPages = total == 0 ? 0 : (int) Math.ceil(total / (double) safeSize);
+        int safePage = Math.max(page, 0);
+        if (totalPages > 0 && safePage >= totalPages) {
+            safePage = totalPages - 1;
+        }
+        int from = Math.min(safePage * safeSize, total);
+        int to = Math.min(from + safeSize, total);
+        List<PublicHomepageReplyResponse> content = latest.subList(from, to).stream()
+                .map(this::toHomepageReply)
+                .collect(Collectors.toList());
+        return PageResponse.<PublicHomepageReplyResponse>builder()
+                .content(content)
+                .totalElements(total)
+                .totalPages(totalPages)
+                .page(safePage)
+                .size(safeSize)
+                .build();
+    }
+
+    private PublicHomepageReplyResponse toHomepageReply(Reply reply) {
+        Report report = reply.getReport();
+        String typeLabel = null;
+        if (report != null && report.getReportType() != null) {
+            typeLabel = report.getReportType().getLabel();
+        }
+        return PublicHomepageReplyResponse.builder()
+                .message(reply.getMessage())
+                .replyDate(reply.getReplyDate())
+                .reportTypeLabel(typeLabel)
+                .build();
     }
 
     private PublicReportListItemResponse toListItem(Report report) {

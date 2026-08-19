@@ -56,6 +56,8 @@ Le destinataire est **l'e-mail du voyageur** sur le signalement, pas celui de l'
 - Réponses filtrées : `public_response = true` uniquement
 - Pas d'IDs internes, agents, priorité
 
+Accueil public (`GET /api/public/reponses`) : filtre **`report.publish = true`** (case « Visible à l'accueil »), distinct du suivi voyageur.
+
 ## Réponse publique de création
 
 `POST /api/public/signalements` retourne la **référence** mais masque l'**UUID** (réservé au lien e-mail).

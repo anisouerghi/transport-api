@@ -66,6 +66,8 @@ mvn spring-boot:run
 | GET | `/api/public/supports/{uuid}` | Support actif via QR |
 | GET | `/api/public/report-types` | Types actifs |
 | POST | `/api/public/signalements` | **multipart** : part `report` (JSON) + `files` (optionnel) |
+| GET | `/api/public/signalements/mine` | JWT voyageur — 15 derniers |
+| GET | `/api/public/reponses` | Accueil : `publish=true`, 15 max, `page`/`size` (5) |
 | GET | `/api/public/suivi/{uuid}` | Suivi sécurisé par UUID (+ réponses publiques) |
 
 ### Admin `/api/admin`

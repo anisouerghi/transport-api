@@ -96,6 +96,9 @@ Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuth
 | `AdminReplyController` | `GET/POST /api/admin/reports/{id}/replies` |
 
 - `publicResponse` (défaut `true`) : visible dans le suivi voyageur
+- `publish` (case admin « Visible à l'accueil ») : flag sur le **signalement** ; dernière réponse écrase la valeur
+- Accueil public : `GET /api/public/reponses?page=&size=` — `report.publish = true`, **15 dernières** max, 5 par page, tri `replyDate` DESC
+- DTO `PublicHomepageReplyResponse` : `message`, `replyDate`, `reportTypeLabel` (pas de voyageur, UUID, référence, support nominatif)
 - `sendEmail` : notification si le voyageur a une adresse e-mail
 - `PassengerResponse.anonymous` : sans nom / e-mail / téléphone
 - Liste admin : `ReportResponse.replied` = au moins une ligne `reply` (toute réponse enregistrée)

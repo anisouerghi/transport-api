@@ -23,4 +23,7 @@ public interface ReplyRepository extends JpaRepository<Reply, Long> {
 
     @Query("SELECT DISTINCT r.report.reportId FROM Reply r WHERE r.report.reportId IN :ids")
     List<Long> findReportIdsHavingReplies(@Param("ids") List<Long> ids);
+
+    /** Accueil public : 15 dernières réponses des signalements {@code publish = true}. */
+    List<Reply> findTop15ByReport_PublishTrueOrderByReplyDateDesc();
 }
