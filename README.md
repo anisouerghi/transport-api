@@ -74,7 +74,7 @@ mvn spring-boot:run
 |---------|----------|
 | CRUD | `/api/admin/users` |
 | search / CRUD | `/api/admin/support-types`, `/api/admin/report-types`, `/api/admin/transport-supports` |
-| GET / POST search | `/api/admin/signalements` |
+| GET / POST search | `/api/admin/signalements` | Search : `filters.replied` (`true`/`false`) ; items : `replied` |
 | GET | `/api/admin/signalements/{id}` |
 | GET | `/api/admin/signalements/{id}/attachments` |
 | GET | `/api/admin/attachments/{id}/view` |

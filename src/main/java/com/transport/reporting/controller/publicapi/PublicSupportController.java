@@ -1,6 +1,7 @@
 package com.transport.reporting.controller.publicapi;
 
 import com.transport.reporting.common.response.ApiResponse;
+import com.transport.reporting.dto.PublicSupportOptionResponse;
 import com.transport.reporting.dto.TransportSupportResponse;
 import com.transport.reporting.service.TransportSupportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +28,12 @@ public class PublicSupportController {
         this.transportSupportService = transportSupportService;
     }
 
+
+    @GetMapping
+    @Operation(summary = "Lister les supports de transport actifs (choix sans QR)")
+    public ResponseEntity<ApiResponse<List<PublicSupportOptionResponse>>> findAllActive() {
+        return ResponseEntity.ok(ApiResponse.ok(transportSupportService.findAllActivePublic()));
+    }
 
     @GetMapping("/{uuid}")
     @Operation(summary = "Identifier un support via UUID du QR Code")

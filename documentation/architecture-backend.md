@@ -98,6 +98,10 @@ Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuth
 - `publicResponse` (défaut `true`) : visible dans le suivi voyageur
 - `sendEmail` : notification si le voyageur a une adresse e-mail
 - `PassengerResponse.anonymous` : sans nom / e-mail / téléphone
+- Liste admin : `ReportResponse.replied` = au moins une ligne `reply` (toute réponse enregistrée)
+- Filtre search : `ReportCriteria.replied` (`true` / `false` / omis) via EXISTS / NOT EXISTS — pagination serveur
+
+`POST /api/admin/signalements/search` : même contrat `SearchRequest<ReportCriteria>` ; le frontend n’infère pas le statut réponse.
 
 E-mails de réponse + suivi UUID : [`email-tracking.md`](email-tracking.md).
 

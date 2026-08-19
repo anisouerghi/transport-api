@@ -21,6 +21,8 @@ public class ReportCriteria {
     private Instant creationDateTo;
     private Instant closureDateFrom;
     private Instant closureDateTo;
+    /** true = au moins une réponse ; false = aucune ; null = tous. */
+    private Boolean replied;
 
     public String getReference() {
         return reference;
@@ -108,5 +110,13 @@ public class ReportCriteria {
 
     public void setClosureDateTo(Instant closureDateTo) {
         this.closureDateTo = closureDateTo;
+    }
+
+    public Boolean getReplied() {
+        return replied;
+    }
+
+    public void setReplied(Boolean replied) {
+        this.replied = replied;
     }
 }

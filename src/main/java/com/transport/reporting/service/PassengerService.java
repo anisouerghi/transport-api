@@ -104,7 +104,7 @@ public class PassengerService {
         return passengerMapper.toResponse(passenger);
     }
 
-    private Passenger getEntity(Long id) {
+    Passenger getEntity(Long id) {
         return passengerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Passenger", id));
     }

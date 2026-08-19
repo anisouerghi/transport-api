@@ -11,6 +11,7 @@ import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
 import com.transport.reporting.dto.AuditLogEvent;
 import com.transport.reporting.dto.EmailSendResult;
+import com.transport.reporting.dto.PassengerRequest;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
@@ -24,6 +25,7 @@ import com.transport.reporting.entity.TransportSupport;
 import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.ReportMapper;
+import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportHistoryRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.ReportTypeRepository;
@@ -41,8 +43,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -76,7 +80,8 @@ public class ReportService {
     private final AuditLogService auditLogService;
     private final EmailService emailService;
     private final ReplyEmailComposer replyEmailComposer;
-    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer) {
+    private final ReplyRepository replyRepository;
+    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository) {
         this.reportRepository = reportRepository;
         this.reportTypeRepository = reportTypeRepository;
         this.transportSupportRepository = transportSupportRepository;
@@ -90,6 +95,7 @@ public class ReportService {
         this.auditLogService = auditLogService;
         this.emailService = emailService;
         this.replyEmailComposer = replyEmailComposer;
+        this.replyRepository = replyRepository;
     }
 
 
@@ -120,7 +126,7 @@ public class ReportService {
         ReportType reportType = reportTypeRepository.findById(request.getReportTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ReportType", request.getReportTypeId()));
 
-        Passenger passenger = passengerService.findOrCreate(request.getPassenger());
+        Passenger passenger = resolvePassenger(request.getPassenger());
         Status initialStatus = statusService.findByCode("NEW");
 
         Report report = Report.builder()
@@ -241,8 +247,14 @@ public class ReportService {
                 SORT_FIELDS
         );
         Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
-        Page<ReportResponse> page = reportRepository.findAll(spec, pageable)
-                .map(reportMapper::toResponse);
+        Page<Report> entityPage = reportRepository.findAll(spec, pageable);
+        Set<Long> repliedIds = repliedReportIds(
+                entityPage.getContent().stream().map(Report::getReportId).toList());
+        Page<ReportResponse> page = entityPage.map(report -> {
+            ReportResponse dto = reportMapper.toResponse(report);
+            dto.setReplied(repliedIds.contains(report.getReportId()));
+            return dto;
+        });
         return PageResponse.from(page);
     }
 
@@ -256,7 +268,15 @@ public class ReportService {
     private ReportResponse toResponseWithAttachments(Report report) {
         ReportResponse response = reportMapper.toResponse(report);
         response.setAttachments(attachmentService.findByReportId(report.getReportId()));
+        response.setReplied(replyRepository.existsByReport_ReportId(report.getReportId()));
         return response;
+    }
+
+    private Set<Long> repliedReportIds(List<Long> reportIds) {
+        if (reportIds == null || reportIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(replyRepository.findReportIdsHavingReplies(reportIds));
     }
 
     /** Génère une référence unique du type {@code SIG-yyyyMMdd-xxxxxx}. */
@@ -300,6 +320,17 @@ public class ReportService {
                         ? "E-mail de confirmation envoyé pour " + report.getReference()
                         : "Échec e-mail de confirmation pour " + report.getReference())
                 .build());
+    }
+
+    /**
+     * Voyageur authentifié : rattache le signalement au compte.
+     * Anonyme : find-or-create (e-mail optionnel).
+     */
+    private Passenger resolvePassenger(PassengerRequest request) {
+        return SecurityUtils.currentPassenger()
+                .map(principal -> passengerService.getEntity(principal.getPassengerId()))
+                .orElseGet(() -> passengerService.findOrCreate(
+                        request != null ? request : new PassengerRequest()));
     }
 
     /**

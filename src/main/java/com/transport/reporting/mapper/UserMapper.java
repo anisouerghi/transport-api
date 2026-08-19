@@ -6,6 +6,7 @@ import com.transport.reporting.entity.AppUser;
 import com.transport.reporting.entity.Role;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ public class UserMapper {
                 .email(request.getEmail())
                 .passwordHash(passwordHash)
                 .active(true)
+                .createdDate(Instant.now())
                 .build();
     }
 

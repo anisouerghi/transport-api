@@ -1,5 +1,6 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.dto.PublicReportListItemResponse;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
 import com.transport.reporting.entity.Reply;
 import com.transport.reporting.entity.Report;
@@ -9,6 +10,9 @@ import com.transport.reporting.repository.ReportRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.util.StringUtils;
+
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -58,6 +62,45 @@ public class PublicTrackingService {
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? report.getStatus().getLabel() : null)
                 .replies(replies)
+                .build();
+    }
+
+    /**
+     * 15 derniers signalements du voyageur authentifié (identité = JWT uniquement).
+     * Filtre optionnel par référence (partiel, insensible à la casse).
+     */
+    public List<PublicReportListItemResponse> listMine(Long passengerId, String reference) {
+        List<Report> reports = StringUtils.hasText(reference)
+                ? reportRepository.findTop15ByPassenger_PassengerIdAndReferenceContainingIgnoreCaseOrderByCreationDateDesc(
+                        passengerId, reference.trim())
+                : reportRepository.findTop15ByPassenger_PassengerIdOrderByCreationDateDesc(passengerId);
+
+        return reports.stream()
+                .sorted(Comparator.comparing(Report::getCreationDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(15)
+                .map(this::toListItem)
+                .collect(Collectors.toList());
+    }
+
+    private PublicReportListItemResponse toListItem(Report report) {
+        String supportLabel = null;
+        String supportTypeLabel = null;
+        if (report.getTransportSupport() != null) {
+            supportLabel = report.getTransportSupport().getLabel() != null
+                    ? report.getTransportSupport().getLabel()
+                    : report.getTransportSupport().getReference();
+            if (report.getTransportSupport().getSupportType() != null) {
+                supportTypeLabel = report.getTransportSupport().getSupportType().getLabel();
+            }
+        }
+        return PublicReportListItemResponse.builder()
+                .uuid(report.getUuid())
+                .reference(report.getReference())
+                .creationDate(report.getCreationDate())
+                .supportLabel(supportLabel)
+                .supportTypeLabel(supportTypeLabel)
+                .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
+                .statusLabel(report.getStatus() != null ? report.getStatus().getLabel() : null)
                 .build();
     }
 

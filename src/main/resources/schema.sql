@@ -68,7 +68,7 @@ CREATE TABLE app_user (
     email         VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     active        TINYINT(1)   NOT NULL DEFAULT 1,
-    created_date  DATETIME(6)  NOT NULL,
+    created_date  DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_app_user_uuid (uuid),
     UNIQUE KEY uk_app_user_username (username),

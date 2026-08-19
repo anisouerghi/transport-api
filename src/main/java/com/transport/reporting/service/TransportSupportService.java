@@ -9,6 +9,7 @@ import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
 import com.transport.reporting.dto.AuditLogEvent;
+import com.transport.reporting.dto.PublicSupportOptionResponse;
 import com.transport.reporting.dto.TransportSupportCriteria;
 import com.transport.reporting.dto.TransportSupportRequest;
 import com.transport.reporting.dto.TransportSupportResponse;
@@ -85,6 +86,21 @@ public class TransportSupportService {
             throw new ResourceNotFoundException("Active TransportSupport", uuid);
         }
         return transportSupportMapper.toResponse(support);
+    }
+
+    /** Catalogue public : supports actifs pour le choix sans QR. */
+    @Transactional(readOnly = true)
+    public List<PublicSupportOptionResponse> findAllActivePublic() {
+        return transportSupportRepository.findBySupportStatusWithType(SupportStatus.ACTIVE).stream()
+                .map(s -> PublicSupportOptionResponse.builder()
+                        .uuid(s.getUuid())
+                        .reference(s.getReference())
+                        .label(s.getLabel())
+                        .supportTypeId(s.getSupportType() != null ? s.getSupportType().getSupportTypeId() : null)
+                        .supportTypeCode(s.getSupportType() != null ? s.getSupportType().getCode() : null)
+                        .supportTypeLabel(s.getSupportType() != null ? s.getSupportType().getLabel() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /** Liste complete sans pagination. */

@@ -1,9 +1,11 @@
 package com.transport.reporting.controller.publicapi;
 
 import com.transport.reporting.common.response.ApiResponse;
+import com.transport.reporting.dto.PublicReportListItemResponse;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
+import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.service.PublicTrackingService;
 import com.transport.reporting.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,13 +18,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -58,6 +63,23 @@ public class PublicReportController {
             @RequestPart(value = "files", required = false) MultipartFile[] files) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Report created", reportService.create(request, files)));
+    }
+
+    @GetMapping("/api/public/signalements/mine")
+    @Operation(
+            summary = "Lister mes 15 derniers signalements",
+            description = "Réservé au voyageur authentifié. L'identité vient uniquement du JWT : "
+                    + "aucun identifiant voyageur n'est accepté en paramètre. Filtre optionnel par référence."
+    )
+    public ResponseEntity<ApiResponse<List<PublicReportListItemResponse>>> mine(
+            @AuthenticationPrincipal PassengerPrincipal principal,
+            @RequestParam(required = false) String reference) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(false, "Authentification requise.", "AUTH_REQUIRED", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                publicTrackingService.listMine(principal.getPassengerId(), reference)));
     }
 
     /**

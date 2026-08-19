@@ -33,6 +33,8 @@ public class ReportResponse {
     private String reportTypeLabel;
     private PassengerResponse passenger;
     private StatusResponse status;
+    /** true si au moins une réponse agent est enregistrée. */
+    private boolean replied;
     /** Pièces jointes associées (renseignées sur détail / création / suivi). */
     private List<AttachmentResponse> attachments;
 }

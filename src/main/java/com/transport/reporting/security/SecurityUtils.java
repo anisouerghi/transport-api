@@ -13,6 +13,14 @@ public final class SecurityUtils {
     private SecurityUtils() {
     }
 
+    public static Optional<PassengerPrincipal> currentPassenger() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof PassengerPrincipal)) {
+            return Optional.empty();
+        }
+        return Optional.of((PassengerPrincipal) authentication.getPrincipal());
+    }
+
     public static Optional<UserPrincipal> currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {

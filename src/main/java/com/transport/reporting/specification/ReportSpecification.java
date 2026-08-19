@@ -2,7 +2,10 @@ package com.transport.reporting.specification;
 
 import com.transport.reporting.common.util.SpecificationUtils;
 import com.transport.reporting.dto.ReportCriteria;
+import com.transport.reporting.entity.Reply;
 import com.transport.reporting.entity.Report;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -57,6 +60,18 @@ public final class ReportSpecification {
                     criteria.getCreationDateFrom(), criteria.getCreationDateTo());
             SpecificationUtils.addInstantRange(predicates, cb, root, "closureDate",
                     criteria.getClosureDateFrom(), criteria.getClosureDateTo());
+
+            if (criteria.getReplied() != null) {
+                Subquery<Long> replyExists = query.subquery(Long.class);
+                Root<Reply> replyRoot = replyExists.from(Reply.class);
+                replyExists.select(replyRoot.get("replyId"));
+                replyExists.where(cb.equal(replyRoot.get("report").get("reportId"), root.get("reportId")));
+                if (Boolean.TRUE.equals(criteria.getReplied())) {
+                    predicates.add(cb.exists(replyExists));
+                } else {
+                    predicates.add(cb.not(cb.exists(replyExists)));
+                }
+            }
 
             if (predicates.isEmpty()) {
                 return cb.conjunction();

@@ -19,6 +19,11 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
 
     Optional<Report> findByUuid(UUID uuid);
 
+    List<Report> findTop15ByPassenger_PassengerIdOrderByCreationDateDesc(Long passengerId);
+
+    List<Report> findTop15ByPassenger_PassengerIdAndReferenceContainingIgnoreCaseOrderByCreationDateDesc(
+            Long passengerId, String reference);
+
     @Query("SELECT r FROM Report r LEFT JOIN FETCH r.passenger LEFT JOIN FETCH r.status WHERE r.reportId = :id")
     Optional<Report> findByIdWithPassenger(@Param("id") Long id);
 
