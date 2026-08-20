@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS report_history;
 DROP TABLE IF EXISTS attachment;
 DROP TABLE IF EXISTS report;
 DROP TABLE IF EXISTS transport_support;
+DROP TABLE IF EXISTS district;
 DROP TABLE IF EXISTS report_type;
 DROP TABLE IF EXISTS passenger;
 DROP TABLE IF EXISTS report_status;
@@ -26,6 +27,16 @@ CREATE TABLE support_type (
     label           VARCHAR(150) NOT NULL,
     PRIMARY KEY (support_type_id),
     UNIQUE KEY uk_support_type_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE district (
+    district_id     BIGINT NOT NULL AUTO_INCREMENT,
+    code_district   VARCHAR(10)  NOT NULL,
+    libelle_district VARCHAR(45) NOT NULL,
+    etat            INT          NOT NULL DEFAULT 1,
+    PRIMARY KEY (district_id),
+    UNIQUE KEY uk_district_code (code_district),
+    KEY idx_district_etat (etat)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE report_type (
@@ -140,6 +151,7 @@ CREATE TABLE transport_support (
     qr_status            VARCHAR(30)  NULL,
     support_status       VARCHAR(30)  NOT NULL,
     support_type_id      BIGINT       NOT NULL,
+    district_id          BIGINT       NOT NULL,
     created_at           DATETIME(6)  NOT NULL,
     updated_at           DATETIME(6)  NOT NULL,
     version              BIGINT       NOT NULL DEFAULT 0,
@@ -150,8 +162,11 @@ CREATE TABLE transport_support (
     KEY idx_transport_support_uuid (uuid),
     KEY idx_transport_support_support_status (support_status),
     KEY idx_transport_support_qr_status (qr_status),
+    KEY idx_transport_support_district (district_id),
     CONSTRAINT fk_transport_support_type
-        FOREIGN KEY (support_type_id) REFERENCES support_type (support_type_id)
+        FOREIGN KEY (support_type_id) REFERENCES support_type (support_type_id),
+    CONSTRAINT fk_transport_support_district
+        FOREIGN KEY (district_id) REFERENCES district (district_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE report (

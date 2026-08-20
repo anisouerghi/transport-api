@@ -32,6 +32,10 @@ public class TransportSupportRequest {
     @NotNull
     private Long supportTypeId;
 
+    /** Identifiant du district (obligatoire). */
+    @NotNull
+    private Long districtId;
+
     /**
      * Version pour verrouillage optimiste.
      * A renvoyer telle quelle lors d'une modification (PUT).

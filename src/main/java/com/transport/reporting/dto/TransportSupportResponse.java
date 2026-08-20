@@ -48,11 +48,20 @@ public class TransportSupportResponse {
     /** Id du type de support lie. */
     private Long supportTypeId;
 
-    /** Code du type (ex. BUS) — denormalise pour l'affichage. */
+    /** Code du type de support. */
     private String supportTypeCode;
 
-    /** Libelle du type — denormalise pour l'affichage. */
+    /** Libelle du type de support. */
     private String supportTypeLabel;
+
+    /** Id du district. */
+    private Long districtId;
+
+    /** Code du district. */
+    private String districtCode;
+
+    /** Libelle du district. */
+    private String districtLabel;
 
     /** Date de creation de l'enregistrement. */
     private Instant createdAt;
