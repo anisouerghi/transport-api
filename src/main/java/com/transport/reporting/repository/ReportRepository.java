@@ -28,4 +28,6 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
     Optional<Report> findByIdWithPassenger(@Param("id") Long id);
 
     boolean existsByReference(String reference);
+
+    boolean existsByTransportSupportTransportSupportId(Long transportSupportId);
 }

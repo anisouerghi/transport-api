@@ -3,6 +3,7 @@ package com.transport.reporting.mapper;
 import com.transport.reporting.dto.TransportSupportRequest;
 import com.transport.reporting.dto.TransportSupportResponse;
 import com.transport.reporting.entity.SupportType;
+import com.transport.reporting.entity.District;
 import com.transport.reporting.entity.TransportSupport;
 import org.springframework.stereotype.Component;
 
@@ -18,26 +19,28 @@ public class TransportSupportMapper {
      * Request -> nouvelle entite (creation).
      * UUID / QR seront renseignes ensuite par le service.
      */
-    public TransportSupport toEntity(TransportSupportRequest request, SupportType supportType) {
-        TransportSupport entity = new TransportSupport();
-        entity.setReference(request.getReference());
-        entity.setLabel(request.getLabel());
-        entity.setSupportStatus(request.getSupportStatus());
-        entity.setSupportType(supportType);
-        return entity;
+    public TransportSupport toEntity(TransportSupportRequest request, SupportType supportType, District district) {
+        return TransportSupport.builder()
+                .reference(request.getReference())
+                .label(request.getLabel())
+                .supportStatus(request.getSupportStatus())
+                .supportType(supportType)
+                .district(district)
+                .build();
     }
 
     /**
      * Applique le Request sur une entite existante (modification).
      * Ne touche pas aux champs QR.
      */
-    public void updateEntity(TransportSupport entity, TransportSupportRequest request, SupportType supportType) {
+    public void updateEntity(TransportSupport entity, TransportSupportRequest request, SupportType supportType, District district) {
         entity.setReference(request.getReference());
         entity.setLabel(request.getLabel());
         if (request.getSupportStatus() != null) {
             entity.setSupportStatus(request.getSupportStatus());
         }
         entity.setSupportType(supportType);
+        entity.setDistrict(district);
         if (request.getVersion() != null) {
             entity.setVersion(request.getVersion());
         }
@@ -61,6 +64,9 @@ public class TransportSupportMapper {
                 .supportTypeId(support.getSupportType().getSupportTypeId())
                 .supportTypeCode(support.getSupportType().getCode())
                 .supportTypeLabel(support.getSupportType().getLabel())
+                .districtId(support.getDistrict().getDistrictId())
+                .districtCode(support.getDistrict().getCodeDistrict())
+                .districtLabel(support.getDistrict().getLibelleDistrict())
                 .createdAt(support.getCreatedAt())
                 .updatedAt(support.getUpdatedAt())
                 .version(support.getVersion())

@@ -4,6 +4,7 @@ import com.transport.reporting.common.enums.AuditAction;
 import com.transport.reporting.common.enums.AuditModule;
 import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.dto.AuditLogEvent;
+import com.transport.reporting.dto.UpdatePasswordRequest;
 import com.transport.reporting.dto.UserRequest;
 import com.transport.reporting.dto.UserResponse;
 import com.transport.reporting.entity.AppUser;
@@ -143,6 +144,31 @@ public class UserService {
                 .entityId(String.valueOf(id))
                 .oldValue(snapshot)
                 .description("Suppression de l'utilisateur " + user.getUsername())
+                .build());
+    }
+
+    public void updatePassword(Long userId, UpdatePasswordRequest request) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new BusinessException("Ancien mot de passe incorrect");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new BusinessException("Le nouveau mot de passe doit être différent de l'ancien");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(userId)
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.USERS)
+                .entityName("AppUser")
+                .entityId(String.valueOf(userId))
+                .description("Mise à jour du mot de passe de l'utilisateur " + user.getUsername())
                 .build());
     }
 

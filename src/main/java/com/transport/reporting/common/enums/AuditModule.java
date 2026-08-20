@@ -14,6 +14,7 @@ public enum AuditModule {
     ATTACHMENTS,
     STATUSES,
     PASSENGERS,
+    DISTRICTS,
     STATISTICS,
     AUTH,
     SYSTEM,

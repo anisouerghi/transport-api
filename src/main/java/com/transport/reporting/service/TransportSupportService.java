@@ -15,10 +15,13 @@ import com.transport.reporting.dto.TransportSupportRequest;
 import com.transport.reporting.dto.TransportSupportResponse;
 import com.transport.reporting.entity.SupportType;
 import com.transport.reporting.entity.TransportSupport;
+import com.transport.reporting.entity.District;
 import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.TransportSupportMapper;
+import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.SupportTypeRepository;
+import com.transport.reporting.repository.DistrictRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.specification.TransportSupportSpecification;
 import org.springframework.data.domain.Page;
@@ -62,9 +65,11 @@ public class TransportSupportService {
 
     private final TransportSupportRepository transportSupportRepository;
     private final SupportTypeRepository supportTypeRepository;
+    private final DistrictRepository districtRepository;
     private final TransportSupportMapper transportSupportMapper;
     private final QrCodeService qrCodeService;
     private final AuditLogService auditLogService;
+    private final ReportRepository reportRepository;
     public TransportSupportService(TransportSupportRepository transportSupportRepository, SupportTypeRepository supportTypeRepository, TransportSupportMapper transportSupportMapper, QrCodeService qrCodeService, AuditLogService auditLogService) {
         this.transportSupportRepository = transportSupportRepository;
         this.supportTypeRepository = supportTypeRepository;
@@ -137,8 +142,9 @@ public class TransportSupportService {
             throw new BusinessException("Support reference already exists");
         }
         SupportType supportType = resolveSupportType(request.getSupportTypeId());
+        District district = resolveDistrict(request.getDistrictId());
 
-        TransportSupport support = transportSupportMapper.toEntity(request, supportType);
+        TransportSupport support = transportSupportMapper.toEntity(request, supportType, district);
         support.setSupportStatus(request.getSupportStatus() != null
                 ? request.getSupportStatus()
                 : SupportStatus.ACTIVE);
@@ -176,7 +182,8 @@ public class TransportSupportService {
         }
 
         SupportType supportType = resolveSupportType(request.getSupportTypeId());
-        transportSupportMapper.updateEntity(support, request, supportType);
+        District district = resolveDistrict(request.getDistrictId());
+        transportSupportMapper.updateEntity(support, request, supportType, district);
         support = transportSupportRepository.save(support);
 
         auditLogService.record(AuditLogEvent.builder()
@@ -196,6 +203,12 @@ public class TransportSupportService {
     /** Regenere l'image QR et remet qrStatus a GENERATED. */
     public TransportSupportResponse regenerateQr(Long id) {
         TransportSupport support = getEntity(id);
+        
+        // Verifier si le transport_support_id possede deja un rapport
+        if (reportRepository.existsByTransportSupportTransportSupportId(support.getTransportSupportId())) {
+            throw new BusinessException("Cannot regenerate QR code: this transport support already has a report");
+        }
+        
         applyQrCode(support);
         support.setQrDateCreation(Instant.now());
         support.setQrStatus(QrStatus.GENERATED);
@@ -216,11 +229,20 @@ public class TransportSupportService {
     public List<TransportSupportResponse> regenerateQrAll() {
         List<TransportSupport> supports = transportSupportRepository.findAll();
         Instant now = Instant.now();
+        int regeneratedCount = 0;
+        
         for (TransportSupport support : supports) {
+            // Sauter la regeneration si le transport_support_id possede deja un rapport
+            if (reportRepository.existsByTransportSupportTransportSupportId(support.getTransportSupportId())) {
+                continue;
+            }
+            
             applyQrCode(support);
             support.setQrDateCreation(now);
             support.setQrStatus(QrStatus.GENERATED);
+            regeneratedCount++;
         }
+        
         transportSupportRepository.saveAll(supports);
         auditLogService.record(AuditLogEvent.builder()
                 .userId(AuditActors.currentAdminUserId())
@@ -228,8 +250,8 @@ public class TransportSupportService {
                 .module(AuditModule.TRANSPORT_SUPPORTS)
                 .entityName("TransportSupport")
                 .entityId("ALL")
-                .newValue("qrCount=" + supports.size())
-                .description("Régénération des QR Codes de tous les supports")
+                .newValue("qrCount=" + regeneratedCount + ";totalCount=" + supports.size())
+                .description("Régénération des QR Codes de tous les supports (" + regeneratedCount + "/" + supports.size() + ")")
                 .build());
         return supports.stream()
                 .map(transportSupportMapper::toResponse)
@@ -283,6 +305,11 @@ public class TransportSupportService {
     private SupportType resolveSupportType(Long supportTypeId) {
         return supportTypeRepository.findById(supportTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("SupportType", supportTypeId));
+    }
+
+    private District resolveDistrict(Long districtId) {
+        return districtRepository.findById(districtId)
+                .orElseThrow(() -> new ResourceNotFoundException("District", districtId));
     }
 
     private TransportSupport getEntity(Long id) {

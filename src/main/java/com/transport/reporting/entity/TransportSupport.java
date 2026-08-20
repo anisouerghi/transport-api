@@ -78,6 +78,12 @@ public class TransportSupport {
             foreignKey = @ForeignKey(name = "fk_transport_support_type"))
     private SupportType supportType;
 
+    /** District du support de transport. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "district_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_transport_support_district"))
+    private District district;
+
     /** Date/heure de creation de l'enregistrement. */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
