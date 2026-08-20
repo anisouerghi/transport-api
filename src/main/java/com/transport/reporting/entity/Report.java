@@ -2,9 +2,13 @@ package com.transport.reporting.entity;
 
 import com.transport.reporting.common.enums.Priority;
 import jakarta.persistence.*;
-import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -80,6 +84,7 @@ public class Report {
     /** Date de la reponse publique. */
     @Column(name = "public_response_date")
     private Instant publicResponseDate;
+
 
     /** Support de transport concerne par le signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

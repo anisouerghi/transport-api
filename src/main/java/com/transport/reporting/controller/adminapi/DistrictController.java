@@ -29,7 +29,7 @@ public class DistrictController {
     private final DistrictService districtService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("@perm.has('REPORT_TYPE', 'VIEW')")
     @Operation(summary = "Lister tous les districts")
     public ResponseEntity<ApiResponse<List<DistrictResponse>>> findAll() {
         try {

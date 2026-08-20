@@ -13,30 +13,44 @@ public final class RequestMetadata {
     }
 
     public static String currentIpAddress() {
-        HttpServletRequest request = currentRequest();
-        if (request == null) {
-            return null;
+        try {
+            HttpServletRequest request = currentRequest();
+            if (request == null) {
+                return "0.0.0.0"; // Valeur par défaut
+            }
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
+            String ip = request.getRemoteAddr();
+            return ip != null ? ip : "0.0.0.0";
+        } catch (Exception e) {
+            return "0.0.0.0";
         }
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 
     public static String currentUserAgent() {
-        HttpServletRequest request = currentRequest();
-        if (request == null) {
-            return null;
+        try {
+            HttpServletRequest request = currentRequest();
+            if (request == null) {
+                return "unknown"; // Valeur par défaut
+            }
+            String userAgent = request.getHeader("User-Agent");
+            return userAgent != null ? userAgent : "unknown";
+        } catch (Exception e) {
+            return "unknown";
         }
-        return request.getHeader("User-Agent");
     }
 
     private static HttpServletRequest currentRequest() {
-        var attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs instanceof ServletRequestAttributes servletAttrs) {
-            return servletAttrs.getRequest();
+        try {
+            var attrs = RequestContextHolder.getRequestAttributes();
+            if (attrs instanceof ServletRequestAttributes servletAttrs) {
+                return servletAttrs.getRequest();
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
         }
-        return null;
     }
 }
