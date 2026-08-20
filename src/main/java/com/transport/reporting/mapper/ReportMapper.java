@@ -2,10 +2,11 @@ package com.transport.reporting.mapper;
 
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.dto.StatusResponse;
+import com.transport.reporting.mapper.TransportSupportMapper;
+import com.transport.reporting.mapper.PassengerMapper;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.Status;
 import org.springframework.stereotype.Component;
-
 /**
  * Mapper Signalement : conversion Entity <-> DTO.
  */

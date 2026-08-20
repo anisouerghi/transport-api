@@ -28,10 +28,6 @@ import java.util.Map;
 
 /**
  * Service métier du journal d'audit.
- * <p>
- * Les services métier appellent {@link #record(AuditLogEvent)} pour tracer une action
- * sans code dans les contrôleurs. L'écriture s'effectue dans une transaction séparée
- * ({@code REQUIRES_NEW}) afin de ne pas perturber la transaction métier.
  */
 @Service
 @Slf4j
@@ -58,9 +54,6 @@ public class AuditLogService {
     }
 
 
-    /**
-     * Recherche paginée multicritère (POST /search).
-     */
     @Transactional(readOnly = true)
     public PageResponse<AuditLogResponse> search(SearchRequest<AuditLogCriteria> request) {
         AuditLogCriteria criteria = request != null ? request.getFilters() : null;
@@ -92,54 +85,87 @@ public class AuditLogService {
             return;
         }
         try {
+            log.debug("Recording audit event: {} - {}", event.getActionType(), event.getModule());
+            
             enrichActor(event);
-            String userAgent = event.getUserAgent() != null ? event.getUserAgent() : RequestMetadata.currentUserAgent();
-            String ip = event.getIpAddress() != null ? event.getIpAddress() : RequestMetadata.currentIpAddress();
+            
+            // Récupérer les métadonnées avec gestion des null
+            String userAgent = event.getUserAgent();
+            if (userAgent == null || userAgent.isBlank()) {
+                try {
+                    userAgent = RequestMetadata.currentUserAgent();
+                } catch (Exception e) {
+                    log.debug("Could not get User-Agent: {}", e.getMessage());
+                    userAgent = "unknown";
+                }
+            }
+            
+            String ip = event.getIpAddress();
+            if (ip == null || ip.isBlank()) {
+                try {
+                    ip = RequestMetadata.currentIpAddress();
+                } catch (Exception e) {
+                    log.debug("Could not get IP address: {}", e.getMessage());
+                    ip = "0.0.0.0";
+                }
+            }
 
+            // Assurer que les valeurs ne sont pas null
+            String finalUserAgent = userAgent != null ? userAgent : "unknown";
+            String finalIp = ip != null ? ip : "0.0.0.0";
+            
+            // Construire l'entité avec des valeurs sécurisées
             AuditLog entity = AuditLog.builder()
                     .userId(event.getUserId())
-                    .username(event.getUsername())
-                    .userFullName(event.getUserFullName())
-                    .ipAddress(truncate(ip, 64))
+                    .username(safeTruncate(event.getUsername(), 255))
+                    .userFullName(safeTruncate(event.getUserFullName(), 255))
+                    .ipAddress(safeTruncate(finalIp, 64))
                     .actionType(event.getActionType())
                     .module(event.getModule())
-                    .entityName(truncate(event.getEntityName(), 100))
-                    .entityId(truncate(event.getEntityId(), 100))
+                    .entityName(safeTruncate(event.getEntityName(), 100))
+                    .entityId(safeTruncate(event.getEntityId(), 100))
                     .oldValue(event.getOldValue())
                     .newValue(event.getNewValue())
-                    .description(truncate(event.getDescription(), 2000))
-                    .userAgent(truncate(userAgent, 500))
-                    .browser(UserAgentParser.detectBrowser(userAgent))
-                    .operatingSystem(UserAgentParser.detectOperatingSystem(userAgent))
+                    .description(safeTruncate(event.getDescription(), 2000))
+                    .userAgent(safeTruncate(finalUserAgent, 500))
+                    .browser(safeTruncate(UserAgentParser.detectBrowser(finalUserAgent), 50))
+                    .operatingSystem(safeTruncate(UserAgentParser.detectOperatingSystem(finalUserAgent), 50))
                     .result(event.getResult() != null ? event.getResult() : AuditResult.SUCCESS)
                     .build();
 
             auditLogRepository.save(entity);
+            log.debug("Audit event recorded successfully with ID: {}", entity.getAuditLogId());
+            
         } catch (Exception ex) {
+            // Ne pas propager l'exception pour ne pas bloquer l'opération métier
             log.error("Failed to persist audit log: {}", ex.getMessage(), ex);
         }
     }
 
     private void enrichActor(AuditLogEvent event) {
         if (event.getUserId() == null) {
+            log.debug("No user ID provided for audit event");
             return;
         }
         if (event.getUsername() != null && event.getUserFullName() != null) {
             return;
         }
-        userRepository.findById(event.getUserId()).ifPresent(user -> applyUser(event, user));
+        try {
+            userRepository.findById(event.getUserId()).ifPresent(user -> {
+                if (event.getUsername() == null) {
+                    event.setUsername(user.getUsername());
+                }
+                if (event.getUserFullName() == null) {
+                    // Vérifiez le nom du champ dans AppUser (name, fullName, etc.)
+                    event.setUserFullName(user.getName() != null ? user.getName() : user.getUsername());
+                }
+            });
+        } catch (Exception e) {
+            log.warn("Could not enrich actor info for userId {}: {}", event.getUserId(), e.getMessage());
+        }
     }
 
-    private void applyUser(AuditLogEvent event, AppUser user) {
-        if (event.getUsername() == null) {
-            event.setUsername(user.getUsername());
-        }
-        if (event.getUserFullName() == null) {
-            event.setUserFullName(user.getName());
-        }
-    }
-
-    private static String truncate(String value, int max) {
+    private String safeTruncate(String value, int max) {
         if (value == null) {
             return null;
         }
