@@ -70,12 +70,14 @@ public class TransportSupportService {
     private final QrCodeService qrCodeService;
     private final AuditLogService auditLogService;
     private final ReportRepository reportRepository;
-    public TransportSupportService(TransportSupportRepository transportSupportRepository, SupportTypeRepository supportTypeRepository, TransportSupportMapper transportSupportMapper, QrCodeService qrCodeService, AuditLogService auditLogService) {
+    public TransportSupportService(TransportSupportRepository transportSupportRepository, SupportTypeRepository supportTypeRepository, DistrictRepository districtRepository, TransportSupportMapper transportSupportMapper, QrCodeService qrCodeService, AuditLogService auditLogService, ReportRepository reportRepository) {
         this.transportSupportRepository = transportSupportRepository;
         this.supportTypeRepository = supportTypeRepository;
+        this.districtRepository = districtRepository;
         this.transportSupportMapper = transportSupportMapper;
         this.qrCodeService = qrCodeService;
         this.auditLogService = auditLogService;
+        this.reportRepository = reportRepository;
     }
 
 
