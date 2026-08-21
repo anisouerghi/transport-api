@@ -48,6 +48,11 @@ public final class TransportSupportSpecification {
                     predicates.add(cb.equal(root.join("supportType").get("supportTypeId"), criteria.getSupportTypeId()));
                 }
 
+                // Filtre sur la relation ManyToOne district
+                if (criteria.getDistrictId() != null) {
+                    predicates.add(cb.equal(root.join("district").get("districtId"), criteria.getDistrictId()));
+                }
+
                 SpecificationUtils.addInstantRange(predicates, cb, root, "qrDateCreation",
                         criteria.getQrDateCreationFrom(), criteria.getQrDateCreationTo());
                 SpecificationUtils.addInstantRange(predicates, cb, root, "qrDateImpression",
