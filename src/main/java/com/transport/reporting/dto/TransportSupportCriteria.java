@@ -32,6 +32,9 @@ public class TransportSupportCriteria {
     /** Filtre exact sur l'identifiant du type de support. */
     private Long supportTypeId;
 
+    /** Filtre exact sur l'identifiant du district. */
+    private Long districtId;
+
     /** Debut de plage pour qrDateCreation (inclus). */
     private Instant qrDateCreationFrom;
 
