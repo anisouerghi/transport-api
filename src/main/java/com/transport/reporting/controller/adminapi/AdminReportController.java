@@ -6,6 +6,7 @@ import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportResponse;
+import com.transport.reporting.dto.UpdateNatureRequest;
 import com.transport.reporting.dto.UpdatePriorityRequest;
 import com.transport.reporting.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,6 +79,17 @@ public class AdminReportController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Priority updated",
                 reportService.updatePriority(id, request.getPriority())));
+    }
+
+    @PatchMapping("/{id}/nature")
+    @PreAuthorize("@perm.has('REPORT', 'ASSIGN_NATURE')")
+    @Operation(summary = "Affecter / modifier la nature métier d'un signalement")
+    public ResponseEntity<ApiResponse<ReportResponse>> updateNature(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateNatureRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Nature updated",
+                reportService.updateNature(id, request.getReportNatureId())));
     }
 
     private static String priorityLabel(Priority priority) {

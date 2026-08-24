@@ -8,6 +8,7 @@ public enum AuditModule {
     USERS,
     SUPPORT_TYPES,
     REPORT_TYPES,
+    REPORT_NATURES,
     TRANSPORT_SUPPORTS,
     REPORTS,
     REPLIES,

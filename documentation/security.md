@@ -25,7 +25,7 @@ Aucune liste de permissions n’est figée dans le code métier : elles vivent e
 | `active` | true |
 
 Actions supportées (selon le module) :  
-`VIEW`, `ADD`, `EDIT`, `DELETE`, `SEARCH`, `EXPORT`, `PRINT`, `REPLY`, `ASSIGN`, `CLOSE`, `ACTIVATE`, `DEACTIVATE`, `UPDATE_PRIORITY`
+`VIEW`, `ADD`, `EDIT`, `DELETE`, `SEARCH`, `EXPORT`, `PRINT`, `REPLY`, `ASSIGN`, `CLOSE`, `ACTIVATE`, `DEACTIVATE`, `UPDATE_PRIORITY`, `ASSIGN_NATURE`
 
 ## Modules récents
 
@@ -33,13 +33,14 @@ Actions supportées (selon le module) :
 |--------|-------|------|
 | `PASSENGER` | `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE` | Voyageurs → `/passengers` |
 | `REPORT_STATISTICS` | `REPORT_STATISTICS_VIEW` | Rapports & Statistiques → `/statistics` |
-| `REPORT` | … + `REPORT_UPDATE_PRIORITY` | Priorité interne des signalements |
+| `REPORT` | … + `REPORT_UPDATE_PRIORITY`, `REPORT_ASSIGN_NATURE` | Priorité / nature des signalements |
+| `NATURE` | `NATURE_VIEW`, `ADD`, `EDIT`, `DELETE`, `SEARCH`, `ACTIVATE`, `DEACTIVATE` | Natures → `/report-natures` |
 
 Rôles seed (création initiale) :
 
 - **ADMIN** : toutes les permissions (resynchronisé au démarrage)
-- **AGENT** : consultation voyageurs (+ signalements / supports)
-- **RESPONSABLE** : voyageurs (activer/désactiver) + `REPORT_STATISTICS_VIEW`
+- **AGENT** : signalements (+ `REPORT_ASSIGN_NATURE`, `NATURE_VIEW`) / supports / voyageurs
+- **RESPONSABLE** : natures (sauf DELETE) + `REPORT_ASSIGN_NATURE` + voyageurs + stats
 
 ## Contrôle API (centralisé)
 

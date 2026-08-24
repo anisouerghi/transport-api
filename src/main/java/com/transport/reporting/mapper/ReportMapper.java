@@ -39,6 +39,9 @@ public class ReportMapper {
                 .transportSupport(transportSupportMapper.toResponse(report.getTransportSupport()))
                 .reportTypeCode(report.getReportType().getCode())
                 .reportTypeLabel(report.getReportType().getLabel())
+                .natureId(report.getNature() != null ? report.getNature().getReportNatureId() : null)
+                .natureCode(report.getNature() != null ? report.getNature().getCode() : null)
+                .natureLabel(report.getNature() != null ? report.getNature().getLabel() : null)
                 .passenger(passengerMapper.toResponse(report.getPassenger()))
                 .status(toStatusResponse(report.getStatus()))
                 .build();

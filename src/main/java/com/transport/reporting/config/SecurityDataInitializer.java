@@ -44,6 +44,12 @@ public class SecurityDataInitializer {
             seedPermissions(permissionRepository);
             seedRoles(permissionRepository, roleRepository);
             syncAdminPermissions(permissionRepository, roleRepository);
+            syncRolePermissions(permissionRepository, roleRepository, "AGENT",
+                    "REPORT_ASSIGN_NATURE", "NATURE_VIEW");
+            syncRolePermissions(permissionRepository, roleRepository, "RESPONSABLE",
+                    "REPORT_ASSIGN_NATURE",
+                    "NATURE_VIEW", "NATURE_ADD", "NATURE_EDIT", "NATURE_SEARCH",
+                    "NATURE_ACTIVATE", "NATURE_DEACTIVATE");
             seedMenus(appMenuRepository);
             seedAdminUser(userRepository, roleRepository, passwordEncoder);
         };
@@ -62,6 +68,15 @@ public class SecurityDataInitializer {
                 p("REPORT", "Signalements", "CLOSE", "Clôturer / changer le statut"),
                 p("REPORT", "Signalements", "EDIT", "Modifier un signalement"),
                 p("REPORT", "Signalements", "UPDATE_PRIORITY", "Définir / modifier la priorité"),
+                p("REPORT", "Signalements", "ASSIGN_NATURE", "Affecter une nature à un signalement"),
+
+                p("NATURE", "Natures des signalements", "VIEW", "Consulter les natures"),
+                p("NATURE", "Natures des signalements", "ADD", "Créer une nature"),
+                p("NATURE", "Natures des signalements", "EDIT", "Modifier une nature"),
+                p("NATURE", "Natures des signalements", "DELETE", "Supprimer une nature"),
+                p("NATURE", "Natures des signalements", "SEARCH", "Rechercher les natures"),
+                p("NATURE", "Natures des signalements", "ACTIVATE", "Activer une nature"),
+                p("NATURE", "Natures des signalements", "DEACTIVATE", "Désactiver une nature"),
 
                 p("REPORT_TYPE", "Types de signalement", "VIEW", "Consulter les types"),
                 p("REPORT_TYPE", "Types de signalement", "ADD", "Créer un type"),
@@ -158,10 +173,11 @@ public class SecurityDataInitializer {
                 .permissions(codes(byCode,
                         "DASHBOARD_VIEW",
                         "REPORT_VIEW", "REPORT_SEARCH", "REPORT_REPLY", "REPORT_CLOSE", "REPORT_EDIT",
-                        "REPORT_UPDATE_PRIORITY",
+                        "REPORT_UPDATE_PRIORITY", "REPORT_ASSIGN_NATURE",
                         "TRANSPORT_SUPPORT_VIEW", "TRANSPORT_SUPPORT_SEARCH", "TRANSPORT_SUPPORT_PRINT",
                         "PASSENGER_VIEW", "PASSENGER_SEARCH",
-                        "STATUS_VIEW"))
+                        "STATUS_VIEW",
+                        "NATURE_VIEW"))
                 .build());
 
         roleRepository.save(Role.builder()
@@ -173,9 +189,11 @@ public class SecurityDataInitializer {
                         "DASHBOARD_VIEW",
                         "REPORT_VIEW", "REPORT_SEARCH", "REPORT_EXPORT", "REPORT_PRINT",
                         "REPORT_REPLY", "REPORT_ASSIGN", "REPORT_CLOSE", "REPORT_EDIT",
-                        "REPORT_UPDATE_PRIORITY",
+                        "REPORT_UPDATE_PRIORITY", "REPORT_ASSIGN_NATURE",
                         "REPORT_TYPE_VIEW", "REPORT_TYPE_ADD", "REPORT_TYPE_EDIT", "REPORT_TYPE_SEARCH",
                         "REPORT_TYPE_ACTIVATE", "REPORT_TYPE_DEACTIVATE",
+                        "NATURE_VIEW", "NATURE_ADD", "NATURE_EDIT", "NATURE_SEARCH",
+                        "NATURE_ACTIVATE", "NATURE_DEACTIVATE",
                         "SUPPORT_TYPE_VIEW", "SUPPORT_TYPE_ADD", "SUPPORT_TYPE_EDIT", "SUPPORT_TYPE_SEARCH",
                         "TRANSPORT_SUPPORT_VIEW", "TRANSPORT_SUPPORT_ADD", "TRANSPORT_SUPPORT_EDIT",
                         "TRANSPORT_SUPPORT_SEARCH", "TRANSPORT_SUPPORT_PRINT",
@@ -200,6 +218,32 @@ public class SecurityDataInitializer {
         });
     }
 
+    /** Ajoute les permissions manquantes à un rôle existant (sans retirer les existantes). */
+    private void syncRolePermissions(
+            PermissionRepository permissionRepository,
+            RoleRepository roleRepository,
+            String roleCode,
+            String... permissionCodes) {
+        roleRepository.findByCode(roleCode).ifPresent(role -> {
+            Role withPerms = roleRepository.findByIdWithPermissions(role.getRoleId()).orElse(role);
+            Set<Permission> perms = withPerms.getPermissions() != null
+                    ? new HashSet<>(withPerms.getPermissions())
+                    : new HashSet<>();
+            int added = 0;
+            for (String code : permissionCodes) {
+                Permission p = permissionRepository.findByCode(code).orElse(null);
+                if (p != null && perms.add(p)) {
+                    added++;
+                }
+            }
+            if (added > 0) {
+                withPerms.setPermissions(perms);
+                roleRepository.save(withPerms);
+                log.info("Role {} synced (+{} permissions)", roleCode, added);
+            }
+        });
+    }
+
     private void seedMenus(AppMenuRepository appMenuRepository) {
         List<AppMenu> catalog = List.of(
                 menu("DASHBOARD", "Dashboard", "/dashboard", "cilSpeedometer", 10, "DASHBOARD_VIEW"),
@@ -209,6 +253,7 @@ public class SecurityDataInitializer {
                 menu("TRANSPORT_SUPPORTS", "Supports", "/transport-supports", "cilList", 30, "TRANSPORT_SUPPORT_VIEW"),
                 menu("SUPPORT_TYPES", "Types de support", "/support-types", "cilList", 40, "SUPPORT_TYPE_VIEW"),
                 menu("REPORT_TYPES", "Types de signalement", "/report-types", "cilSpeech", 50, "REPORT_TYPE_VIEW"),
+                menu("REPORT_NATURES", "Natures des signalements", "/report-natures", "cilTags", 55, "NATURE_VIEW"),
                 menu("USERS", "Utilisateurs", "/users", "cilUser", 60, "USER_VIEW"),
                 menu("ROLES", "Rôles", "/roles", "cilLockLocked", 70, "ROLE_VIEW"),
                 menu("PERMISSIONS", "Permissions", "/permissions", "cilLockLocked", 80, "PERMISSION_VIEW"),

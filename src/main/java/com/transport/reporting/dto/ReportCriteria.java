@@ -23,6 +23,10 @@ public class ReportCriteria {
     private Instant closureDateTo;
     /** true = au moins une réponse ; false = aucune ; null = tous. */
     private Boolean replied;
+    /** Filtre nature : id technique. */
+    private Long natureId;
+    /** true = sans nature (non classé) ; ignore natureId si true. */
+    private Boolean uncategorized;
 
     public String getReference() {
         return reference;
@@ -118,5 +122,21 @@ public class ReportCriteria {
 
     public void setReplied(Boolean replied) {
         this.replied = replied;
+    }
+
+    public Long getNatureId() {
+        return natureId;
+    }
+
+    public void setNatureId(Long natureId) {
+        this.natureId = natureId;
+    }
+
+    public Boolean getUncategorized() {
+        return uncategorized;
+    }
+
+    public void setUncategorized(Boolean uncategorized) {
+        this.uncategorized = uncategorized;
     }
 }

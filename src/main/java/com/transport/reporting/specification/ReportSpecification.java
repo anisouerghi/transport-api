@@ -73,6 +73,12 @@ public final class ReportSpecification {
                 }
             }
 
+            if (Boolean.TRUE.equals(criteria.getUncategorized())) {
+                predicates.add(cb.isNull(root.get("nature")));
+            } else if (criteria.getNatureId() != null) {
+                predicates.add(cb.equal(root.join("nature").get("reportNatureId"), criteria.getNatureId()));
+            }
+
             if (predicates.isEmpty()) {
                 return cb.conjunction();
             }

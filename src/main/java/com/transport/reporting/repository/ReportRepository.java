@@ -29,5 +29,9 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
 
     boolean existsByReference(String reference);
 
+
     boolean existsByTransportSupportTransportSupportId(Long transportSupportId);
+
+    boolean existsByNature_ReportNatureId(Long reportNatureId);
+
 }

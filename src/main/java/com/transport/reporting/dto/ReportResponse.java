@@ -31,6 +31,9 @@ public class ReportResponse {
     private TransportSupportResponse transportSupport;
     private String reportTypeCode;
     private String reportTypeLabel;
+    private Long natureId;
+    private String natureCode;
+    private String natureLabel;
     private PassengerResponse passenger;
     private StatusResponse status;
     /** true si au moins une réponse agent est enregistrée. */

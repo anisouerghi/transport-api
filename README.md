@@ -75,8 +75,8 @@ mvn spring-boot:run
 | Méthode | Endpoint |
 |---------|----------|
 | CRUD | `/api/admin/users` |
-| search / CRUD | `/api/admin/support-types`, `/api/admin/report-types`, `/api/admin/transport-supports` |
-| GET / POST search | `/api/admin/signalements` | Search : `filters.replied` (`true`/`false`) ; items : `replied` |
+| search / CRUD | `/api/admin/support-types`, `/api/admin/report-types`, `/api/admin/natures`, `/api/admin/transport-supports` |
+| GET / POST search | `/api/admin/signalements` | Search : `filters.replied`, `natureId`, `uncategorized` ; items : `replied`, `nature*` |
 | GET | `/api/admin/signalements/{id}` |
 | GET | `/api/admin/signalements/{id}/attachments` |
 | GET | `/api/admin/attachments/{id}/view` |
@@ -86,6 +86,7 @@ mvn spring-boot:run
 | GET | `/api/admin/statistics/overview` | Rapports & Statistiques (squelette) |
 | POST search / GET / PATCH activate|deactivate | `/api/admin/passengers` | Voyageurs |
 | PATCH | `/api/admin/signalements/{id}/priority` | Priorité interne (`REPORT_UPDATE_PRIORITY`) |
+| PATCH | `/api/admin/signalements/{id}/nature` | Nature métier (`REPORT_ASSIGN_NATURE`) |
 | GET | `/api/admin/statuses` ou `/api/admin/status` |
 | POST search / GET | `/api/admin/audit-logs` |
 | CRUD | `/api/admin/roles` |
@@ -102,6 +103,10 @@ Compte seed : `admin` / `admin123`
 ## Journal d'audit
 
 Voir : [`documentation/audit-logs.md`](documentation/audit-logs.md).
+
+## Natures de signalement
+
+Voir : [`documentation/report-natures.md`](documentation/report-natures.md).
 
 ## Pièces jointes
 

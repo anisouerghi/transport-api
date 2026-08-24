@@ -17,6 +17,7 @@ import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.entity.AppUser;
 import com.transport.reporting.entity.Passenger;
+import com.transport.reporting.entity.ReportNature;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportHistory;
 import com.transport.reporting.entity.ReportType;
@@ -27,6 +28,7 @@ import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.ReportMapper;
 import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportHistoryRepository;
+import com.transport.reporting.repository.ReportNatureRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
@@ -81,7 +83,8 @@ public class ReportService {
     private final EmailService emailService;
     private final ReplyEmailComposer replyEmailComposer;
     private final ReplyRepository replyRepository;
-    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository) {
+    private final ReportNatureRepository reportNatureRepository;
+    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository) {
         this.reportRepository = reportRepository;
         this.reportTypeRepository = reportTypeRepository;
         this.transportSupportRepository = transportSupportRepository;
@@ -96,6 +99,7 @@ public class ReportService {
         this.emailService = emailService;
         this.replyEmailComposer = replyEmailComposer;
         this.replyRepository = replyRepository;
+        this.reportNatureRepository = reportNatureRepository;
     }
 
 
@@ -210,6 +214,64 @@ public class ReportService {
                 .oldValue("priority=" + previous)
                 .newValue("priority=" + newPriority)
                 .description("Modification de priorité du signalement " + report.getReference())
+                .build());
+
+        return toResponseWithAttachments(report);
+    }
+
+    /**
+     * Affecte ou retire la nature métier d'un signalement ({@code REPORT_ASSIGN_NATURE}).
+     */
+    public ReportResponse updateNature(Long id, Long reportNatureId) {
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+
+        ReportNature previous = report.getNature();
+        Long previousId = previous != null ? previous.getReportNatureId() : null;
+        if ((previousId == null && reportNatureId == null)
+                || (previousId != null && previousId.equals(reportNatureId))) {
+            return toResponseWithAttachments(report);
+        }
+
+        ReportNature next = null;
+        if (reportNatureId != null) {
+            next = reportNatureRepository.findById(reportNatureId)
+                    .orElseThrow(() -> new ResourceNotFoundException("ReportNature", reportNatureId));
+            if (!next.isActive()) {
+                throw new BusinessException("Cannot assign an inactive nature");
+            }
+        }
+
+        report.setNature(next);
+        report = reportRepository.save(report);
+
+        AppUser actor = resolveCurrentUser();
+        Status currentStatus = report.getStatus();
+        if (currentStatus == null) {
+            currentStatus = statusService.findByCode("NEW");
+        }
+        String oldLabel = previous != null ? previous.getLabel() : "Non classé";
+        String newLabel = next != null ? next.getLabel() : "Non classé";
+        reportHistoryRepository.save(ReportHistory.builder()
+                .oldStatus(currentStatus)
+                .newStatus(currentStatus)
+                .comments("Nature : " + oldLabel + " → " + newLabel)
+                .report(report)
+                .appUser(actor)
+                .build());
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(actor != null ? actor.getUserId() : AuditActors.currentAdminUserId())
+                .username(actor != null ? actor.getUsername() : null)
+                .userFullName(actor != null ? actor.getName() : null)
+                .actionType(AuditAction.NATURE_CHANGE)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(id))
+                .oldValue("nature=" + (previous != null ? previous.getCode() : "null"))
+                .newValue("nature=" + (next != null ? next.getCode() : "null"))
+                .description("Modification de nature du signalement " + report.getReference()
+                        + " (" + oldLabel + " → " + newLabel + ")")
                 .build());
 
         return toResponseWithAttachments(report);

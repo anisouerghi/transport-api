@@ -81,6 +81,8 @@ Tant qu'il n'y a pas de JWT, les opérations admin sont attribuées à l'utilisa
 | `UserService` | CREATE, UPDATE, DELETE, activation |
 | `SupportTypeService` | CREATE, UPDATE, DELETE |
 | `ReportTypeService` | CREATE, UPDATE, DELETE, activation |
+| `ReportNatureService` | CREATE, UPDATE, DELETE, activation |
+| `ReportService.updateNature` | `NATURE_CHANGE` |
 | `TransportSupportService` | CREATE, UPDATE, DELETE, régénération QR |
 | `ReportService` | CREATE public (acteur PUBLIC) |
 | `ReplyService` | REPLY + STATUS_CHANGE |

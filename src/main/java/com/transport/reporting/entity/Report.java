@@ -96,6 +96,11 @@ public class Report {
     @JoinColumn(name = "report_type_id", nullable = false)
     private ReportType reportType;
 
+    /** Nature métier (classification agent) — null = non classé. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "nature_id")
+    private ReportNature nature;
+
     /** Voyageur ayant depose le signalement. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "passenger_id", nullable = false)

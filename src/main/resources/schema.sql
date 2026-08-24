@@ -6,7 +6,11 @@ DROP TABLE IF EXISTS report_history;
 DROP TABLE IF EXISTS attachment;
 DROP TABLE IF EXISTS report;
 DROP TABLE IF EXISTS transport_support;
+
 DROP TABLE IF EXISTS district;
+
+DROP TABLE IF EXISTS report_nature;
+
 DROP TABLE IF EXISTS report_type;
 DROP TABLE IF EXISTS passenger;
 DROP TABLE IF EXISTS report_status;
@@ -47,6 +51,18 @@ CREATE TABLE report_type (
     active         TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (report_type_id),
     UNIQUE KEY uk_report_type_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE report_nature (
+    report_nature_id BIGINT       NOT NULL AUTO_INCREMENT,
+    code             VARCHAR(50)  NOT NULL,
+    label            VARCHAR(150) NOT NULL,
+    description      VARCHAR(500) NULL,
+    active           TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (report_nature_id),
+    UNIQUE KEY uk_report_nature_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE report_status (
@@ -186,15 +202,19 @@ CREATE TABLE report (
     public_response_date DATETIME(6)  NULL,
     transport_support_id BIGINT       NOT NULL,
     report_type_id       BIGINT       NOT NULL,
+    nature_id            BIGINT       NULL,
     passenger_id         BIGINT       NOT NULL,
     status_id            BIGINT       NOT NULL,
     PRIMARY KEY (report_id),
     UNIQUE KEY uk_report_uuid (uuid),
     UNIQUE KEY uk_report_reference (reference),
+    KEY idx_report_nature (nature_id),
     CONSTRAINT fk_report_support
         FOREIGN KEY (transport_support_id) REFERENCES transport_support (transport_support_id),
     CONSTRAINT fk_report_type
         FOREIGN KEY (report_type_id) REFERENCES report_type (report_type_id),
+    CONSTRAINT fk_report_nature
+        FOREIGN KEY (nature_id) REFERENCES report_nature (report_nature_id),
     CONSTRAINT fk_report_passenger
         FOREIGN KEY (passenger_id) REFERENCES passenger (passenger_id),
     CONSTRAINT fk_report_status
