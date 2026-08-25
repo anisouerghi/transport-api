@@ -4,6 +4,11 @@
 
 Architecture Backend simple, claire et commune pour toute l'équipe.
 
+> **Évolution prévue (2 JAR)** : analyse et plan de migration progressive —  
+> voir **[architecture-2jar-migration.md](./architecture-2jar-migration.md)**.  
+> **Étape 2 faite** : parent Maven `transport-backend` + modules `common` / `public-api` / `admin-api` (vides) ;  
+> le monolithe exécutable est le module **`transport-api/`** (sources métier non extraites).
+
 ## Organisation par couches
 
 ```

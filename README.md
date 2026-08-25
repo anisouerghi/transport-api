@@ -1,115 +1,54 @@
-# transport-api
+# transport-api / transport-backend
 
-Architecture Backend Spring Boot — signalement transport public.
+Parent Maven multi-module (`transport-backend`) — **2 JAR** : `public-api` + `admin-api`.
 
-## Organisation (par couches)
+> Migration : [`documentation/architecture-2jar-migration.md`](./documentation/architecture-2jar-migration.md)  
+> Frontend + JWT : [`documentation/frontend-migration-validation.md`](./documentation/frontend-migration-validation.md)
 
-```
-com.transport.reporting
-├── config
-├── controller
-│   ├── publicapi     # /api/public/**
-│   └── adminapi      # /api/admin/**
-├── service
-├── repository
-├── entity
-├── dto
-├── mapper
-├── exception
-├── specification
-└── common
+## Modules
+
+```text
+pom.xml                 ← parent transport-backend
+common/                 ← domaine + JWT + services partagés
+public-api/             ← Boot voyageur (port 8081)
+admin-api/              ← Boot admin (port 8082) — seed ; schéma via profil dev-reset
+transport-api/          ← DEPRECATED (coquille, ne plus utiliser en dev)
 ```
 
-## Règles
-
-| Couche | Responsabilité |
-|--------|----------------|
-| Controller | HTTP uniquement |
-| Service | Logique métier |
-| Repository | Accès JPA |
-| Entity | Tables MySQL |
-| DTO | Échange Angular |
-| Mapper | Entity ↔ DTO |
-
-## Base MySQL
-
-```sql
-CREATE DATABASE IF NOT EXISTS transport_reporting;
-```
-
-## Démarrage
+## Démarrage (2 processus, même MySQL)
 
 ```bash
-mvn spring-boot:run
+# Terminal 1 — Admin (seeders ; pas de DROP)
+mvn -pl admin-api -am spring-boot:run
+
+# Terminal 2 — Public
+mvn -pl public-api -am spring-boot:run
 ```
 
-- Swagger : http://localhost:8080/swagger-ui/index.html
-- Admin démo : `admin` / `admin123`
+Première install / reset schéma :
 
-## Configuration utile
+```bash
+mvn -pl admin-api -am spring-boot:run -Dspring-boot.run.profiles=dev,dev-reset
+```
 
-| Propriété | Rôle |
-|-----------|------|
-| `app.qr.base-url` | Base URL des QR (`{base}/report/{uuid}`) |
-| `app.qr.storage-path` | Images QR générées |
-| `app.upload.path` | Répertoire des pièces jointes |
-| `app.frontend.public-base-url` | Base URL frontend public (liens e-mail `/suivi/{uuid}`) |
-| `spring.servlet.multipart.max-file-size` | 10MB |
-| `spring.servlet.multipart.max-request-size` | 30MB |
+| API | Port | Swagger |
+|-----|------|---------|
+| Public | 8081 | http://localhost:8081/swagger-ui/index.html |
+| Admin | 8082 | http://localhost:8082/swagger-ui/index.html |
 
-## API
+Chemins partagés (mêmes valeurs / env) : `APP_UPLOAD_PATH`, `APP_QR_STORAGE_PATH`, `DATABASE_URL`, `JWT_SECRET`.
 
-### Public `/api/public`
+Admin démo (après seed) : `admin` / `admin123`
 
-| Méthode | Endpoint | Notes |
-|---------|----------|-------|
-| GET | `/api/public/supports/{uuid}` | Support actif via QR |
-| GET | `/api/public/report-types` | Types actifs |
-| POST | `/api/public/signalements` | **multipart** : part `report` (JSON) + `files` (optionnel) |
-| GET | `/api/public/signalements/mine` | JWT voyageur — 15 derniers |
-| GET | `/api/public/reponses` | Accueil : `publish=true`, 15 max, `page`/`size` (5) |
-| GET | `/api/public/suivi/{uuid}` | Suivi sécurisé par UUID (+ réponses publiques) |
+## Build
 
-### Admin `/api/admin`
+```bash
+mvn -pl public-api,admin-api -am clean package -DskipTests
+```
 
-| Méthode | Endpoint |
-|---------|----------|
-| CRUD | `/api/admin/users` |
-| search / CRUD | `/api/admin/support-types`, `/api/admin/report-types`, `/api/admin/natures`, `/api/admin/transport-supports` |
-| GET / POST search | `/api/admin/signalements` | Search : `filters.replied`, `natureId`, `uncategorized` ; items : `replied`, `nature*` |
-| GET | `/api/admin/signalements/{id}` |
-| GET | `/api/admin/signalements/{id}/attachments` |
-| GET | `/api/admin/attachments/{id}/view` |
-| GET | `/api/admin/attachments/{id}/download` |
-| GET/POST | `/api/admin/reports/{id}/replies` |
-| GET | `/api/admin/dashboard` |
-| GET | `/api/admin/statistics/overview` | Rapports & Statistiques (squelette) |
-| POST search / GET / PATCH activate|deactivate | `/api/admin/passengers` | Voyageurs |
-| PATCH | `/api/admin/signalements/{id}/priority` | Priorité interne (`REPORT_UPDATE_PRIORITY`) |
-| PATCH | `/api/admin/signalements/{id}/nature` | Nature métier (`REPORT_ASSIGN_NATURE`) |
-| GET | `/api/admin/statuses` ou `/api/admin/status` |
-| POST search / GET | `/api/admin/audit-logs` |
-| CRUD | `/api/admin/roles` |
-| GET | `/api/admin/permissions` |
-| POST | `/api/auth/login` |
-| GET | `/api/auth/me` |
+## Documentation
 
-## Sécurité
-
-Voir : [`documentation/security.md`](documentation/security.md).
-
-Compte seed : `admin` / `admin123`
-
-## Journal d'audit
-
-Voir : [`documentation/audit-logs.md`](documentation/audit-logs.md).
-
-## Natures de signalement
-
-Voir : [`documentation/report-natures.md`](documentation/report-natures.md).
-
-## Pièces jointes
-
-Voir la documentation détaillée : [`documentation/attachments.md`](documentation/attachments.md).
-
-Documentation d'architecture : [`documentation/architecture-backend.md`](documentation/architecture-backend.md).
+| Document | Contenu |
+|----------|---------|
+| [architecture-2jar-migration.md](./documentation/architecture-2jar-migration.md) | Plan migration 2 JAR |
+| [public-api-validation.md](./documentation/public-api-validation.md) | Validation isolation public |
