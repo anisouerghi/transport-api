@@ -16,7 +16,7 @@ public final class RequestMetadata {
         try {
             HttpServletRequest request = currentRequest();
             if (request == null) {
-                return "0.0.0.0"; // Valeur par défaut
+                return "0.0.0.0";
             }
             String forwarded = request.getHeader("X-Forwarded-For");
             if (forwarded != null && !forwarded.isBlank()) {
@@ -33,7 +33,7 @@ public final class RequestMetadata {
         try {
             HttpServletRequest request = currentRequest();
             if (request == null) {
-                return "unknown"; // Valeur par défaut
+                return "unknown";
             }
             String userAgent = request.getHeader("User-Agent");
             return userAgent != null ? userAgent : "unknown";
@@ -43,11 +43,6 @@ public final class RequestMetadata {
     }
 
     private static HttpServletRequest currentRequest() {
-<<<<<<< HEAD
-        var attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs instanceof ServletRequestAttributes) {
-            return ((ServletRequestAttributes) attrs).getRequest();
-=======
         try {
             var attrs = RequestContextHolder.getRequestAttributes();
             if (attrs instanceof ServletRequestAttributes servletAttrs) {
@@ -56,7 +51,6 @@ public final class RequestMetadata {
             return null;
         } catch (Exception e) {
             return null;
->>>>>>> alaeddine-namouchi
         }
     }
 }

@@ -30,6 +30,11 @@ public class AuthController {
     private final AuthenticationService authenticationService;
     private final UserService userService;
 
+    public AuthController(AuthenticationService authenticationService, UserService userService) {
+        this.authenticationService = authenticationService;
+        this.userService = userService;
+    }
+
     @PostMapping("/login")
     @Operation(summary = "Connexion et génération du JWT")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {

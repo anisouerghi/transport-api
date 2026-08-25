@@ -90,14 +90,14 @@ public class DataInitializer {
                         });
 
                 // Création du support avec tous les champs requis
-                TransportSupport support = TransportSupport.builder()
-                        .reference("7500")
-                        .label("7500")
-                        .qrStatus(QrStatus.ACTIVE)
-                        .supportStatus(SupportStatus.ACTIVE)
-                        .supportType(bus)
-                        .district(district) // ✅ DISTRICT OBLIGATOIRE
-                        .build();
+                // TransportSupport n'a plus de Lombok @Builder (compat Eclipse) — setters.
+                TransportSupport support = new TransportSupport();
+                support.setReference("7500");
+                support.setLabel("7500");
+                support.setQrStatus(QrStatus.ACTIVE);
+                support.setSupportStatus(SupportStatus.ACTIVE);
+                support.setSupportType(bus);
+                support.setDistrict(district);
 
                 // Sauvegarde initiale
                 TransportSupport savedSupport = transportSupportRepository.saveAndFlush(support);

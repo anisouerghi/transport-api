@@ -210,6 +210,14 @@ public class TransportSupport {
         this.supportType = supportType;
     }
 
+    public District getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(District district) {
+        this.district = district;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }

@@ -20,13 +20,13 @@ public class TransportSupportMapper {
      * UUID / QR seront renseignes ensuite par le service.
      */
     public TransportSupport toEntity(TransportSupportRequest request, SupportType supportType, District district) {
-        return TransportSupport.builder()
-                .reference(request.getReference())
-                .label(request.getLabel())
-                .supportStatus(request.getSupportStatus())
-                .supportType(supportType)
-                .district(district)
-                .build();
+        TransportSupport entity = new TransportSupport();
+        entity.setReference(request.getReference());
+        entity.setLabel(request.getLabel());
+        entity.setSupportStatus(request.getSupportStatus());
+        entity.setSupportType(supportType);
+        entity.setDistrict(district);
+        return entity;
     }
 
     /**
