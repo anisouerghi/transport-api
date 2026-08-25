@@ -5,6 +5,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.transport.reporting.config.QrProperties;
+import com.transport.reporting.config.SharedStoragePaths;
 import com.transport.reporting.entity.TransportSupport;
 import com.transport.reporting.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Service de generation et lecture des images QR Code (bibliotheque ZXing).
@@ -32,8 +32,11 @@ public class QrCodeService {
     private static final int QR_SIZE = 300;
 
     private final QrProperties qrProperties;
-    public QrCodeService(QrProperties qrProperties) {
+    private final SharedStoragePaths sharedStoragePaths;
+
+    public QrCodeService(QrProperties qrProperties, SharedStoragePaths sharedStoragePaths) {
         this.qrProperties = qrProperties;
+        this.sharedStoragePaths = sharedStoragePaths;
     }
 
 
@@ -59,7 +62,7 @@ public class QrCodeService {
     public String generateAndStore(TransportSupport support) {
         try {
             String publicUrl = buildPublicUrl(support);
-            Path storageDir = Paths.get(qrProperties.getStoragePath()).toAbsolutePath().normalize();
+            Path storageDir = sharedStoragePaths.qrRoot();
             Files.createDirectories(storageDir);
 
             String fileName = support.getUuid() + ".png";
@@ -86,9 +89,14 @@ public class QrCodeService {
             throw new BusinessException("QR code file not found for this support");
         }
         try {
-            Path path = Paths.get(support.getQrCodePath());
+            Path path = Path.of(support.getQrCodePath()).toAbsolutePath().normalize();
             if (!Files.exists(path)) {
-                throw new BusinessException("QR code file not found on disk");
+                // Repli : même UUID sous le répertoire QR partagé (après migration de chemin)
+                Path shared = sharedStoragePaths.qrRoot().resolve(path.getFileName()).normalize();
+                if (!shared.startsWith(sharedStoragePaths.qrRoot()) || !Files.exists(shared)) {
+                    throw new BusinessException("QR code file not found on disk");
+                }
+                path = shared;
             }
             return Files.readAllBytes(path);
         } catch (BusinessException e) {

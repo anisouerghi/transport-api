@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.upload")
 public class UploadProperties {
 
-    private String path = "./data/attachments";
+    private String path = "data/attachments";
 
     public String getPath() {
         return path;

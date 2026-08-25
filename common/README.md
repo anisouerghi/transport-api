@@ -1,17 +1,10 @@
-# Module `common`
+# common
 
-Bibliothèque partagée (JAR non exécutable).
+Bibliothèque partagée (entités, repos, services métier, JWT, DTO, mail, PJ, QR).
 
-## Contenu (après étapes 3–5)
+Consommée par :
 
-- Entities, repositories, dto, mappers, specifications
-- Exceptions métier + `GlobalExceptionHandler`
-- Sécurité partagée : JWT, principals, filtre, `PermissionChecker`, `AuditActors`
-- Config partagée : upload, QR, frontend URL, password encoder, mail sanitizer
-- Services partagés : Report, ReportType, TransportSupport, Passenger(+auth), Attachment, Email, QR, AuditLog, Status, Role, Dashboard, Statistics, PublicTracking…
+- `public-api` (voyageur)
+- `admin-api` (administration)
 
-## Non inclus
-
-- Controllers HTTP (dans `public-api` / `transport-api`)
-- `SecurityConfig` admin, initializers schéma / seed (`transport-api`)
-- `PublicSecurityConfig` (`public-api`)
+Ne contient **pas** de `@SpringBootApplication` ni de controllers HTTP.

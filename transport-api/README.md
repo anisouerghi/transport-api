@@ -1,10 +1,24 @@
-# transport-api (DEPRECATED)
+# transport-api (DEPRECATED — rollback uniquement)
 
-Coquille transitoire du monolithe — **ne plus démarrer en développement**.
+Coquille du monolithe historique. **Ne plus démarrer en développement ni en production.**
 
-Utiliser :
+## Utiliser à la place
 
-- `public-api` → port **8081**
-- `admin-api` → port **8082**
+| API | Port | Commande |
+|-----|------|----------|
+| Public | 8081 | `mvn -pl public-api -am spring-boot:run` |
+| Admin | 8082 | `mvn -pl admin-api -am spring-boot:run` |
 
-Conservé uniquement jusqu’à validation complète des 2 JAR (étape 11).
+## Pourquoi le module reste dans Git
+
+- Rollback rapide si régression majeure sur les 2 JAR
+- Historique / comparaison
+- `spring-boot:run` est **désactivé** (`skip=true`) pour éviter un démarrage accidentel sur 8080
+
+## Réactiver en rollback (exceptionnel)
+
+1. Dans `transport-api/pom.xml` : `spring-boot-maven-plugin` → `<skip>false</skip>`
+2. Restaurer controllers / sécurité depuis l’historique Git si la coquille ne suffit pas
+3. `mvn -pl transport-api -am spring-boot:run` (port 8080)
+
+La suppression définitive du module = **étape 11**, après validation prod/recette.

@@ -23,5 +23,5 @@ public class QrProperties {
     /**
      * Repertoire de stockage des images QR Code generees.
      */
-    private String storagePath = "./data/qr-codes";
+    private String storagePath = "data/qr-codes";
 }

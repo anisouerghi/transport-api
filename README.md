@@ -3,7 +3,8 @@
 Parent Maven multi-module (`transport-backend`) — **2 JAR** : `public-api` + `admin-api`.
 
 > Migration : [`documentation/architecture-2jar-migration.md`](./documentation/architecture-2jar-migration.md)  
-> Frontend + JWT : [`documentation/frontend-migration-validation.md`](./documentation/frontend-migration-validation.md)
+> Frontend + JWT : [`documentation/frontend-migration-validation.md`](./documentation/frontend-migration-validation.md)  
+> Dépréciation monolithe : [`documentation/etape9-transport-api-deprecation.md`](./documentation/etape9-transport-api-deprecation.md)
 
 ## Modules
 
@@ -15,14 +16,15 @@ admin-api/              ← Boot admin (port 8082) — seed ; schéma via profil
 transport-api/          ← DEPRECATED (coquille, ne plus utiliser en dev)
 ```
 
-## Démarrage (2 processus, même MySQL)
+## Démarrage (2 processus, même MySQL + même disque)
 
-```bash
-# Terminal 1 — Admin (seeders ; pas de DROP)
-mvn -pl admin-api -am spring-boot:run
+```powershell
+# Chemins PJ/QR partagés (recommandé)
+.\scripts\run-admin-api.ps1     # :8082
+.\scripts\run-public-api.ps1    # :8081
 
-# Terminal 2 — Public
-mvn -pl public-api -am spring-boot:run
+# Fronts
+# voyageur :4200 → 8081 | admin :4300 → 8082
 ```
 
 Première install / reset schéma :

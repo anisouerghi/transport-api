@@ -1,6 +1,6 @@
 package com.transport.reporting.service;
 
-import com.transport.reporting.config.UploadProperties;
+import com.transport.reporting.config.SharedStoragePaths;
 import com.transport.reporting.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,8 @@ import java.util.UUID;
  * <ul>
  *   <li>valider extension, type MIME et tailles (par fichier et cumulées) ;</li>
  *   <li>enregistrer chaque fichier sous un nom physique unique (UUID) ;</li>
- *   <li>lire le contenu en s'assurant que le chemin reste dans {@code app.upload.path}.</li>
+ *   <li>lire le contenu en s'assurant que le chemin reste sous le répertoire partagé
+ *       ({@link com.transport.reporting.config.SharedStoragePaths#uploadRoot()}).</li>
  * </ul>
  * Le nom d'origine fourni par le client n'est jamais utilisé comme nom de stockage.
  */
@@ -59,10 +60,10 @@ public class FileStorageService {
             MediaType.APPLICATION_PDF_VALUE
     );
 
-    private final UploadProperties uploadProperties;
+    private final SharedStoragePaths sharedStoragePaths;
 
-    public FileStorageService(UploadProperties uploadProperties) {
-        this.uploadProperties = uploadProperties;
+    public FileStorageService(SharedStoragePaths sharedStoragePaths) {
+        this.sharedStoragePaths = sharedStoragePaths;
     }
 
     /**
@@ -85,7 +86,7 @@ public class FileStorageService {
         }
 
         try {
-            Path storageDir = Path.of(uploadProperties.getPath()).toAbsolutePath().normalize();
+            Path storageDir = sharedStoragePaths.uploadRoot();
             Files.createDirectories(storageDir);
 
             String storedName = UUID.randomUUID() + "." + extension;
@@ -116,7 +117,7 @@ public class FileStorageService {
     public byte[] readBytes(String filePath) {
         try {
             Path path = Path.of(filePath).toAbsolutePath().normalize();
-            Path storageDir = Path.of(uploadProperties.getPath()).toAbsolutePath().normalize();
+            Path storageDir = sharedStoragePaths.uploadRoot();
             if (!path.startsWith(storageDir) || !Files.exists(path) || !Files.isRegularFile(path)) {
                 throw new BusinessException("Fichier introuvable sur le serveur.");
             }

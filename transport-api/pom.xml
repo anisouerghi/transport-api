@@ -12,7 +12,7 @@
 
     <artifactId>transport-api</artifactId>
     <name>transport-api</name>
-    <description>Monolithe actuel (seul module Spring Boot exécutable)</description>
+    <description>DEPRECATED — coquille monolithe conservée pour rollback Git uniquement. Utiliser public-api + admin-api.</description>
 
     <dependencies>
         <dependency>
@@ -107,7 +107,8 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <skip>false</skip>
+                    <!-- Étape 9 : ne plus démarrer en dev — rollback : remettre skip=false -->
+                    <skip>true</skip>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

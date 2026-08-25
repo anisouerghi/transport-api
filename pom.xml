@@ -149,15 +149,8 @@
             </plugins>
         </pluginManagement>
 
-        <!-- Empêche spring-boot:run sur le parent (packaging pom) quand on utilise -pl … -am -->
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-        </plugins>
+        <!-- Ne PAS déclarer spring-boot-maven-plugin ici avec skip=true :
+             Eclipse STS / m2e hérite de cette config et masque "Run As > Spring Boot App"
+             sur public-api / admin-api. Le parent (packaging pom) n'est pas exécutable. -->
     </build>
 </project>

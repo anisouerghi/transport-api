@@ -138,7 +138,9 @@ Aucune modification métier Angular / services hors URL & sécurité.
 - [ ] Parcours UI manuel voyageur (création signalement + PJ + e-mail) sur 4200 → proxy 8081
 - [ ] Parcours UI manuel admin (réponse, priorité, nature, QR, PJ) sur front admin → 8082
 - [ ] Vérifier ports Angular : voyageur **4200**, admin idéalement **4300** si les deux tournent (scripts actuels admin aussi sur 4200 par défaut)
-- [ ] Étape 9 : validation finale / dépréciation progressive `transport-api` (**après votre GO**) — garder le module Git pour rollback
+- [x] Étape 9 : dépréciation progressive `transport-api` (module Git conservé) — [etape9-transport-api-deprecation.md](./etape9-transport-api-deprecation.md)
+- [ ] Étape 10 : parcours UI manuel complets
+- [ ] Étape 11 : suppression physique éventuelle du module (après recette)
 
 ---
 

@@ -228,8 +228,8 @@ transport-backend/   (ou conservation du repo transport-api en multi-module)
 | **5** | Créer `public-api` Boot qui dépend de `common` + controllers public | Public OK en solo | **FAIT** |
 | **6** | Créer `admin-api` idem | Admin OK en solo | **FAIT** |
 | **7** | Deux processus + même MySQL + chemins fichiers partagés | Pas de DROP croisé ; seed sur admin seulement | **FAIT** |
-| **8–10** | Non-régression endpoints / JWT / 2 fronts | Checklist §7 | **8 FAIT** (rapports) ; 9–10 à faire |
-| **11** | Déprécier monolithe ; livrer `public-api.jar` + `admin-api.jar` | Prod/recette validée | À faire |
+| **8–10** | Non-régression endpoints / JWT / 2 fronts | Checklist §7 | **8–10 FAIT** (API) ; UI manuelle à cocher |
+| **11** | Déprécier monolithe ; livrer `public-api.jar` + `admin-api.jar` | Prod/recette validée | Module Git conservé ; suppression physique reportée |
 
 ### Règles anti-régression
 
@@ -297,22 +297,22 @@ mvn -pl public-api,admin-api -am clean package -DskipTests
 
 ### Voyageur
 
-- [ ] Scan QR / UUID support  
-- [ ] Signalement anonyme + authentifié  
-- [ ] Pièces jointes  
-- [ ] Confirmation + e-mail  
-- [ ] Suivi UUID + réponses publiques  
+- [x] Scan QR / UUID support *(API)*  
+- [x] Signalement anonyme + authentifié *(API)*  
+- [x] Pièces jointes *(upload API ; view cross-JVM après chemins partagés)*  
+- [ ] Confirmation + e-mail *(SMTP réel / UI)*  
+- [x] Suivi UUID + réponses publiques *(API)*  
 - [ ] i18n FR/AR/EN (front)  
 
 ### Administration
 
-- [ ] Login JWT + `/me`  
-- [ ] Permissions / rôles  
-- [ ] Liste / filtres / pagination signalements  
-- [ ] Priorité, nature, réponses + e-mail  
-- [ ] Supports + QR  
-- [ ] Stats, audit logs  
-- [ ] Upload/view PJ admin  
+- [x] Login JWT + `/me`  
+- [x] Permissions / rôles  
+- [x] Liste / filtres / pagination signalements  
+- [x] Priorité, nature, réponses *(e-mail optionnel UI)*  
+- [x] Supports + QR *(GET QR OK)*  
+- [x] Stats, audit logs  
+- [ ] Upload/view PJ admin *(view après redémarrage scripts data/)*  
 
 ---
 
@@ -361,9 +361,27 @@ mvn clean package -DskipTests
 mvn -pl transport-api -am spring-boot:run
 ```
 
-### Prochaine action (Étape 9 — après validation rapport Frontend)
+### Prochaine action (Étape 11)
 
-Validation finale / usage zéro de `transport-api:8080` ; conservation Git pour rollback ; suppression progressive uniquement après GO.
+Livrer les 2 JAR ; conserver `transport-api` en Git pour rollback ; cocher les parcours UI restants dans [etape10-non-regression-checklist.md](./etape10-non-regression-checklist.md).
+
+### Étape 10 — réalisée (checklist §7 API)
+
+Rapport : [etape10-non-regression-checklist.md](./etape10-non-regression-checklist.md)
+
+- Flux voyageur create anon/auth + PJ + follow-up OK
+- Flux admin priorité / nature / réponse / search / stats / audit OK
+- Correctif chemins PJ/QR partagés (`data/` + scripts `run-*.ps1`)
+- UI navigateur + e-mail SMTP réel : cases manuelles restantes
+
+### Étape 9 — réalisée (dépréciation progressive `transport-api`)
+
+Rapport : [etape9-transport-api-deprecation.md](./etape9-transport-api-deprecation.md)
+
+- Aucun front ne pointe vers **8080**
+- `spring-boot:run` du monolithe **désactivé** (`skip=true`)
+- Module **conservé** dans Git pour rollback
+- Smoke : 8081 + 8082 OK ; 8080 DOWN
 
 ### Étape 8 — réalisée (Frontend + JWT)
 
