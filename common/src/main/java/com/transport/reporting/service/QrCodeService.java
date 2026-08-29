@@ -19,10 +19,10 @@ import java.nio.file.Path;
  * <p>
  * Configuration :
  * <ul>
- *   <li>{@code app.qr.base-url} — ex. http://localhost:4200</li>
+ *   <li>{@code app.qr.base-url} — ex. http://localhost:4200 ou http://192.168.1.55/sig/</li>
  *   <li>{@code app.qr.storage-path} — repertoire de stockage des PNG</li>
  * </ul>
- * URL encodee dans le QR : {@code {baseUrl}/report/{uuid}}
+ * URL encodee dans le QR (Hash Routing Angular) : {@code {baseUrl}/#/report/{uuid}}
  */
 @Service
 @Slf4j
@@ -41,9 +41,9 @@ public class QrCodeService {
 
 
     /**
-     * Construit l'URL publique de signalement pour un support.
+     * Construit l'URL publique de signalement pour un support (Hash Routing Angular).
      *
-     * @return ex. http://localhost:4200/report/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+     * @return ex. http://192.168.1.55/sig/#/report/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
      */
     public String buildPublicUrl(TransportSupport support) {
         String baseUrl = qrProperties.getBaseUrl();
@@ -52,7 +52,7 @@ public class QrCodeService {
         }
         // Evite les doubles slash si baseUrl se termine par /
         String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        return normalizedBase + "/report/" + support.getUuid();
+        return normalizedBase + "/#/report/" + support.getUuid();
     }
 
     /**

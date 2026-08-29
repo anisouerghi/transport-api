@@ -4,6 +4,7 @@ Parent Maven multi-module (`transport-backend`) — **2 JAR** : `public-api` + `
 
 > Migration : [`documentation/architecture-2jar-migration.md`](./documentation/architecture-2jar-migration.md)  
 > Frontend + JWT : [`documentation/frontend-migration-validation.md`](./documentation/frontend-migration-validation.md)  
+> Fronts — config runtime & déploiement : [`documentation/frontend-runtime-config-deployment.md`](./documentation/frontend-runtime-config-deployment.md)  
 > Dépréciation monolithe : [`documentation/etape9-transport-api-deprecation.md`](./documentation/etape9-transport-api-deprecation.md)
 
 ## Modules
@@ -53,4 +54,5 @@ mvn -pl public-api,admin-api -am clean package -DskipTests
 | Document | Contenu |
 |----------|---------|
 | [architecture-2jar-migration.md](./documentation/architecture-2jar-migration.md) | Plan migration 2 JAR |
+| [frontend-runtime-config-deployment.md](./documentation/frontend-runtime-config-deployment.md) | Config Angular `config.json`, `--base-href`, déploiement `/sig/` |
 | [public-api-validation.md](./documentation/public-api-validation.md) | Validation isolation public |
