@@ -140,12 +140,11 @@ Proxy DEV inchangé :
    <base href="/sig/">
    ```
 4. **Ajuster** si besoin `assets/config/config.json` sur le serveur (URL API, locale…) **sans rebuild**.
-5. **Routing Angular (Signalement)** : Hash Location — les QR ouvrent `/sig/#/report/{uuid}` sans rewrite Apache.
+5. **Routing Angular (Signalement)** : Path Location — les QR ouvrent `/sig/report/{uuid}` (fallback Apache `.htaccess`).
 
 #### Fallback SPA Apache / nginx
 
-**Non requis** pour le front voyageur (Hash Routing).  
-Conservé uniquement si un autre front (ex. Admin) utilise Path Location sous un sous-répertoire.
+Requis pour le front voyageur sous `/sig/` (routes `/report/{uuid}`, etc.).
 
 ---
 
@@ -174,12 +173,12 @@ Conservé uniquement si un autre front (ex. Admin) utilise Path Location sous un
 | Admin (front) | `http://192.168.1.55/admin/` (à adapter) |
 | Public API | `http://192.168.1.55:8081` |
 | Admin API | `http://192.168.1.55:8082` |
-| `APP_QR_BASE_URL` | `http://192.168.1.55/sig/` → QR = `/sig/#/report/{uuid}` |
-| `APP_FRONTEND_PUBLIC_BASE_URL` | `http://192.168.1.55/sig/` → e-mails `/sig/#/report-followup/{uuid}` |
+| `APP_QR_BASE_URL` | `http://192.168.1.55/sig/` → QR = `/sig/report/{uuid}` |
+| `APP_FRONTEND_PUBLIC_BASE_URL` | `http://192.168.1.55/sig/` → e-mails `/sig/report-followup/{uuid}` |
 
-### Hash Routing (Signalement)
+### Routing Signalement (Path Location)
 
-Le front voyageur utilise `withHashLocation()`. Apache ne voit que `/sig/` ; la route Angular est après `#`.
+Le front voyageur utilise le routing Angular classique. Apache sert `index.html` via `.htaccess` pour `/sig/report/{uuid}`.
 
 Aucun rewrite Apache n’est nécessaire pour les QR Codes.
 

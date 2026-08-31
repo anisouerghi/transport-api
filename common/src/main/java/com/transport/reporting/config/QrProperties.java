@@ -16,8 +16,8 @@ public class QrProperties {
 
     /**
      * URL de base utilisee pour construire les liens publics.
-     * Format final (Hash Routing) : {baseUrl}/#/report/{uuid}
-     * Ex. {@code http://192.168.1.55/sig/} → {@code http://192.168.1.55/sig/#/report/{uuid}}
+     * Format final : {baseUrl}/report/{uuid}
+     * Ex. {@code http://192.168.1.55/sig/} → {@code http://192.168.1.55/sig/report/{uuid}}
      */
     private String baseUrl;
 

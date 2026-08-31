@@ -27,7 +27,7 @@ public class TransportSupportResponse {
     /** Libelle descriptif. */
     private String label;
 
-    /** URL publique de signalement : {app.qr.base-url}/#/report/{uuid}. */
+    /** URL publique de signalement : {app.qr.base-url}report/{uuid}. */
     private String qrCodeUrl;
 
     /** Chemin du fichier image QR sur le serveur. */

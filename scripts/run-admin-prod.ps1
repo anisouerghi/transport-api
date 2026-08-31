@@ -63,7 +63,7 @@ try {
     # ------------------------------------------------------------
 
     # QR + liens e-mail → front voyageur (sous-repertoire /sig/), PAS l'API :8081
-    # Le code ajoute /#/report/{uuid} et /#/report-followup/{uuid} (Hash Routing)
+    # Le code ajoute report/{uuid} et report-followup/{uuid} a APP_*_BASE_URL
     $env:APP_QR_BASE_URL = "http://${HostIp}/sig/"
     $env:APP_FRONTEND_PUBLIC_BASE_URL = "http://${HostIp}/sig/"
     $env:CORS_ALLOWED_ORIGINS = "http://${HostIp},http://${HostIp}:4200,http://${HostIp}:4500,http://localhost:4200,http://localhost:4500"
