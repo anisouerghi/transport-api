@@ -3,6 +3,7 @@ package com.transport.reporting.service;
 import com.transport.reporting.dto.PassengerAuthResponse;
 import com.transport.reporting.dto.PassengerLoginRequest;
 import com.transport.reporting.dto.PassengerRegisterRequest;
+import com.transport.reporting.entity.AuthProvider;
 import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
@@ -39,6 +40,9 @@ public class PassengerAuthService {
         Passenger passenger;
         if (existing.isPresent()) {
             passenger = existing.get();
+            if (StringUtils.hasText(passenger.getGoogleSubject())) {
+                throw new BusinessException("Un compte Google existe déjà avec cet e-mail. Connectez-vous avec Google.");
+            }
             if (StringUtils.hasText(passenger.getPasswordHash())) {
                 throw new BusinessException("Un compte existe déjà avec cet e-mail. Connectez-vous.");
             }
@@ -49,6 +53,7 @@ public class PassengerAuthService {
                 passenger.setPhoneNumber(request.getPhoneNumber().trim());
             }
             passenger.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            passenger.setAuthProvider(AuthProvider.LOCAL);
             passenger.setActive(true);
         } else {
             passenger = new Passenger();
@@ -56,6 +61,7 @@ public class PassengerAuthService {
             passenger.setEmail(email);
             passenger.setPhoneNumber(StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null);
             passenger.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            passenger.setAuthProvider(AuthProvider.LOCAL);
             passenger.setEmailVerified(false);
             passenger.setActive(true);
         }
@@ -81,6 +87,63 @@ public class PassengerAuthService {
         return toAuthResponse(passenger);
     }
 
+    /**
+     * Authentifie ou crée un voyageur après validation Google côté serveur (OIDC).
+     * Les claims proviennent du {@code OidcUser} Spring Security, jamais du navigateur seul.
+     */
+    public PassengerAuthResponse authenticateGoogleUser(
+            String googleSubject,
+            String email,
+            boolean emailVerified,
+            String fullName) {
+        if (!StringUtils.hasText(googleSubject)) {
+            throw new BusinessException("Identité Google invalide.");
+        }
+        if (!emailVerified) {
+            throw new BusinessException("Votre adresse e-mail Google n'est pas vérifiée.");
+        }
+        if (!StringUtils.hasText(email)) {
+            throw new BusinessException("Aucune adresse e-mail fournie par Google.");
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+        Passenger passenger = passengerRepository.findByGoogleSubject(googleSubject.trim())
+                .orElseGet(() -> resolvePassengerForGoogle(normalizedEmail, googleSubject.trim()));
+
+        if (StringUtils.hasText(fullName)) {
+            passenger.setName(fullName.trim());
+        }
+        passenger.setEmail(normalizedEmail);
+        passenger.setGoogleSubject(googleSubject.trim());
+        passenger.setAuthProvider(AuthProvider.GOOGLE);
+        passenger.setEmailVerified(true);
+
+        if (!passenger.isActive()) {
+            throw new BusinessException("Ce compte voyageur est désactivé.");
+        }
+
+        passenger = passengerRepository.save(passenger);
+        return toAuthResponse(passenger);
+    }
+
+    private Passenger resolvePassengerForGoogle(String normalizedEmail, String googleSubject) {
+        return passengerRepository.findByEmailIgnoreCase(normalizedEmail)
+                .map(existing -> {
+                    if (StringUtils.hasText(existing.getGoogleSubject())
+                            && !existing.getGoogleSubject().equals(googleSubject)) {
+                        throw new BusinessException("Cet e-mail est associé à un autre compte Google.");
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    Passenger created = new Passenger();
+                    created.setEmail(normalizedEmail);
+                    created.setActive(true);
+                    created.setPasswordHash(null);
+                    return created;
+                });
+    }
+
     @Transactional(readOnly = true)
     public PassengerAuthResponse current(PassengerPrincipal principal) {
         if (principal == null) {
@@ -88,10 +151,15 @@ public class PassengerAuthService {
         }
         Passenger passenger = passengerRepository.findById(principal.getPassengerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Passenger", principal.getPassengerId()));
-        if (!passenger.isActive() || !StringUtils.hasText(passenger.getPasswordHash())) {
+        if (!passenger.isActive() || !isRegisteredAccount(passenger)) {
             throw new BusinessException("Session invalide. Veuillez vous reconnecter.");
         }
         return toAuthResponse(passenger);
+    }
+
+    private static boolean isRegisteredAccount(Passenger passenger) {
+        return StringUtils.hasText(passenger.getPasswordHash())
+                || StringUtils.hasText(passenger.getGoogleSubject());
     }
 
     private PassengerAuthResponse toAuthResponse(Passenger passenger) {

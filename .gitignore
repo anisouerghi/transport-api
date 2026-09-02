@@ -26,6 +26,7 @@ application-local.yml
 
 # Environment
 .env
+scripts/secrets.local.ps1
 
 # Uploads locaux
 uploads/

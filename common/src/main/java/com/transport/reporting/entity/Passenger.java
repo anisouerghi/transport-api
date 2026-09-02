@@ -39,8 +39,20 @@ public class Passenger {
     private boolean active = true;
 
     /**
-     * Mot de passe BCrypt. {@code null} = contact anonyme sans compte.
+     * Mot de passe BCrypt. {@code null} = contact anonyme ou compte Google uniquement.
      */
     @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    /**
+     * Identifiant Google stable (claim {@code sub} OIDC). Clé d'association du compte OAuth.
+     */
+    @Column(name = "google_subject", length = 255)
+    private String googleSubject;
+
+    /** Fournisseur d'authentification ({@code LOCAL} ou {@code GOOGLE}). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", length = 20, nullable = false)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
 }

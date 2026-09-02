@@ -10,5 +10,7 @@ public interface PassengerRepository extends JpaRepository<Passenger, Long>, Jpa
 
     Optional<Passenger> findByEmailIgnoreCase(String email);
 
+    Optional<Passenger> findByGoogleSubject(String googleSubject);
+
     long countByActiveTrue();
 }

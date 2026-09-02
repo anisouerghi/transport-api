@@ -5,127 +5,106 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot 'runtime-config-display.ps1')
+
 try {
 
     # ============================================================
-    # PUBLIC API
+    # PUBLIC API - Maven spring-boot:run
     # DEV  : 8081
-    # PROD : 8081 par défaut
+    # PROD : 8081
     # ============================================================
 
+    $secretsFile = Import-LocalSecrets -ScriptRoot $PSScriptRoot
     $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
-    # ------------------------------------------------------------
-    # Profil Spring
-    # ------------------------------------------------------------
-
     $env:SPRING_PROFILES_ACTIVE = $Profile
-
-    # ------------------------------------------------------------
-    # Stockage partagé
-    # ------------------------------------------------------------
-
     $env:APP_STORAGE_ROOT = $Root
     $env:APP_UPLOAD_PATH = Join-Path $Root 'data\attachments'
     $env:APP_QR_STORAGE_PATH = Join-Path $Root 'data\qr-codes'
+    $env:PUBLIC_SERVER_PORT = "8081"
 
-    New-Item -ItemType Directory -Force -Path `
-        $env:APP_UPLOAD_PATH | Out-Null
-
-    New-Item -ItemType Directory -Force -Path `
-        $env:APP_QR_STORAGE_PATH | Out-Null
-
-    # ------------------------------------------------------------
-    # Port Public API
-    # ------------------------------------------------------------
-
-    if ($Profile -eq "dev") {
-        $env:PUBLIC_SERVER_PORT = "8081"
+    if ($Profile -eq "prod") {
+        $env:APP_QR_BASE_URL = "http://192.168.1.55/sig/"
+        $env:APP_FRONTEND_PUBLIC_BASE_URL = "http://192.168.1.55/sig/"
+        $env:CORS_ALLOWED_ORIGINS = "http://192.168.1.55,http://192.168.1.55:4200,http://localhost:4200"
     }
     else {
-        $env:PUBLIC_SERVER_PORT = "8081"
+        $env:APP_QR_BASE_URL = "http://localhost:4200"
+        $env:APP_FRONTEND_PUBLIC_BASE_URL = "http://localhost:4200"
+        if (-not $env:CORS_ALLOWED_ORIGINS) {
+            $env:CORS_ALLOWED_ORIGINS = "http://localhost:4200,http://localhost:4500"
+        }
     }
 
-    # ------------------------------------------------------------
-    # Affichage
-    # ------------------------------------------------------------
+    if (-not $env:GOOGLE_CLIENT_ID) {
+        $env:GOOGLE_CLIENT_ID = "805628985152-kkg4l131p8jmpi7bek764icsp5ikmso7.apps.googleusercontent.com"
+    }
+    if (-not $env:GOOGLE_REDIRECT_URI) {
+        $env:GOOGLE_REDIRECT_URI = "http://localhost:8081/login/oauth2/code/google"
+    }
+    if (-not $env:GOOGLE_FRONTEND_CALLBACK_URL) {
+        $env:GOOGLE_FRONTEND_CALLBACK_URL = "http://localhost:4200/connexion/google/callback"
+    }
 
-    Clear-Host
-
-    Write-Host ""
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host "              TRANSTU - PUBLIC API" -ForegroundColor Cyan
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Profil              : $env:SPRING_PROFILES_ACTIVE"
-    Write-Host "Port                : $env:PUBLIC_SERVER_PORT"
-    Write-Host "APP_STORAGE_ROOT    : $env:APP_STORAGE_ROOT"
-    Write-Host "APP_UPLOAD_PATH     : $env:APP_UPLOAD_PATH"
-    Write-Host "APP_QR_STORAGE_PATH : $env:APP_QR_STORAGE_PATH"
-    Write-Host ""
-    Write-Host "API : http://localhost:$env:PUBLIC_SERVER_PORT" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host ""
-
-    # ------------------------------------------------------------
-    # Racine du projet
-    # ------------------------------------------------------------
-
-    Set-Location $Root
-
-    # ------------------------------------------------------------
-    # Vérification Maven
-    # ------------------------------------------------------------
+    New-Item -ItemType Directory -Force -Path $env:APP_UPLOAD_PATH | Out-Null
+    New-Item -ItemType Directory -Force -Path $env:APP_QR_STORAGE_PATH | Out-Null
 
     $mvn = Get-Command mvn -ErrorAction SilentlyContinue
-
     if (-not $mvn) {
         throw "Maven n'est pas disponible dans le PATH."
     }
 
-    Write-Host "Maven : $($mvn.Source)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "Démarrage de public-api..." -ForegroundColor Yellow
+    $mavenCmd = "mvn -pl public-api spring-boot:run"
+
+    Clear-Host
+
+    Write-RuntimeHeader "TRANSTU - PUBLIC API ($Profile / Maven)"
+
+    Write-RuntimeSection "Execution"
+    Write-EnvLine "Mode" "mvn spring-boot:run" -ValueColor Green
+    Write-EnvLine "Commande" $mavenCmd
+    Write-EnvLine "Maven" $mvn.Source
+    Write-EnvLine "Racine projet" $Root
+    Write-EnvLine "Secrets locaux" ($(if ($secretsFile) { $secretsFile } else { '(aucun - secrets.local.ps1 absent)' }))
+
+    Write-RuntimeSection "Spring / Serveur"
+    Write-EnvLine "SPRING_PROFILES_ACTIVE" $env:SPRING_PROFILES_ACTIVE -ValueColor Green
+    Write-EnvLine "PUBLIC_SERVER_PORT" $env:PUBLIC_SERVER_PORT -ValueColor Green
+    Write-EnvLine "URL API" "http://localhost:$($env:PUBLIC_SERVER_PORT)" -ValueColor Green
+
+    Write-RuntimeSection "Stockage / Frontend / CORS"
+    Write-EnvLine "APP_STORAGE_ROOT" $env:APP_STORAGE_ROOT
+    Write-EnvLine "APP_UPLOAD_PATH" $env:APP_UPLOAD_PATH
+    Write-EnvLine "APP_QR_STORAGE_PATH" $env:APP_QR_STORAGE_PATH
+    Write-EnvLine "APP_QR_BASE_URL" (Get-EnvDisplayValue -Name 'APP_QR_BASE_URL')
+    Write-EnvLine "APP_FRONTEND_PUBLIC_BASE_URL" (Get-EnvDisplayValue -Name 'APP_FRONTEND_PUBLIC_BASE_URL')
+    Write-EnvLine "CORS_ALLOWED_ORIGINS" (Get-EnvDisplayValue -Name 'CORS_ALLOWED_ORIGINS')
+
+    Write-GoogleOAuthBlock
+    Write-SpringDatabaseBlock
+
+    Write-RuntimeFooter
+
+    Write-Host "Demarrage de public-api..." -ForegroundColor Yellow
     Write-Host ""
 
-    # ------------------------------------------------------------
-    # IMPORTANT :
-    # Pas de -am.
-    #
-    # public-api dépend déjà de common.
-    # -am provoquerait le lancement du parent
-    # transport-backend par spring-boot:run.
-    # ------------------------------------------------------------
-
+    Set-Location $Root
     & mvn -pl public-api spring-boot:run
 
     if ($LASTEXITCODE -ne 0) {
-
         Write-Host ""
-        Write-Host "==================================================" -ForegroundColor Red
-        Write-Host "       ERREUR DE DEMARRAGE PUBLIC API" -ForegroundColor Red
-        Write-Host "==================================================" -ForegroundColor Red
+        Write-Host "ERREUR DE DEMARRAGE PUBLIC API - Code Maven : $LASTEXITCODE" -ForegroundColor Red
         Write-Host ""
-        Write-Host "Code retour Maven : $LASTEXITCODE" -ForegroundColor Red
-        Write-Host ""
-
     }
     else {
-
         Write-Host ""
-        Write-Host "Public API arrêtée." -ForegroundColor Yellow
+        Write-Host "Public API arretee." -ForegroundColor Yellow
     }
-
 }
 catch {
-
     Write-Host ""
-    Write-Host "==================================================" -ForegroundColor Red
-    Write-Host "                  ERREUR" -ForegroundColor Red
-    Write-Host "==================================================" -ForegroundColor Red
-    Write-Host ""
-    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "ERREUR : $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
 }
 

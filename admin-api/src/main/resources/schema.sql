@@ -82,7 +82,10 @@ CREATE TABLE passenger (
     email_verified BIT(1)       NOT NULL DEFAULT 0,
     active         TINYINT(1)   NOT NULL DEFAULT 1,
     password_hash  VARCHAR(255) NULL,
+    google_subject VARCHAR(255) NULL,
+    auth_provider  VARCHAR(20)  NOT NULL DEFAULT 'LOCAL',
     PRIMARY KEY (passenger_id),
+    UNIQUE KEY uk_passenger_google_subject (google_subject),
     KEY idx_passenger_active (active),
     KEY idx_passenger_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

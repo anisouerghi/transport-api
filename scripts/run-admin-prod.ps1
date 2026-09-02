@@ -4,6 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot 'runtime-config-display.ps1')
+
 function Resolve-ModuleJar {
     param(
         [Parameter(Mandatory = $true)][string]$ModuleName,
@@ -69,17 +71,6 @@ try {
     $env:CORS_ALLOWED_ORIGINS = "http://${HostIp},http://${HostIp}:4200,http://${HostIp}:4500,http://localhost:4200,http://localhost:4500"
 
     # ------------------------------------------------------------
-    # Base de données / JWT (surcharge uniquement si deja definies)
-    # Sinon : defauts Spring (application-prod.properties / application.properties)
-    # ------------------------------------------------------------
-
-    $databaseUrlDisplay = if ($env:DATABASE_URL) { $env:DATABASE_URL } else { '(defaut Spring - localhost:3306/transport_reporting)' }
-    $databaseUserDisplay = if ($env:DATABASE_USERNAME) { $env:DATABASE_USERNAME } else { '(defaut Spring - root)' }
-    $databasePasswordDisplay = if ($env:DATABASE_PASSWORD) { '********' } else { '(defaut Spring - vide)' }
-    $jwtSecretDisplay = if ($env:JWT_SECRET) { '********' } else { '(defaut Spring - application.properties)' }
-    $jwtExpirationDisplay = if ($env:JWT_EXPIRATION_MS) { $env:JWT_EXPIRATION_MS } else { '(defaut Spring - 86400000)' }
-
-    # ------------------------------------------------------------
     # JAR
     # ------------------------------------------------------------
 
@@ -116,39 +107,36 @@ Ou depuis Maven portable :
     }
 
     # ------------------------------------------------------------
-    # Affichage
+    # Affichage configuration effective
     # ------------------------------------------------------------
 
     Clear-Host
 
-    Write-Host ""
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host "         TRANSTU - ADMIN API (PRODUCTION)" -ForegroundColor Cyan
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Profil                  : $env:SPRING_PROFILES_ACTIVE"
-    Write-Host "Port                    : $env:ADMIN_SERVER_PORT"
-    Write-Host "JAR                     : $JarPath"
-    Write-Host ""
-    Write-Host "APP_UPLOAD_PATH         : $env:APP_UPLOAD_PATH"
-    Write-Host "APP_QR_STORAGE_PATH     : $env:APP_QR_STORAGE_PATH"
-    Write-Host "APP_QR_BASE_URL         : $env:APP_QR_BASE_URL"
-    Write-Host "APP_FRONTEND_PUBLIC_BASE_URL : $env:APP_FRONTEND_PUBLIC_BASE_URL"
-    Write-Host "CORS_ALLOWED_ORIGINS    : $env:CORS_ALLOWED_ORIGINS"
-    Write-Host ""
-    Write-Host "DATABASE_URL            : $databaseUrlDisplay"
-    Write-Host "DATABASE_USERNAME       : $databaseUserDisplay"
-    Write-Host "DATABASE_PASSWORD       : $databasePasswordDisplay"
-    Write-Host "JWT_SECRET              : $jwtSecretDisplay"
-    Write-Host "JWT_EXPIRATION_MS       : $jwtExpirationDisplay"
-    Write-Host ""
-    Write-Host "API : http://${HostIp}:$env:ADMIN_SERVER_PORT" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host ""
+    Write-RuntimeHeader "TRANSTU - ADMIN API (PRODUCTION / JAR)"
+
+    Write-RuntimeSection "Execution"
+    Write-EnvLine "Mode" "java -jar" -ValueColor Green
+    Write-EnvLine "Commande" "java -jar `"$JarPath`""
+    Write-EnvLine "JAR" $JarPath
+
+    Write-RuntimeSection "Spring / Serveur"
+    Write-EnvLine "SPRING_PROFILES_ACTIVE" $env:SPRING_PROFILES_ACTIVE -ValueColor Green
+    Write-EnvLine "ADMIN_SERVER_PORT" $env:ADMIN_SERVER_PORT -ValueColor Green
+    Write-EnvLine "URL API" "http://${HostIp}:$($env:ADMIN_SERVER_PORT)" -ValueColor Green
+
+    Write-RuntimeSection "Stockage / Frontend / CORS"
+    Write-EnvLine "APP_UPLOAD_PATH" $env:APP_UPLOAD_PATH
+    Write-EnvLine "APP_QR_STORAGE_PATH" $env:APP_QR_STORAGE_PATH
+    Write-EnvLine "APP_QR_BASE_URL" $env:APP_QR_BASE_URL
+    Write-EnvLine "APP_FRONTEND_PUBLIC_BASE_URL" $env:APP_FRONTEND_PUBLIC_BASE_URL
+    Write-EnvLine "CORS_ALLOWED_ORIGINS" $env:CORS_ALLOWED_ORIGINS
+
+    Write-SpringDatabaseBlock
+
+    Write-RuntimeFooter
 
     # ------------------------------------------------------------
-    # Vérifications
+    # Verifications
     # ------------------------------------------------------------
 
     $java = Get-Command java -ErrorAction SilentlyContinue
