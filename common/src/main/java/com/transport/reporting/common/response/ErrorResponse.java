@@ -15,6 +15,7 @@ public class ErrorResponse {
     private int status;
     private String error;
     private String message;
+    private String errorCode;
     private String path;
     private List<String> details;
 
@@ -22,11 +23,17 @@ public class ErrorResponse {
     }
 
     public static ErrorResponse of(int status, String error, String message, String path, List<String> details) {
+        return of(status, error, message, null, path, details);
+    }
+
+    public static ErrorResponse of(
+            int status, String error, String message, String errorCode, String path, List<String> details) {
         ErrorResponse body = new ErrorResponse();
         body.timestamp = Instant.now();
         body.status = status;
         body.error = error;
         body.message = message;
+        body.errorCode = errorCode;
         body.path = path;
         body.details = details;
         return body;
@@ -62,6 +69,14 @@ public class ErrorResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
     }
 
     public String getPath() {

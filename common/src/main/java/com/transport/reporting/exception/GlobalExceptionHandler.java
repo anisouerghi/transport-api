@@ -26,12 +26,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        return build(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI(), null);
+        return build(HttpStatus.NOT_FOUND, ex.getMessage(), null, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request.getRequestURI(), null);
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), ex.getErrorCode(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -39,32 +39,32 @@ public class GlobalExceptionHandler {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + " : " + error.getDefaultMessage())
                 .collect(Collectors.toList());
-        return build(HttpStatus.BAD_REQUEST, "Validation error", request.getRequestURI(), details);
+        return build(HttpStatus.BAD_REQUEST, "Validation error", null, request.getRequestURI(), details);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         log.warn("JSON illisible sur {} : {}", request.getRequestURI(), ex.getMessage());
-        return build(HttpStatus.BAD_REQUEST, "Requête JSON invalide.", request.getRequestURI(), null);
+        return build(HttpStatus.BAD_REQUEST, "Requête JSON invalide.", null, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUpload(MaxUploadSizeExceededException ex, HttpServletRequest request) {
         return build(HttpStatus.PAYLOAD_TOO_LARGE,
                 "Fichier trop volumineux. Maximum 10 Mo par fichier et 25 Mo au total.",
-                request.getRequestURI(), null);
+                null, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ErrorResponse> handleDataAccess(DataAccessException ex, HttpServletRequest request) {
         log.error("Erreur base de données sur {}", request.getRequestURI(), ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, rootMessage(ex), request.getRequestURI(), null);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, rootMessage(ex), null, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
         log.error("Erreur non gérée sur {}", request.getRequestURI(), ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, rootMessage(ex), request.getRequestURI(), null);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, rootMessage(ex), null, request.getRequestURI(), null);
     }
 
     private static String rootMessage(Throwable ex) {
@@ -82,8 +82,9 @@ public class GlobalExceptionHandler {
         return msg;
     }
 
-    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, String path, List<String> details) {
+    private ResponseEntity<ErrorResponse> build(
+            HttpStatus status, String message, String errorCode, String path, List<String> details) {
         return ResponseEntity.status(status).body(
-                ErrorResponse.of(status.value(), status.getReasonPhrase(), message, path, details));
+                ErrorResponse.of(status.value(), status.getReasonPhrase(), message, errorCode, path, details));
     }
 }

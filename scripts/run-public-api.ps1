@@ -47,6 +47,13 @@ try {
         $env:GOOGLE_FRONTEND_CALLBACK_URL = "http://localhost:4200/connexion/google/callback"
     }
 
+    # OTP e-mail (connexion voyageur — activé par défaut)
+    if (-not $env:APP_AUTH_OTP_ENABLED) { $env:APP_AUTH_OTP_ENABLED = "true" }
+    if (-not $env:APP_AUTH_OTP_LENGTH) { $env:APP_AUTH_OTP_LENGTH = "6" }
+    if (-not $env:APP_AUTH_OTP_EXPIRATION_MINUTES) { $env:APP_AUTH_OTP_EXPIRATION_MINUTES = "5" }
+    if (-not $env:APP_AUTH_OTP_MAX_ATTEMPTS) { $env:APP_AUTH_OTP_MAX_ATTEMPTS = "5" }
+    if (-not $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS) { $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS = "60" }
+
     New-Item -ItemType Directory -Force -Path $env:APP_UPLOAD_PATH | Out-Null
     New-Item -ItemType Directory -Force -Path $env:APP_QR_STORAGE_PATH | Out-Null
 
@@ -55,7 +62,7 @@ try {
         throw "Maven n'est pas disponible dans le PATH."
     }
 
-    $mavenCmd = "mvn -pl public-api spring-boot:run"
+    $mavenCmd = "mvn -pl public-api -am install -DskipTests ; mvn -pl public-api spring-boot:run"
 
     Clear-Host
 
@@ -82,14 +89,27 @@ try {
     Write-EnvLine "CORS_ALLOWED_ORIGINS" (Get-EnvDisplayValue -Name 'CORS_ALLOWED_ORIGINS')
 
     Write-GoogleOAuthBlock
+    Write-OtpAuthBlock
     Write-SpringDatabaseBlock
 
+    Write-RuntimeSection "Frontend voyageur (OTP)"
+    Write-Host "  Lancer dans un 2e terminal : .\scripts\run-frontend-dev.ps1" -ForegroundColor Yellow
+    Write-Host "  Puis connexion : http://localhost:4200/connexion" -ForegroundColor Gray
+
     Write-RuntimeFooter
+
+    Write-Host "Installation Maven common + public-api (classpath a jour)..." -ForegroundColor Yellow
+    Set-Location $Root
+    & mvn -pl public-api -am install -DskipTests -q
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installation Maven echouee (code $LASTEXITCODE). Corrigez les erreurs puis relancez."
+    }
+    Write-Host "Installation OK (common JAR dans .m2 a jour)." -ForegroundColor Green
+    Write-Host ""
 
     Write-Host "Demarrage de public-api..." -ForegroundColor Yellow
     Write-Host ""
 
-    Set-Location $Root
     & mvn -pl public-api spring-boot:run
 
     if ($LASTEXITCODE -ne 0) {

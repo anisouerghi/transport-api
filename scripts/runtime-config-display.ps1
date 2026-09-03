@@ -74,6 +74,25 @@ function Write-GoogleOAuthBlock {
     }
 }
 
+function Write-OtpAuthBlock {
+    Write-RuntimeSection "OTP e-mail (public-api)"
+    $enabled = [Environment]::GetEnvironmentVariable('APP_AUTH_OTP_ENABLED')
+    if ([string]::IsNullOrWhiteSpace($enabled)) {
+        $enabled = 'true (defaut Spring)'
+    }
+    Write-EnvLine "APP_AUTH_OTP_ENABLED" $enabled
+    Write-EnvLine "APP_AUTH_OTP_LENGTH" (Get-EnvDisplayValue -Name 'APP_AUTH_OTP_LENGTH' -DefaultDisplay '(defaut Spring - 6)')
+    Write-EnvLine "APP_AUTH_OTP_EXPIRATION_MINUTES" (Get-EnvDisplayValue -Name 'APP_AUTH_OTP_EXPIRATION_MINUTES' -DefaultDisplay '(defaut Spring - 5)')
+    Write-EnvLine "APP_AUTH_OTP_MAX_ATTEMPTS" (Get-EnvDisplayValue -Name 'APP_AUTH_OTP_MAX_ATTEMPTS' -DefaultDisplay '(defaut Spring - 5)')
+    Write-EnvLine "APP_AUTH_OTP_RESEND_DELAY_SECONDS" (Get-EnvDisplayValue -Name 'APP_AUTH_OTP_RESEND_DELAY_SECONDS' -DefaultDisplay '(defaut Spring - 60)')
+    if ($enabled -eq 'false') {
+        Write-Host "  -> OTP DESACTIVE (login direct JWT)" -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "  -> OTP ACTIVE (login e-mail/mot de passe)" -ForegroundColor Green
+    }
+}
+
 function Import-LocalSecrets {
     param([Parameter(Mandatory = $true)][string]$ScriptRoot)
 
@@ -83,4 +102,36 @@ function Import-LocalSecrets {
         return $localSecrets
     }
     return $null
+}
+
+function Invoke-ModulePackage {
+    param(
+        [Parameter(Mandatory = $true)][string]$ModuleName,
+        [Parameter(Mandatory = $true)][string]$ProjectRoot
+    )
+
+    $mvn = Get-Command mvn -ErrorAction SilentlyContinue
+    if (-not $mvn) {
+        throw "Maven n'est pas disponible dans le PATH (requis pour -Build)."
+    }
+
+    Write-Host ""
+    Write-Host "Build Maven en cours : $ModuleName ..." -ForegroundColor Yellow
+    Write-Host "  mvn -pl $ModuleName -am clean package -DskipTests" -ForegroundColor DarkGray
+    Write-Host ""
+
+    Push-Location $ProjectRoot
+    try {
+        & mvn -pl $ModuleName -am clean package -DskipTests
+        if ($LASTEXITCODE -ne 0) {
+            throw "Build Maven echoue (code $LASTEXITCODE)."
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    Write-Host ""
+    Write-Host "Build termine : $ModuleName" -ForegroundColor Green
+    Write-Host ""
 }

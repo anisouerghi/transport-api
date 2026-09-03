@@ -90,6 +90,23 @@ CREATE TABLE passenger (
     KEY idx_passenger_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE passenger_otp_challenge (
+    challenge_id   BIGINT NOT NULL AUTO_INCREMENT,
+    transaction_id VARCHAR(36)  NOT NULL,
+    passenger_id   BIGINT       NOT NULL,
+    otp_hash       VARCHAR(255) NOT NULL,
+    attempt_count  INT          NOT NULL DEFAULT 0,
+    send_count     INT          NOT NULL DEFAULT 1,
+    expires_at     DATETIME(6)  NOT NULL,
+    last_sent_at   DATETIME(6)  NOT NULL,
+    status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    created_at     DATETIME(6)  NOT NULL,
+    PRIMARY KEY (challenge_id),
+    UNIQUE KEY uk_otp_transaction (transaction_id),
+    KEY idx_otp_challenge_passenger (passenger_id),
+    KEY idx_otp_challenge_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE app_user (
     user_id       BIGINT NOT NULL AUTO_INCREMENT,
     uuid          VARCHAR(36)  NOT NULL,

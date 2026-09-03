@@ -1,5 +1,6 @@
 param(
-    [string]$JarPath = ""
+    [string]$JarPath = "",
+    [switch]$Build
 )
 
 $ErrorActionPreference = "Stop"
@@ -71,6 +72,14 @@ try {
     $env:CORS_ALLOWED_ORIGINS = "http://${HostIp},http://${HostIp}:4200,http://${HostIp}:4500,http://localhost:4200,http://localhost:4500"
 
     # ------------------------------------------------------------
+    # Build JAR (optionnel)
+    # ------------------------------------------------------------
+
+    if ($Build) {
+        Invoke-ModulePackage -ModuleName 'admin-api' -ProjectRoot $Root
+    }
+
+    # ------------------------------------------------------------
     # JAR
     # ------------------------------------------------------------
 
@@ -81,11 +90,16 @@ try {
 JAR introuvable dans admin-api\target\
 Attendu : admin-api.jar ou admin-api-*.jar (Spring Boot repackage)
 
-Construire d'abord :
-  mvn -pl admin-api -am clean package -DskipTests
+Construire d'abord (choisir une option) :
 
-Ou depuis Maven portable :
-  C:\Users\ThInKpAd11\Desktop\Vm\Back\apache-maven-3.9.6\bin\mvn.cmd -pl admin-api -am clean package -DskipTests
+  1) Build + run en une commande :
+     .\scripts\run-admin-prod.ps1 -Build
+
+  2) Build seulement :
+     mvn -pl admin-api -am clean package -DskipTests
+
+  3) Puis relancer sans rebuild :
+     .\scripts\run-admin-prod.ps1
 "@
         }
     }
@@ -116,6 +130,7 @@ Ou depuis Maven portable :
 
     Write-RuntimeSection "Execution"
     Write-EnvLine "Mode" "java -jar" -ValueColor Green
+    Write-EnvLine "Build avant run" ($(if ($Build) { 'OUI (mvn clean package)' } else { 'NON - JAR existant dans target/' }))
     Write-EnvLine "Commande" "java -jar `"$JarPath`""
     Write-EnvLine "JAR" $JarPath
 

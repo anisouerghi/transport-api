@@ -3,8 +3,11 @@ package com.transport.reporting.controller.publicapi;
 import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.config.GoogleOAuthProperties;
 import com.transport.reporting.dto.GoogleCallbackRequest;
+import com.transport.reporting.dto.OtpResendRequest;
+import com.transport.reporting.dto.OtpVerifyRequest;
 import com.transport.reporting.dto.PassengerAuthResponse;
 import com.transport.reporting.dto.PassengerLoginRequest;
+import com.transport.reporting.dto.PassengerOtpPendingResponse;
 import com.transport.reporting.dto.PassengerRegisterRequest;
 import com.transport.reporting.security.GoogleOAuth2LoginSuccessHandler;
 import com.transport.reporting.security.PassengerPrincipal;
@@ -63,9 +66,35 @@ public class PublicPassengerAuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Connexion voyageur")
-    public ResponseEntity<ApiResponse<PassengerAuthResponse>> login(
+    public ResponseEntity<ApiResponse<?>> login(
             @Valid @RequestBody PassengerLoginRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(passengerAuthService.login(request)));
+        var result = passengerAuthService.login(request);
+        if (result.isOtpRequired()) {
+            var pending = result.getOtpPending();
+            String message = pending.isEmailSent()
+                    ? "Un code de vérification a été envoyé à votre adresse e-mail."
+                    : "Code généré, mais l'e-mail n'a pas pu être envoyé. Utilisez « Renvoyer le code » ou réessayez plus tard.";
+            return ResponseEntity.ok(ApiResponse.of(true, message, "OTP_REQUIRED", pending));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(result.getAuthResponse()));
+    }
+
+    @PostMapping("/otp/verify")
+    @Operation(summary = "Valider le code OTP et obtenir le JWT")
+    public ResponseEntity<ApiResponse<PassengerAuthResponse>> verifyOtp(
+            @Valid @RequestBody OtpVerifyRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Connexion réussie.",
+                passengerAuthService.verifyOtpAndIssueToken(request)));
+    }
+
+    @PostMapping("/otp/resend")
+    @Operation(summary = "Renvoyer le code OTP")
+    public ResponseEntity<ApiResponse<PassengerOtpPendingResponse>> resendOtp(
+            @Valid @RequestBody OtpResendRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Un nouveau code de vérification a été envoyé.",
+                passengerAuthService.resendOtp(request)));
     }
 
     @GetMapping("/me")

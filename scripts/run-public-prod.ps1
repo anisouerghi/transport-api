@@ -1,5 +1,6 @@
 param(
-    [string]$JarPath = ""
+    [string]$JarPath = "",
+    [switch]$Build
 )
 
 $ErrorActionPreference = "Stop"
@@ -93,6 +94,21 @@ try {
         Write-Host ""
     }
 
+    # OTP e-mail (connexion voyageur — activé par défaut)
+    if (-not $env:APP_AUTH_OTP_ENABLED) { $env:APP_AUTH_OTP_ENABLED = "true" }
+    if (-not $env:APP_AUTH_OTP_LENGTH) { $env:APP_AUTH_OTP_LENGTH = "6" }
+    if (-not $env:APP_AUTH_OTP_EXPIRATION_MINUTES) { $env:APP_AUTH_OTP_EXPIRATION_MINUTES = "5" }
+    if (-not $env:APP_AUTH_OTP_MAX_ATTEMPTS) { $env:APP_AUTH_OTP_MAX_ATTEMPTS = "5" }
+    if (-not $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS) { $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS = "60" }
+
+    # ------------------------------------------------------------
+    # Build JAR (optionnel)
+    # ------------------------------------------------------------
+
+    if ($Build) {
+        Invoke-ModulePackage -ModuleName 'public-api' -ProjectRoot $Root
+    }
+
     # ------------------------------------------------------------
     # JAR
     # ------------------------------------------------------------
@@ -104,8 +120,16 @@ try {
 JAR introuvable dans public-api\target\
 Attendu : public-api.jar ou public-api-*.jar (Spring Boot repackage)
 
-Construire d'abord :
-  mvn -pl public-api -am clean package -DskipTests
+Construire d'abord (choisir une option) :
+
+  1) Build + run en une commande :
+     .\scripts\run-public-prod.ps1 -Build
+
+  2) Build seulement :
+     mvn -pl public-api -am clean package -DskipTests
+
+  3) Puis relancer sans rebuild :
+     .\scripts\run-public-prod.ps1
 "@
         }
     }
@@ -136,6 +160,7 @@ Construire d'abord :
 
     Write-RuntimeSection "Execution"
     Write-EnvLine "Mode" "java -jar" -ValueColor Green
+    Write-EnvLine "Build avant run" ($(if ($Build) { 'OUI (mvn clean package)' } else { 'NON - JAR existant dans target/' }))
     Write-EnvLine "Commande" "java -jar `"$JarPath`"" 
     Write-EnvLine "JAR" $JarPath
     Write-EnvLine "Secrets locaux" ($(if ($secretsFile) { $secretsFile } else { '(aucun - secrets.local.ps1 absent)' }))
@@ -153,7 +178,14 @@ Construire d'abord :
     Write-EnvLine "CORS_ALLOWED_ORIGINS" $env:CORS_ALLOWED_ORIGINS
 
     Write-GoogleOAuthBlock
+    Write-OtpAuthBlock
     Write-SpringDatabaseBlock
+
+    Write-RuntimeSection "Frontend voyageur (OTP)"
+    Write-Host "  OTP cote UI necessite le frontend a jour (ecran /connexion)." -ForegroundColor Yellow
+    Write-Host "  DEV  : .\scripts\run-frontend-dev.ps1  (+ run-public-api.ps1)" -ForegroundColor Gray
+    Write-Host "  PROD : .\scripts\build-frontend-prod.ps1 -Deploy" -ForegroundColor Gray
+    Write-Host "  URL  : http://${HostIp}/sig/connexion" -ForegroundColor Gray
 
     Write-RuntimeFooter
 

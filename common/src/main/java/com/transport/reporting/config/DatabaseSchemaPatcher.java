@@ -22,6 +22,7 @@ public final class DatabaseSchemaPatcher {
     public static void apply(JdbcTemplate jdbcTemplate) {
         ensurePassengerPasswordHashColumn(jdbcTemplate);
         ensurePassengerGoogleOAuthColumns(jdbcTemplate);
+        ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
     }
 
@@ -55,6 +56,39 @@ public final class DatabaseSchemaPatcher {
             }
         } catch (Exception ex) {
             log.warn("Impossible de vérifier/ajouter les colonnes Google OAuth passenger : {}", ex.getMessage());
+        }
+    }
+
+    private static void ensurePassengerOtpChallengeTable(JdbcTemplate jdbcTemplate) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.TABLES "
+                            + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'passenger_otp_challenge'",
+                    Integer.class);
+            if (count != null && count > 0) {
+                return;
+            }
+            jdbcTemplate.execute("""
+                    CREATE TABLE passenger_otp_challenge (
+                        challenge_id   BIGINT NOT NULL AUTO_INCREMENT,
+                        transaction_id VARCHAR(36)  NOT NULL,
+                        passenger_id   BIGINT       NOT NULL,
+                        otp_hash       VARCHAR(255) NOT NULL,
+                        attempt_count  INT          NOT NULL DEFAULT 0,
+                        send_count     INT          NOT NULL DEFAULT 1,
+                        expires_at     DATETIME(6)  NOT NULL,
+                        last_sent_at   DATETIME(6)  NOT NULL,
+                        status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+                        created_at     DATETIME(6)  NOT NULL,
+                        PRIMARY KEY (challenge_id),
+                        UNIQUE KEY uk_otp_transaction (transaction_id),
+                        KEY idx_otp_challenge_passenger (passenger_id),
+                        KEY idx_otp_challenge_status (status)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    """);
+            log.info("Table passenger_otp_challenge créée (OTP e-mail voyageur).");
+        } catch (Exception ex) {
+            log.warn("Impossible de vérifier/créer passenger_otp_challenge : {}", ex.getMessage());
         }
     }
 

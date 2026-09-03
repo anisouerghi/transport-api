@@ -1,8 +1,7 @@
 package com.transport.reporting.service;
 
-import com.transport.reporting.dto.PassengerAuthResponse;
-import com.transport.reporting.dto.PassengerLoginRequest;
-import com.transport.reporting.dto.PassengerRegisterRequest;
+import com.transport.reporting.config.OtpProperties;
+import com.transport.reporting.dto.*;
 import com.transport.reporting.entity.AuthProvider;
 import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.exception.BusinessException;
@@ -26,12 +25,21 @@ public class PassengerAuthService {
     private final PassengerRepository passengerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    public PassengerAuthService(PassengerRepository passengerRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    private final OtpProperties otpProperties;
+    private final PassengerOtpService passengerOtpService;
+
+    public PassengerAuthService(
+            PassengerRepository passengerRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            OtpProperties otpProperties,
+            PassengerOtpService passengerOtpService) {
         this.passengerRepository = passengerRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.otpProperties = otpProperties;
+        this.passengerOtpService = passengerOtpService;
     }
-
 
     public PassengerAuthResponse register(PassengerRegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
@@ -70,26 +78,30 @@ public class PassengerAuthService {
         return toAuthResponse(passenger);
     }
 
-    public PassengerAuthResponse login(PassengerLoginRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-        Passenger passenger = passengerRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new BusinessException("E-mail ou mot de passe incorrect."));
+    /**
+     * Connexion e-mail/mot de passe. Si OTP activé, ne délivre pas de JWT avant validation OTP.
+     */
+    public PassengerLoginResult login(PassengerLoginRequest request) {
+        Passenger passenger = authenticateLocalCredentials(request);
+        if (!otpProperties.isEnabled()) {
+            return PassengerLoginResult.jwt(toAuthResponse(passenger));
+        }
+        return PassengerLoginResult.otpRequired(passengerOtpService.startChallenge(passenger));
+    }
 
-        if (!StringUtils.hasText(passenger.getPasswordHash())) {
-            throw new BusinessException("E-mail ou mot de passe incorrect.");
-        }
-        if (!passenger.isActive()) {
-            throw new BusinessException("Ce compte voyageur est désactivé.");
-        }
-        if (!passwordEncoder.matches(request.getPassword(), passenger.getPasswordHash())) {
-            throw new BusinessException("E-mail ou mot de passe incorrect.");
-        }
+    public PassengerAuthResponse verifyOtpAndIssueToken(OtpVerifyRequest request) {
+        Passenger passenger = passengerOtpService.verifyChallenge(request);
         return toAuthResponse(passenger);
+    }
+
+    public PassengerOtpPendingResponse resendOtp(OtpResendRequest request) {
+        return passengerOtpService.resendChallenge(request);
     }
 
     /**
      * Authentifie ou crée un voyageur après validation Google côté serveur (OIDC).
      * Les claims proviennent du {@code OidcUser} Spring Security, jamais du navigateur seul.
+     * Google OAuth ne déclenche pas d'OTP (fournisseur d'identité externe déjà vérifié).
      */
     public PassengerAuthResponse authenticateGoogleUser(
             String googleSubject,
@@ -126,6 +138,23 @@ public class PassengerAuthService {
         return toAuthResponse(passenger);
     }
 
+    private Passenger authenticateLocalCredentials(PassengerLoginRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        Passenger passenger = passengerRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new BusinessException("E-mail ou mot de passe incorrect."));
+
+        if (!StringUtils.hasText(passenger.getPasswordHash())) {
+            throw new BusinessException("E-mail ou mot de passe incorrect.");
+        }
+        if (!passenger.isActive()) {
+            throw new BusinessException("Ce compte voyageur est désactivé.");
+        }
+        if (!passwordEncoder.matches(request.getPassword(), passenger.getPasswordHash())) {
+            throw new BusinessException("E-mail ou mot de passe incorrect.");
+        }
+        return passenger;
+    }
+
     private Passenger resolvePassengerForGoogle(String normalizedEmail, String googleSubject) {
         return passengerRepository.findByEmailIgnoreCase(normalizedEmail)
                 .map(existing -> {
@@ -157,12 +186,7 @@ public class PassengerAuthService {
         return toAuthResponse(passenger);
     }
 
-    private static boolean isRegisteredAccount(Passenger passenger) {
-        return StringUtils.hasText(passenger.getPasswordHash())
-                || StringUtils.hasText(passenger.getGoogleSubject());
-    }
-
-    private PassengerAuthResponse toAuthResponse(Passenger passenger) {
+    PassengerAuthResponse toAuthResponse(Passenger passenger) {
         PassengerPrincipal principal = toPrincipal(passenger);
         String token = jwtService.generatePassengerToken(principal);
         PassengerAuthResponse response = new PassengerAuthResponse();
@@ -174,6 +198,11 @@ public class PassengerAuthService {
         response.setEmail(passenger.getEmail());
         response.setPhoneNumber(passenger.getPhoneNumber());
         return response;
+    }
+
+    private static boolean isRegisteredAccount(Passenger passenger) {
+        return StringUtils.hasText(passenger.getPasswordHash())
+                || StringUtils.hasText(passenger.getGoogleSubject());
     }
 
     private static PassengerPrincipal toPrincipal(Passenger passenger) {
