@@ -92,8 +92,8 @@ public class Report {
     private TransportSupport transportSupport;
 
     /** Type / categorie du signalement. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "report_type_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "report_type_id")
     private ReportType reportType;
 
     /** Nature métier (classification agent) — null = non classé. */
@@ -102,8 +102,8 @@ public class Report {
     private ReportNature nature;
 
     /** Voyageur ayant depose le signalement. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "passenger_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "passenger_id")
     private Passenger passenger;
 
     /** Statut courant du workflow de traitement. */

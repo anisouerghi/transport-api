@@ -23,7 +23,6 @@ public class ReportRequest {
     @NotNull
     private UUID supportUuid;
 
-    @NotNull
     private Long reportTypeId;
 
     private Boolean publish;
@@ -42,7 +41,5 @@ public class ReportRequest {
     @Size(max = 5000)
     private String description;
 
-    @NotNull
-    @Valid
     private PassengerRequest passenger;
 }

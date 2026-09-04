@@ -127,7 +127,9 @@ public class ReportService {
                 .filter(s -> s.getSupportStatus() == SupportStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active TransportSupport", request.getSupportUuid()));
 
-        ReportType reportType = reportTypeRepository.findById(request.getReportTypeId())
+        ReportType reportType = request.getReportTypeId() == null
+            ? null
+            : reportTypeRepository.findById(request.getReportTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ReportType", request.getReportTypeId()));
 
         Passenger passenger = resolvePassenger(request.getPassenger());
@@ -152,7 +154,9 @@ public class ReportService {
         sendCreationEmailIfPossible(report, passenger);
         sanitizePublicCreateResponse(response);
 
-        String passengerName = passenger.getName() != null ? passenger.getName() : "voyageur";
+        String passengerName = passenger == null || passenger.getName() == null
+            ? "voyageur"
+            : passenger.getName();
         auditLogService.record(AuditLogEvent.builder()
                 .username("PUBLIC")
                 .userFullName(passengerName)
@@ -161,7 +165,7 @@ public class ReportService {
                 .entityName("Report")
                 .entityId(String.valueOf(report.getReportId()))
                 .newValue("reference=" + report.getReference()
-                        + ";reportTypeId=" + reportType.getReportTypeId())
+                    + ";reportTypeId=" + (reportType == null ? null : reportType.getReportTypeId()))
                 .description("Création publique du signalement " + report.getReference())
                 .build());
 
@@ -390,9 +394,8 @@ public class ReportService {
      */
     private Passenger resolvePassenger(PassengerRequest request) {
         return SecurityUtils.currentPassenger()
-                .map(principal -> passengerService.getEntity(principal.getPassengerId()))
-                .orElseGet(() -> passengerService.findOrCreate(
-                        request != null ? request : new PassengerRequest()));
+            .map(principal -> passengerService.getEntity(principal.getPassengerId()))
+            .orElseGet(() -> request == null ? null : passengerService.findOrCreate(request));
     }
 
     /**
