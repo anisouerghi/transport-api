@@ -123,9 +123,12 @@ public class ReportService {
         // Valider les fichiers avant toute persistence
         fileStorageService.validateBatch(files);
 
-        TransportSupport support = transportSupportRepository.findByUuid(request.getSupportUuid())
+        TransportSupport support = request.getSupportUuid() == null
+            ? null
+            : transportSupportRepository.findByUuid(request.getSupportUuid())
                 .filter(s -> s.getSupportStatus() == SupportStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("Active TransportSupport", request.getSupportUuid()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Active TransportSupport", request.getSupportUuid()));
 
         ReportType reportType = request.getReportTypeId() == null
             ? null

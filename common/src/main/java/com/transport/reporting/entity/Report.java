@@ -87,8 +87,8 @@ public class Report {
 
 
     /** Support de transport concerne par le signalement. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "transport_support_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transport_support_id")
     private TransportSupport transportSupport;
 
     /** Type / categorie du signalement. */

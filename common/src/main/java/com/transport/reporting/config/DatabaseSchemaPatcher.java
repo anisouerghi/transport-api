@@ -24,6 +24,7 @@ public final class DatabaseSchemaPatcher {
         ensurePassengerGoogleOAuthColumns(jdbcTemplate);
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
+        ensureReportSupportNullable(jdbcTemplate);
     }
 
     private static void ensurePassengerPasswordHashColumn(JdbcTemplate jdbcTemplate) {
@@ -102,6 +103,19 @@ public final class DatabaseSchemaPatcher {
             log.info("Colonne reply.public_response ajoutée.");
         } catch (Exception ex) {
             log.warn("Impossible de vérifier/ajouter reply.public_response : {}", ex.getMessage());
+        }
+    }
+
+    private static void ensureReportSupportNullable(JdbcTemplate jdbcTemplate) {
+        try {
+            if (!columnExists(jdbcTemplate, "report", "transport_support_id")) {
+                return;
+            }
+            jdbcTemplate.execute(
+                    "ALTER TABLE report MODIFY COLUMN transport_support_id BIGINT NULL");
+            log.info("Colonne report.transport_support_id rendue optionnelle.");
+        } catch (Exception ex) {
+            log.warn("Impossible de rendre report.transport_support_id optionnelle : {}", ex.getMessage());
         }
     }
 

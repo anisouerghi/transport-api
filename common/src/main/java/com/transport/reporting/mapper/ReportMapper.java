@@ -36,7 +36,9 @@ public class ReportMapper {
                 .sendEmailDate(report.getSendEmailDate())
                 .publicResponse(report.getPublicResponse())
                 .publicResponseDate(report.getPublicResponseDate())
-                .transportSupport(transportSupportMapper.toResponse(report.getTransportSupport()))
+                .transportSupport(report.getTransportSupport() == null
+                    ? null
+                    : transportSupportMapper.toResponse(report.getTransportSupport()))
                 .reportTypeCode(report.getReportType().getCode())
                 .reportTypeLabel(report.getReportType().getLabel())
                 .natureId(report.getNature() != null ? report.getNature().getReportNatureId() : null)

@@ -220,7 +220,7 @@ CREATE TABLE report (
     send_email_date      DATETIME(6)  NULL,
     public_response      TINYINT(1)   NOT NULL DEFAULT 0,
     public_response_date DATETIME(6)  NULL,
-    transport_support_id BIGINT       NOT NULL,
+    transport_support_id BIGINT       NULL,
     report_type_id       BIGINT,
     nature_id            BIGINT       NULL,
     passenger_id         BIGINT       NULL,
