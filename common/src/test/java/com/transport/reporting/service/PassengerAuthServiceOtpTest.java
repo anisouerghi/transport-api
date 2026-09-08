@@ -32,27 +32,23 @@ class PassengerAuthServiceOtpTest {
     @Mock
     private PassengerOtpService passengerOtpService;
 
-    private OtpProperties otpProperties;
     private PasswordEncoder passwordEncoder;
     private PassengerAuthService authService;
 
     @BeforeEach
     void setUp() {
-        otpProperties = new OtpProperties();
         passwordEncoder = new BCryptPasswordEncoder();
         authService = new PassengerAuthService(
                 passengerRepository,
                 passwordEncoder,
                 jwtService,
-                otpProperties,
                 passengerOtpService);
     }
 
     @Test
-    void login_whenOtpDisabled_returnsJwtDirectly() {
-        otpProperties.setEnabled(false);
-
+    void login_whenEmailIsVerified_returnsJwtDirectly() {
         Passenger passenger = activePassenger("secret123");
+        passenger.setEmailVerified(true);
         when(passengerRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(passenger));
         when(jwtService.generatePassengerToken(any())).thenReturn("jwt-token");
         when(jwtService.getExpirationMs()).thenReturn(86_400_000L);
@@ -69,9 +65,7 @@ class PassengerAuthServiceOtpTest {
     }
 
     @Test
-    void login_whenOtpEnabled_doesNotReturnJwt() {
-        otpProperties.setEnabled(true);
-
+    void login_whenEmailIsNotVerified_sendsOtpWithoutJwt() {
         Passenger passenger = activePassenger("secret123");
         when(passengerRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(passenger));
         when(passengerOtpService.startChallenge(passenger)).thenReturn(
@@ -89,6 +83,7 @@ class PassengerAuthServiceOtpTest {
 
         assertThat(result.isOtpRequired()).isTrue();
         assertThat(result.getOtpPending().getOtpTransactionId()).isEqualTo("tx-123");
+        verify(passengerOtpService).startChallenge(passenger);
         verify(jwtService, never()).generatePassengerToken(any());
     }
 

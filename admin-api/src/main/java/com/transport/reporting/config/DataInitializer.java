@@ -164,8 +164,8 @@ public class DataInitializer {
                 .build());
 
         Passenger p2 = passengerRepository.save(Passenger.builder()
-                .name("Alaa Nammouchi")
-                .email("alaa.namouchi@transtu.tn")
+                .name("Alaeddine Namouchi")
+                .email("alaeddine.nammouchi@transtu.tn")
                 .phoneNumber("+21622555478")
                 .emailVerified(false)
                 .build());

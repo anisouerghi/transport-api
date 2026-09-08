@@ -25,23 +25,20 @@ public class PassengerAuthService {
     private final PassengerRepository passengerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final OtpProperties otpProperties;
     private final PassengerOtpService passengerOtpService;
 
     public PassengerAuthService(
             PassengerRepository passengerRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            OtpProperties otpProperties,
             PassengerOtpService passengerOtpService) {
         this.passengerRepository = passengerRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.otpProperties = otpProperties;
         this.passengerOtpService = passengerOtpService;
     }
 
-    public PassengerAuthResponse register(PassengerRegisterRequest request) {
+    public PassengerOtpPendingResponse register(PassengerRegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         var existing = passengerRepository.findByEmailIgnoreCase(email);
 
@@ -51,7 +48,7 @@ public class PassengerAuthService {
             if (StringUtils.hasText(passenger.getGoogleSubject())) {
                 throw new BusinessException("Un compte Google existe déjà avec cet e-mail. Connectez-vous avec Google.");
             }
-            if (StringUtils.hasText(passenger.getPasswordHash())) {
+            if (StringUtils.hasText(passenger.getPasswordHash()) && passenger.isEmailVerified()) {
                 throw new BusinessException("Un compte existe déjà avec cet e-mail. Connectez-vous.");
             }
             if (StringUtils.hasText(request.getName())) {
@@ -74,23 +71,24 @@ public class PassengerAuthService {
             passenger.setActive(true);
         }
 
+        passenger.setEmailVerified(false);
         passenger = passengerRepository.save(passenger);
-        return toAuthResponse(passenger);
+        return passengerOtpService.startChallenge(passenger);
     }
 
-    /**
-     * Connexion e-mail/mot de passe. Si OTP activé, ne délivre pas de JWT avant validation OTP.
-     */
+    /** Connexion directe si l'e-mail est vérifié, sinon nouveau code OTP. */
     public PassengerLoginResult login(PassengerLoginRequest request) {
         Passenger passenger = authenticateLocalCredentials(request);
-        if (!otpProperties.isEnabled()) {
-            return PassengerLoginResult.jwt(toAuthResponse(passenger));
+        if (!passenger.isEmailVerified()) {
+            return PassengerLoginResult.otpRequired(passengerOtpService.startChallenge(passenger));
         }
-        return PassengerLoginResult.otpRequired(passengerOtpService.startChallenge(passenger));
+        return PassengerLoginResult.jwt(toAuthResponse(passenger));
     }
 
     public PassengerAuthResponse verifyOtpAndIssueToken(OtpVerifyRequest request) {
         Passenger passenger = passengerOtpService.verifyChallenge(request);
+        passenger.setEmailVerified(true);
+        passengerRepository.save(passenger);
         return toAuthResponse(passenger);
     }
 

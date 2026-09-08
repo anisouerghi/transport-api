@@ -24,7 +24,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Gestion du cycle de vie OTP e-mail pour la connexion voyageur.
+ * Gestion du cycle de vie OTP e-mail pour la validation du compte voyageur.
  * Le code n'est jamais journalisé ni renvoyé dans les réponses HTTP.
  */
 @Service

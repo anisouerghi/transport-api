@@ -37,16 +37,6 @@ try {
         }
     }
 
-    if (-not $env:GOOGLE_CLIENT_ID) {
-        $env:GOOGLE_CLIENT_ID = "805628985152-kkg4l131p8jmpi7bek764icsp5ikmso7.apps.googleusercontent.com"
-    }
-    if (-not $env:GOOGLE_REDIRECT_URI) {
-        $env:GOOGLE_REDIRECT_URI = "http://localhost:8081/login/oauth2/code/google"
-    }
-    if (-not $env:GOOGLE_FRONTEND_CALLBACK_URL) {
-        $env:GOOGLE_FRONTEND_CALLBACK_URL = "http://localhost:4200/connexion/google/callback"
-    }
-
     # OTP e-mail (connexion voyageur — activé par défaut)
     if (-not $env:APP_AUTH_OTP_ENABLED) { $env:APP_AUTH_OTP_ENABLED = "true" }
     if (-not $env:APP_AUTH_OTP_LENGTH) { $env:APP_AUTH_OTP_LENGTH = "6" }

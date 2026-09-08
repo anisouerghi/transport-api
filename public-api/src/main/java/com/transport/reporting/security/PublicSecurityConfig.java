@@ -78,6 +78,7 @@ public class PublicSecurityConfig {
             auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
             auth.requestMatchers(GOOGLE_OAUTH_PATHS).permitAll();
             auth.requestMatchers("/error").permitAll();
+            auth.requestMatchers(HttpMethod.POST, "/api/public/auth/logout").authenticated();
             auth.requestMatchers("/api/public/signalements/mine").authenticated();
             auth.requestMatchers(
                     "/api/public/**",

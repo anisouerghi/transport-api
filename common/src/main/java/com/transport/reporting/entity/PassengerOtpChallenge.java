@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * Transaction OTP temporaire liée à un voyageur (login e-mail/mot de passe).
+ * Transaction OTP temporaire liée à la validation e-mail d'un voyageur.
  * Le code est stocké hashé ; jamais en clair en base.
  */
 @Entity

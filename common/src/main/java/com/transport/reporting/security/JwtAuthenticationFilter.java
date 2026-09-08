@@ -29,16 +29,19 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final RevokedTokenService revokedTokenService;
     private final UserDetailsServiceImpl userDetailsService;
     private final PassengerRepository passengerRepository;
     private final Set<String> acceptedTokenTypes;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
+            RevokedTokenService revokedTokenService,
             UserDetailsServiceImpl userDetailsService,
             PassengerRepository passengerRepository,
             @Value("${app.security.accepted-token-types:ADMIN,PASSENGER}") String acceptedTokenTypes) {
         this.jwtService = jwtService;
+        this.revokedTokenService = revokedTokenService;
         this.userDetailsService = userDetailsService;
         this.passengerRepository = passengerRepository;
         this.acceptedTokenTypes = Arrays.stream(acceptedTokenTypes.split(","))
@@ -76,7 +79,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (revokedTokenService.isRevoked(token)) {
+                SecurityContextHolder.clearContext();
+            } else if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String typ = jwtService.extractTokenType(token);
                 String normalized = typ == null
                         ? JwtService.TYPE_ADMIN

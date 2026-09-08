@@ -12,6 +12,7 @@ import com.transport.reporting.dto.PassengerRegisterRequest;
 import com.transport.reporting.security.GoogleOAuth2LoginSuccessHandler;
 import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.security.GoogleOAuthCallbackCodeStore;
+import com.transport.reporting.security.RevokedTokenService;
 import com.transport.reporting.service.PassengerAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,23 +47,28 @@ public class PublicPassengerAuthController {
     private final PassengerAuthService passengerAuthService;
     private final GoogleOAuthProperties googleOAuthProperties;
     private final GoogleOAuthCallbackCodeStore callbackCodeStore;
+    private final RevokedTokenService revokedTokenService;
 
     public PublicPassengerAuthController(
             PassengerAuthService passengerAuthService,
             GoogleOAuthProperties googleOAuthProperties,
-            ObjectProvider<GoogleOAuthCallbackCodeStore> callbackCodeStore) {
+            ObjectProvider<GoogleOAuthCallbackCodeStore> callbackCodeStore,
+            RevokedTokenService revokedTokenService) {
         this.passengerAuthService = passengerAuthService;
         this.googleOAuthProperties = googleOAuthProperties;
         this.callbackCodeStore = callbackCodeStore.getIfAvailable();
+        this.revokedTokenService = revokedTokenService;
     }
 
 
     @PostMapping("/register")
     @Operation(summary = "Créer un compte voyageur")
-    public ResponseEntity<ApiResponse<PassengerAuthResponse>> register(
+    public ResponseEntity<ApiResponse<PassengerOtpPendingResponse>> register(
             @Valid @RequestBody PassengerRegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("Compte créé", passengerAuthService.register(request)));
+                .body(ApiResponse.created(
+                        "Un code de vérification a été envoyé à votre adresse e-mail.",
+                        passengerAuthService.register(request)));
     }
 
     @PostMapping("/login")
@@ -79,8 +86,16 @@ public class PublicPassengerAuthController {
         return ResponseEntity.ok(ApiResponse.ok(result.getAuthResponse()));
     }
 
+    @PostMapping("/logout")
+    @Operation(summary = "Déconnexion voyageur", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @org.springframework.web.bind.annotation.RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
+        revokedTokenService.revoke(authorization.substring(7));
+        return ResponseEntity.ok(ApiResponse.ok("Déconnexion réussie.", null));
+    }
+
     @PostMapping("/otp/verify")
-    @Operation(summary = "Valider le code OTP et obtenir le JWT")
+    @Operation(summary = "Valider l'e-mail et obtenir le JWT")
     public ResponseEntity<ApiResponse<PassengerAuthResponse>> verifyOtp(
             @Valid @RequestBody OtpVerifyRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(
