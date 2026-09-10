@@ -21,6 +21,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Envoi d'e-mails HTML via {@link JavaMailSender}.
@@ -97,12 +98,15 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            String logoContentId = ReplyEmailComposer.LOGO_CONTENT_ID + "-" + UUID.randomUUID();
             applyFromAndReplyTo(helper);
             helper.setTo(to.trim());
             helper.setSubject(subject);
             helper.setSentDate(new java.util.Date());
-            helper.setText(htmlBody, true);
-            attachInlineLogo(helper);
+            helper.setText(htmlBody.replace(
+                    "cid:" + ReplyEmailComposer.LOGO_CONTENT_ID,
+                    "cid:" + logoContentId), true);
+            attachInlineLogo(helper, logoContentId);
             mailSender.send(message);
             String messageId = message.getMessageID();
             log.info("E-mail accepté par SMTP from={} to={} host={} (Message-ID: {})",
@@ -127,7 +131,7 @@ public class EmailService {
         helper.setReplyTo(from);
     }
 
-    private void attachInlineLogo(MimeMessageHelper helper) {
+    private void attachInlineLogo(MimeMessageHelper helper, String contentId) {
         try {
             ClassPathResource logo = new ClassPathResource(LOGO_CLASSPATH);
             if (!logo.exists()) {
@@ -138,7 +142,7 @@ public class EmailService {
             try (java.io.InputStream inputStream = logo.getInputStream()) {
                 logoBytes = inputStream.readAllBytes();
             }
-            helper.addInline(ReplyEmailComposer.LOGO_CONTENT_ID,
+                helper.addInline(contentId,
                     new ByteArrayResource(logoBytes), "image/png");
         } catch (Exception ex) {
             log.warn("Impossible d'attacher le logo TRANSTU à l'e-mail : {}", ex.getMessage());
