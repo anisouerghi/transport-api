@@ -30,7 +30,8 @@ public class PublicReplyController {
     @Operation(
             summary = "Lister les réponses visibles à l'accueil",
             description = "Accès anonyme. Filtre : signalement.publish = true. "
-                    + "15 dernières réponses max, pagination 5 par page. Aucune donnée personnelle."
+                    + "15 dernières réponses max, pagination 5 par page. Retourne le message du signalement, "
+                    + "le message de la réponse et le nom du voyageur."
     )
     public ResponseEntity<ApiResponse<PageResponse<PublicHomepageReplyResponse>>> homepage(
             @RequestParam(defaultValue = "0") int page,

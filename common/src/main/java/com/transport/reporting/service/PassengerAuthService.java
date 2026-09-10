@@ -184,6 +184,52 @@ public class PassengerAuthService {
         return toAuthResponse(passenger);
     }
 
+    public PassengerAuthResponse updateProfile(
+            PassengerPrincipal principal,
+            PassengerProfileUpdateRequest request) {
+        if (principal == null) {
+            throw new BusinessException("Authentification requise.");
+        }
+
+        Passenger passenger = passengerRepository.findById(principal.getPassengerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger", principal.getPassengerId()));
+        if (!passenger.isActive() || !isRegisteredAccount(passenger)) {
+            throw new BusinessException("Session invalide. Veuillez vous reconnecter.");
+        }
+
+        if (StringUtils.hasText(request.getEmail())) {
+            String email = request.getEmail().trim().toLowerCase();
+            passengerRepository.findByEmailIgnoreCase(email)
+                    .filter(existing -> !existing.getPassengerId().equals(passenger.getPassengerId()))
+                    .ifPresent(existing -> {
+                        throw new BusinessException("Un compte existe déjà avec cet e-mail.");
+                    });
+            passenger.setEmail(email);
+        }
+        if (request.getName() != null) {
+            passenger.setName(StringUtils.hasText(request.getName()) ? request.getName().trim() : null);
+        }
+        if (request.getPhoneNumber() != null) {
+            passenger.setPhoneNumber(
+                    StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null);
+        }
+
+        if (StringUtils.hasText(request.getPassword())) {
+            if (request.getPassword().length() < 8 || request.getPassword().length() > 100) {
+                throw new BusinessException("Le nouveau mot de passe doit contenir entre 8 et 100 caractères.");
+            }
+            if (!StringUtils.hasText(passenger.getPasswordHash())
+                    || !StringUtils.hasText(request.getCurrentPassword())
+                    || !passwordEncoder.matches(request.getCurrentPassword(), passenger.getPasswordHash())) {
+                throw new BusinessException("Ancien mot de passe incorrect.");
+            }
+            passenger.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            passenger.setAuthProvider(AuthProvider.LOCAL);
+        }
+
+        return toAuthResponse(passengerRepository.save(passenger));
+    }
+
     PassengerAuthResponse toAuthResponse(Passenger passenger) {
         PassengerPrincipal principal = toPrincipal(passenger);
         String token = jwtService.generatePassengerToken(principal);

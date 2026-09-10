@@ -89,7 +89,7 @@ public class PublicTrackingService {
 
     /**
      * Accueil public : 15 dernières réponses des signalements {@code publish} (case « Visible à l'accueil »),
-     * paginées par 5, plus récentes d'abord. Aucune donnée personnelle.
+     * paginées par 5, plus récentes d'abord.
      */
     public PageResponse<PublicHomepageReplyResponse> listHomepageReplies(int page, int size) {
         int safeSize = size <= 0 ? HOMEPAGE_PAGE_SIZE : Math.min(size, HOMEPAGE_PAGE_SIZE);
@@ -117,11 +117,17 @@ public class PublicTrackingService {
     private PublicHomepageReplyResponse toHomepageReply(Reply reply) {
         Report report = reply.getReport();
         String typeLabel = null;
+        String passengerName = null;
         if (report != null && report.getReportType() != null) {
             typeLabel = report.getReportType().getLabel();
         }
+        if (report != null && report.getPassenger() != null) {
+            passengerName = report.getPassenger().getName();
+        }
         return PublicHomepageReplyResponse.builder()
+            .description(report != null ? report.getDescription() : null)
                 .message(reply.getMessage())
+                .passengerName(passengerName)
                 .replyDate(reply.getReplyDate())
                 .reportTypeLabel(typeLabel)
                 .build();

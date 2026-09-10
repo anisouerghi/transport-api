@@ -8,6 +8,7 @@ import com.transport.reporting.dto.OtpVerifyRequest;
 import com.transport.reporting.dto.PassengerAuthResponse;
 import com.transport.reporting.dto.PassengerLoginRequest;
 import com.transport.reporting.dto.PassengerOtpPendingResponse;
+import com.transport.reporting.dto.PassengerProfileUpdateRequest;
 import com.transport.reporting.dto.PassengerRegisterRequest;
 import com.transport.reporting.security.GoogleOAuth2LoginSuccessHandler;
 import com.transport.reporting.security.PassengerPrincipal;
@@ -28,6 +29,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -121,6 +123,16 @@ public class PublicPassengerAuthController {
                     .body(ApiResponse.of(false, "Authentification requise.", "AUTH_REQUIRED", null));
         }
         return ResponseEntity.ok(ApiResponse.ok(passengerAuthService.current(principal)));
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Modifier le profil voyageur", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<PassengerAuthResponse>> updateProfile(
+            @AuthenticationPrincipal PassengerPrincipal principal,
+            @Valid @RequestBody PassengerProfileUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Profil mis à jour.",
+                passengerAuthService.updateProfile(principal, request)));
     }
 
     @GetMapping("/google")
