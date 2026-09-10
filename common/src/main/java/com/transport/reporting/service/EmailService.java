@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -133,7 +134,12 @@ public class EmailService {
                 log.warn("Logo e-mail introuvable sur le classpath : {}", LOGO_CLASSPATH);
                 return;
             }
-            helper.addInline(ReplyEmailComposer.LOGO_CONTENT_ID, logo, "image/png");
+            byte[] logoBytes;
+            try (java.io.InputStream inputStream = logo.getInputStream()) {
+                logoBytes = inputStream.readAllBytes();
+            }
+            helper.addInline(ReplyEmailComposer.LOGO_CONTENT_ID,
+                    new ByteArrayResource(logoBytes), "image/png");
         } catch (Exception ex) {
             log.warn("Impossible d'attacher le logo TRANSTU à l'e-mail : {}", ex.getMessage());
         }

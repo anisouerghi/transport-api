@@ -186,7 +186,7 @@ public class ReplyService {
                     .replySaved(true)
                     .success(true)
                     .message("Réponse enregistrée. E-mail envoyé à " + passengerEmail
-                            + " (accepté par le serveur SMTP — vérifiez aussi les indésirables).")
+                            + " (— vérifiez les spams).")
                     .build();
         }
 
