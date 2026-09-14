@@ -45,20 +45,33 @@ public class FileStorageService {
     /** Taille maximale cumulée de toutes les pièces jointes (25 Mo). */
     public static final long MAX_TOTAL_BYTES = 25L * 1024 * 1024;
 
-    private static final Map<String, String> ALLOWED_EXTENSIONS_TO_MIME = Map.of(
-            "jpg", MediaType.IMAGE_JPEG_VALUE,
-            "jpeg", MediaType.IMAGE_JPEG_VALUE,
-            "png", MediaType.IMAGE_PNG_VALUE,
-            "webp", "image/webp",
-            "pdf", MediaType.APPLICATION_PDF_VALUE
+    private static final Map<String, String> ALLOWED_EXTENSIONS_TO_MIME = Map.ofEntries(
+            Map.entry("jpg", MediaType.IMAGE_JPEG_VALUE),
+            Map.entry("jpeg", MediaType.IMAGE_JPEG_VALUE),
+            Map.entry("png", MediaType.IMAGE_PNG_VALUE),
+            Map.entry("webp", "image/webp"),
+            Map.entry("pdf", MediaType.APPLICATION_PDF_VALUE),
+            Map.entry("webm", "audio/webm"),
+            Map.entry("ogg", "audio/ogg"),
+            Map.entry("mp3", "audio/mpeg"),
+            Map.entry("m4a", "audio/mp4"),
+            Map.entry("mp4", "audio/mp4")
     );
 
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
             "image/webp",
-            MediaType.APPLICATION_PDF_VALUE
+            MediaType.APPLICATION_PDF_VALUE,
+            "audio/webm",
+            "audio/ogg",
+            "audio/mpeg",
+            "audio/mp4",
+            "audio/x-m4a"
     );
+
+    private static final String ALLOWED_FORMATS_MESSAGE =
+            "Format de fichier non autorisé. Formats acceptés : JPG, JPEG, PNG, WEBP, PDF, WEBM, OGG, MP3, M4A.";
 
     private final SharedStoragePaths sharedStoragePaths;
 
@@ -80,9 +93,8 @@ public class FileStorageService {
         String extension = extractExtension(originalName);
         String mimeType = resolveMimeType(file, extension);
         String expectedMime = ALLOWED_EXTENSIONS_TO_MIME.get(extension);
-        if (expectedMime == null || !ALLOWED_MIME_TYPES.contains(mimeType) || !expectedMime.equals(mimeType)) {
-            throw new BusinessException(
-                    "Format de fichier non autorisé. Formats acceptés : JPG, JPEG, PNG, WEBP, PDF.");
+        if (expectedMime == null || !ALLOWED_MIME_TYPES.contains(mimeType) || !mimeMatchesExtension(expectedMime, mimeType)) {
+            throw new BusinessException(ALLOWED_FORMATS_MESSAGE);
         }
 
         try {
@@ -168,9 +180,16 @@ public class FileStorageService {
         String originalName = sanitizeOriginalFilename(file.getOriginalFilename());
         String extension = extractExtension(originalName);
         if (!ALLOWED_EXTENSIONS_TO_MIME.containsKey(extension)) {
-            throw new BusinessException(
-                    "Format de fichier non autorisé. Formats acceptés : JPG, JPEG, PNG, WEBP, PDF.");
+            throw new BusinessException(ALLOWED_FORMATS_MESSAGE);
         }
+    }
+
+    private static boolean mimeMatchesExtension(String expectedMime, String actualMime) {
+        if (expectedMime.equals(actualMime)) {
+            return true;
+        }
+        // Safari / certains navigateurs envoient audio/x-m4a pour .m4a/.mp4
+        return "audio/mp4".equals(expectedMime) && "audio/x-m4a".equals(actualMime);
     }
 
     /**
@@ -183,6 +202,9 @@ public class FileStorageService {
             String mime = contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
             if ("image/jpg".equals(mime)) {
                 return MediaType.IMAGE_JPEG_VALUE;
+            }
+            if ("audio/x-m4a".equals(mime)) {
+                return "audio/mp4";
             }
             return mime;
         }

@@ -26,4 +26,6 @@ public class AttachmentResponse {
     private Long reportId;
     /** {@code true} lorsque le fichier est une image visualisable inline. */
     private boolean image;
+    /** {@code true} lorsque le fichier est un message vocal / audio. */
+    private boolean audio;
 }

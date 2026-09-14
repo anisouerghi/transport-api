@@ -26,6 +26,7 @@ public class AttachmentMapper {
                 .fileSize(resolveFileSize(attachment.getFilePath()))
                 .reportId(attachment.getReport() != null ? attachment.getReport().getReportId() : null)
                 .image(fileType != null && fileType.startsWith("image/"))
+                .audio(fileType != null && fileType.startsWith("audio/"))
                 .build();
     }
 

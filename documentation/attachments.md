@@ -10,7 +10,7 @@ L'entité JPA existante `Attachment` est réutilisée sans rupture du modèle.
 
 | Règle | Valeur |
 |-------|--------|
-| Formats | JPG, JPEG, PNG, WEBP, PDF |
+| Formats | JPG, JPEG, PNG, WEBP, PDF, WEBM, OGG, MP3, M4A (audio) |
 | Nombre max | 5 fichiers / signalement |
 | Taille unitaire | 10 Mo |
 | Taille totale | 25 Mo |
@@ -78,3 +78,4 @@ Flux métier :
 - Scan antivirus
 - Compression / redimensionnement d'images
 - Quota par voyageur
+- Message vocal voyageur (MediaRecorder) : déjà intégré via `files` (formats audio ci-dessus)
