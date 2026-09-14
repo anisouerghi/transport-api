@@ -236,6 +236,85 @@ Table `passenger_otp_challenge` créée automatiquement via `DatabaseSchemaPatch
 
 ---
 
+## Problème : OTP non reçu sur Gmail (alors que Transtu OK)
+
+### Constat
+
+L'application **n'a aucune règle spéciale** pour Gmail. Le même code envoie à toutes les adresses via :
+
+```text
+public-api → mail.transtu.tn → destinataire
+```
+
+Si `@transtu.tn` reçoit et `@gmail.com` non :
+
+| Étape | Transtu | Gmail |
+|-------|---------|-------|
+| Génération OTP | OK | OK |
+| Acceptation SMTP (`Message-ID`) | OK | souvent OK aussi |
+| Livraison boîte | interne = rapide | externe = rejet / spam / délai |
+
+**"Non reçu"** côté Gmail ≠ "non envoyé" côté app. Il faut lire les logs.
+
+### Diagnostic rapide (2 minutes)
+
+1. Inscription / login avec un Gmail → écran OTP.
+2. Dans les logs `public-api`, chercher **immédiatement** :
+
+```text
+E-mail accepté par SMTP from=reclamations@transtu.tn to=xxx@gmail.com ... Message-ID: <...>
+```
+
+| Résultat log | Interprétation | Action |
+|--------------|----------------|--------|
+| `E-mail accepté par SMTP ... to=...@gmail.com` | App a **envoyé** | Problème livraison Gmail / spam / SPF |
+| `Échec envoi OTP e-mail ... smtpError=...` | SMTP a **refusé** | Corriger SMTP / auth / réseau |
+| `emailSent: false` dans la réponse API | Échec SMTP signalé au front | Même chose + bouton « Renvoyer » |
+| Rien du tout | Mauvais flux (ex. Google OAuth sans OTP) | Utiliser `/inscription` ou `/connexion` email |
+
+3. Côté Gmail : **Spam / Promotions / Tous les messages**.
+4. Donner le **Message-ID** à l'admin `mail.transtu.tn` pour voir bounce / reject Gmail.
+
+### Causes les plus fréquentes (Gmail)
+
+1. **SPF / DKIM / DMARC** incomplets pour `transtu.tn` → Gmail refuse ou jette
+2. E-mail en **Indésirables**
+3. Serveur mail Transtu **accepte** le message puis **échoue** au relais externe (queue / bounce)
+4. Port **25** peu fiable pour la livraison externe (préférer **587** + auth si possible)
+
+### Solutions
+
+**Court terme (utilisateur / test)**
+
+- Vérifier Spam Gmail
+- Utiliser « Renvoyer le code » sur l'écran OTP
+- Tester aussi avec une adresse `@transtu.tn` pour confirmer que l'OTP marche
+
+**Moyen terme (équipe messagerie — correctif réel)**
+
+- Configurer / corriger **SPF + DKIM + DMARC** pour `reclamations@transtu.tn`
+- Tracer le Message-ID dans Postfix / logs sortants vers `gmail-smtp-in.l.google.com`
+- Envisager SMTP **587 STARTTLS** authentifié plutôt que port 25
+- Vérifier que l'IP d'envoi n'est pas blacklistée
+
+**Application**
+
+- Aucun correctif code nécessaire pour "autoriser Gmail" : déjà autorisé
+- Ne jamais renvoyer le code OTP dans la réponse HTTP
+
+### Checklist admin mail
+
+```text
+[ ] SPF : mail.transtu.tn autorisé pour transtu.tn
+[ ] DKIM : signature présente sur les messages sortants
+[ ] DMARC : politique définie
+[ ] Logs : Message-ID OTP → statut delivery vers Gmail
+[ ] Pas de bounce 550 / 5.7.1 / spam rejection
+[ ] Test manuel : echo mail depuis le même serveur vers Gmail
+```
+
+---
+
 ## Fichiers principaux
 
 **Backend**

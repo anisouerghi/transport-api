@@ -3,6 +3,8 @@ package com.transport.reporting.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 /**
  * Entite Voyageur (declarant) - table passenger.
  */
@@ -55,4 +57,40 @@ public class Passenger {
     @Column(name = "auth_provider", length = 20, nullable = false)
     @Builder.Default
     private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    /** URL photo de profil (ex. claim OIDC {@code picture} Google). */
+    @Column(name = "profile_picture_url", length = 512)
+    private String profilePictureUrl;
+
+    /** Dernière IP HTTP connue (serveur). */
+    @Column(name = "last_ip", length = 64)
+    private String lastIp;
+
+    /** Dernier User-Agent brut (tronqué). */
+    @Column(name = "last_user_agent", length = 512)
+    private String lastUserAgent;
+
+    /** Navigateur détecté (Chrome, Safari, …). */
+    @Column(name = "last_browser", length = 50)
+    private String lastBrowser;
+
+    /** Latitude GPS optionnelle (navigateur). */
+    @Column(name = "latitude")
+    private Double latitude;
+
+    /** Longitude GPS optionnelle (navigateur). */
+    @Column(name = "longitude")
+    private Double longitude;
+
+    /** Précision GPS en mètres (optionnelle). */
+    @Column(name = "gps_accuracy")
+    private Double gpsAccuracy;
+
+    /** Horodatage de la dernière position GPS reçue. */
+    @Column(name = "gps_captured_at")
+    private Instant gpsCapturedAt;
+
+    /** Dernière authentification réussie (login / OTP / Google). */
+    @Column(name = "last_auth_at")
+    private Instant lastAuthAt;
 }

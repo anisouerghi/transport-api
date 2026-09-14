@@ -13,4 +13,9 @@ public class GoogleCallbackRequest {
 
     @NotBlank
     private String code;
+
+    /** GPS optionnel fourni par le navigateur après redirection Google. */
+    private Double latitude;
+    private Double longitude;
+    private Double gpsAccuracy;
 }

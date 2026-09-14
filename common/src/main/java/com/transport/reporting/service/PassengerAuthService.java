@@ -1,6 +1,7 @@
 package com.transport.reporting.service;
 
-import com.transport.reporting.config.OtpProperties;
+import com.transport.reporting.common.util.RequestMetadata;
+import com.transport.reporting.common.util.UserAgentParser;
 import com.transport.reporting.dto.*;
 import com.transport.reporting.entity.AuthProvider;
 import com.transport.reporting.entity.Passenger;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
+
 /**
  * Authentification publique des voyageurs.
  * {@code password_hash == null} → contact anonyme ; renseigné → compte inscrit.
@@ -21,6 +24,9 @@ import org.springframework.util.StringUtils;
 @Service
 @Transactional
 public class PassengerAuthService {
+
+    private static final int MAX_USER_AGENT_LENGTH = 512;
+    private static final int MAX_PICTURE_URL_LENGTH = 512;
 
     private final PassengerRepository passengerRepository;
     private final PasswordEncoder passwordEncoder;
@@ -72,6 +78,8 @@ public class PassengerAuthService {
         }
 
         passenger.setEmailVerified(false);
+        applyRequestMetadata(passenger);
+        applyOptionalGps(passenger, request.getLatitude(), request.getLongitude(), request.getGpsAccuracy());
         passenger = passengerRepository.save(passenger);
         return passengerOtpService.startChallenge(passenger);
     }
@@ -82,12 +90,17 @@ public class PassengerAuthService {
         if (!passenger.isEmailVerified()) {
             return PassengerLoginResult.otpRequired(passengerOtpService.startChallenge(passenger));
         }
+        applyRequestMetadata(passenger);
+        passenger.setLastAuthAt(Instant.now());
+        passengerRepository.save(passenger);
         return PassengerLoginResult.jwt(toAuthResponse(passenger));
     }
 
     public PassengerAuthResponse verifyOtpAndIssueToken(OtpVerifyRequest request) {
         Passenger passenger = passengerOtpService.verifyChallenge(request);
         passenger.setEmailVerified(true);
+        applyRequestMetadata(passenger);
+        passenger.setLastAuthAt(Instant.now());
         passengerRepository.save(passenger);
         return toAuthResponse(passenger);
     }
@@ -105,7 +118,8 @@ public class PassengerAuthService {
             String googleSubject,
             String email,
             boolean emailVerified,
-            String fullName) {
+            String fullName,
+            String profilePictureUrl) {
         if (!StringUtils.hasText(googleSubject)) {
             throw new BusinessException("Identité Google invalide.");
         }
@@ -127,13 +141,36 @@ public class PassengerAuthService {
         passenger.setGoogleSubject(googleSubject.trim());
         passenger.setAuthProvider(AuthProvider.GOOGLE);
         passenger.setEmailVerified(true);
+        if (StringUtils.hasText(profilePictureUrl)) {
+            String picture = profilePictureUrl.trim();
+            if (picture.length() > MAX_PICTURE_URL_LENGTH) {
+                picture = picture.substring(0, MAX_PICTURE_URL_LENGTH);
+            }
+            passenger.setProfilePictureUrl(picture);
+        }
 
         if (!passenger.isActive()) {
             throw new BusinessException("Ce compte voyageur est désactivé.");
         }
 
+        applyRequestMetadata(passenger);
+        passenger.setLastAuthAt(Instant.now());
         passenger = passengerRepository.save(passenger);
         return toAuthResponse(passenger);
+    }
+
+    /**
+     * Enrichit un voyageur avec une position GPS optionnelle (callback Google, etc.).
+     * Sans effet si latitude/longitude absents ou invalides.
+     */
+    public void enrichOptionalGps(Long passengerId, Double latitude, Double longitude, Double gpsAccuracy) {
+        if (passengerId == null || latitude == null || longitude == null) {
+            return;
+        }
+        passengerRepository.findById(passengerId).ifPresent(passenger -> {
+            applyOptionalGps(passenger, latitude, longitude, gpsAccuracy);
+            passengerRepository.save(passenger);
+        });
     }
 
     private Passenger authenticateLocalCredentials(PassengerLoginRequest request) {
@@ -241,7 +278,41 @@ public class PassengerAuthService {
         response.setName(passenger.getName());
         response.setEmail(passenger.getEmail());
         response.setPhoneNumber(passenger.getPhoneNumber());
+        response.setProfilePictureUrl(passenger.getProfilePictureUrl());
+        response.setAuthProvider(
+                passenger.getAuthProvider() != null ? passenger.getAuthProvider().name() : null);
         return response;
+    }
+
+    private static void applyRequestMetadata(Passenger passenger) {
+        String ip = RequestMetadata.currentIpAddress();
+        if (StringUtils.hasText(ip) && !"0.0.0.0".equals(ip)) {
+            passenger.setLastIp(ip.length() > 64 ? ip.substring(0, 64) : ip);
+        }
+        String userAgent = RequestMetadata.currentUserAgent();
+        if (StringUtils.hasText(userAgent) && !"unknown".equalsIgnoreCase(userAgent)) {
+            passenger.setLastUserAgent(
+                    userAgent.length() > MAX_USER_AGENT_LENGTH
+                            ? userAgent.substring(0, MAX_USER_AGENT_LENGTH)
+                            : userAgent);
+            passenger.setLastBrowser(UserAgentParser.detectBrowser(userAgent));
+        }
+    }
+
+    private static void applyOptionalGps(
+            Passenger passenger, Double latitude, Double longitude, Double gpsAccuracy) {
+        if (latitude == null || longitude == null) {
+            return;
+        }
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            return;
+        }
+        passenger.setLatitude(latitude);
+        passenger.setLongitude(longitude);
+        if (gpsAccuracy != null && gpsAccuracy >= 0) {
+            passenger.setGpsAccuracy(gpsAccuracy);
+        }
+        passenger.setGpsCapturedAt(Instant.now());
     }
 
     private static boolean isRegisteredAccount(Passenger passenger) {

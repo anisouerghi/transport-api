@@ -144,8 +144,11 @@ public class PublicPassengerAuthController {
             response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
             response.setContentType("text/plain;charset=UTF-8");
             response.getWriter().write(
-                    "Connexion Google non configurée sur le serveur. "
-                            + "Définissez GOOGLE_CLIENT_SECRET puis redémarrez public-api.");
+                    "Connexion Google non configurée sur le serveur (public-api). "
+                            + "Variables requises : GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, "
+                            + "GOOGLE_REDIRECT_URI, GOOGLE_FRONTEND_CALLBACK_URL. "
+                            + "Lancez via scripts\\run-public-api.ps1 (charge secrets.local.ps1). "
+                            + "Le googleClientId du frontend Angular (assets/config) n'est PAS utilisé ici.");
             return;
         }
 
@@ -172,7 +175,14 @@ public class PublicPassengerAuthController {
         }
 
         return callbackCodeStore.redeem(request.getCode())
-                .map(auth -> ResponseEntity.ok(ApiResponse.ok(auth)))
+                .map(auth -> {
+                    passengerAuthService.enrichOptionalGps(
+                            auth.getPassengerId(),
+                            request.getLatitude(),
+                            request.getLongitude(),
+                            request.getGpsAccuracy());
+                    return ResponseEntity.ok(ApiResponse.ok(auth));
+                })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ApiResponse.of(false, "Code Google invalide ou expiré.", "GOOGLE_CODE_INVALID", null)));
     }

@@ -57,7 +57,8 @@ public class GoogleOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
                     oidcUser.getSubject(),
                     oidcUser.getEmail(),
                     Boolean.TRUE.equals(oidcUser.getEmailVerified()),
-                    oidcUser.getFullName());
+                    oidcUser.getFullName(),
+                    oidcUser.getPicture());
 
             String exchangeCode = callbackCodeStore.issue(authResponse);
             String returnUrl = readReturnUrl(request);

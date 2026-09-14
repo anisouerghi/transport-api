@@ -22,6 +22,7 @@ public final class DatabaseSchemaPatcher {
     public static void apply(JdbcTemplate jdbcTemplate) {
         ensurePassengerPasswordHashColumn(jdbcTemplate);
         ensurePassengerGoogleOAuthColumns(jdbcTemplate);
+        ensurePassengerEnrichmentColumns(jdbcTemplate);
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
@@ -58,6 +59,41 @@ public final class DatabaseSchemaPatcher {
         } catch (Exception ex) {
             log.warn("Impossible de vérifier/ajouter les colonnes Google OAuth passenger : {}", ex.getMessage());
         }
+    }
+
+    private static void ensurePassengerEnrichmentColumns(JdbcTemplate jdbcTemplate) {
+        try {
+            addColumnIfMissing(jdbcTemplate, "passenger", "profile_picture_url",
+                    "ALTER TABLE passenger ADD COLUMN profile_picture_url VARCHAR(512) NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "last_ip",
+                    "ALTER TABLE passenger ADD COLUMN last_ip VARCHAR(64) NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "last_user_agent",
+                    "ALTER TABLE passenger ADD COLUMN last_user_agent VARCHAR(512) NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "last_browser",
+                    "ALTER TABLE passenger ADD COLUMN last_browser VARCHAR(50) NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "latitude",
+                    "ALTER TABLE passenger ADD COLUMN latitude DOUBLE NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "longitude",
+                    "ALTER TABLE passenger ADD COLUMN longitude DOUBLE NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "gps_accuracy",
+                    "ALTER TABLE passenger ADD COLUMN gps_accuracy DOUBLE NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "gps_captured_at",
+                    "ALTER TABLE passenger ADD COLUMN gps_captured_at DATETIME(6) NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "last_auth_at",
+                    "ALTER TABLE passenger ADD COLUMN last_auth_at DATETIME(6) NULL");
+        } catch (Exception ex) {
+            log.warn("Impossible de vérifier/ajouter les colonnes d'enrichissement passenger : {}",
+                    ex.getMessage());
+        }
+    }
+
+    private static void addColumnIfMissing(
+            JdbcTemplate jdbcTemplate, String table, String column, String alterSql) {
+        if (columnExists(jdbcTemplate, table, column)) {
+            return;
+        }
+        jdbcTemplate.execute(alterSql);
+        log.info("Colonne {}.{} ajoutée.", table, column);
     }
 
     private static void ensurePassengerOtpChallengeTable(JdbcTemplate jdbcTemplate) {

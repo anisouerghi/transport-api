@@ -22,4 +22,9 @@ public class PassengerRegisterRequest {
     @NotBlank
     @Size(min = 8, max = 100)
     private String password;
+
+    /** GPS optionnel (navigateur) — jamais obligatoire. */
+    private Double latitude;
+    private Double longitude;
+    private Double gpsAccuracy;
 }
