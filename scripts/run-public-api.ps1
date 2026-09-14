@@ -61,6 +61,12 @@ try {
     if (-not $env:APP_AUTH_OTP_MAX_ATTEMPTS) { $env:APP_AUTH_OTP_MAX_ATTEMPTS = "5" }
     if (-not $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS) { $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS = "60" }
 
+    # Cloudflare Turnstile — DEV : clés de TEST officielles Cloudflare (toujours passer).
+    # Ne jamais utiliser ces valeurs en PROD. Doc : https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+    if (-not $env:CLOUDFLARE_ENABLED) { $env:CLOUDFLARE_ENABLED = "true" }
+    if (-not $env:CLOUDFLARE_SITE_KEY) { $env:CLOUDFLARE_SITE_KEY = "1x00000000000000000000AA" }
+    if (-not $env:CLOUDFLARE_SECRET_KEY) { $env:CLOUDFLARE_SECRET_KEY = "1x0000000000000000000000000000000AA" }
+
     New-Item -ItemType Directory -Force -Path $env:APP_UPLOAD_PATH | Out-Null
     New-Item -ItemType Directory -Force -Path $env:APP_QR_STORAGE_PATH | Out-Null
 
@@ -97,6 +103,7 @@ try {
 
     Write-GoogleOAuthBlock
     Write-OtpAuthBlock
+    Write-CloudflareBlock
     Write-SpringDatabaseBlock
 
     Write-RuntimeSection "Frontend voyageur (OTP)"

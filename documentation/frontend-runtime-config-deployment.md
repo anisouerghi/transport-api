@@ -27,13 +27,16 @@ Il peut être **modifié après déploiement** sans rebuild (URL API, locale, et
 ```json
 {
   "apiBaseUrl": "http://192.168.1.55:8081",
-  "googleClientId": "805628985152-kkg4l131p8jmpi7bek764icsp5ikmso7.apps.googleusercontent.com"
+  "googleClientId": "805628985152-kkg4l131p8jmpi7bek764icsp5ikmso7.apps.googleusercontent.com",
+  "cloudflareEnabled": true,
+  "cloudflareSiteKey": ""
 }
 ```
 
 - **DEV** (`src/assets/config/development/config.json`) : `apiBaseUrl` → `http://localhost:8081` (requis pour OAuth Google en redirection pleine page)
 - **PROD** (build) : `src/assets/config/production/config.json` → embarqué dans `dist/.../assets/config/config.json`
 - `googleClientId` : public uniquement — voir `documentation/google-oauth-passenger.md`
+- `cloudflareEnabled` / `cloudflareSiteKey` : site key publique uniquement (jamais la secret) — voir `documentation/cloudflare-turnstile-config.md`
 
 ### Admin
 
@@ -188,7 +191,9 @@ Exemple `config.json` Signalement post-déploiement :
 
 ```json
 {
-  "apiBaseUrl": "http://192.168.1.55:8081"
+  "apiBaseUrl": "http://192.168.1.55:8081",
+  "cloudflareEnabled": true,
+  "cloudflareSiteKey": "<SITE_KEY_PROD>"
 }
 ```
 

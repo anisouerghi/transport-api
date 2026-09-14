@@ -62,10 +62,35 @@ $configPath = Join-Path $DistDir 'assets\config\config.json'
 if (Test-Path -LiteralPath $configPath) {
     $json = Get-Content -Raw -LiteralPath $configPath | ConvertFrom-Json
     $expectedApi = "http://${HostIp}:8081"
+    $changed = $false
     if ($json.apiBaseUrl -ne $expectedApi) {
         $json.apiBaseUrl = $expectedApi
-        $json | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configPath -Encoding UTF8
+        $changed = $true
         Write-Host "config.json mis a jour : apiBaseUrl=$expectedApi" -ForegroundColor Yellow
+    }
+    # Site key publique PROD (jamais la secret) — injectee via env au build/deploy
+    if ($env:CLOUDFLARE_SITE_KEY -and $json.cloudflareSiteKey -ne $env:CLOUDFLARE_SITE_KEY) {
+        $json.cloudflareSiteKey = $env:CLOUDFLARE_SITE_KEY
+        $changed = $true
+        Write-Host "config.json mis a jour : cloudflareSiteKey (depuis CLOUDFLARE_SITE_KEY)" -ForegroundColor Yellow
+    }
+    if ($null -eq $json.cloudflareEnabled) {
+        $json.cloudflareEnabled = $true
+        $changed = $true
+    }
+    if ($env:CLOUDFLARE_ENABLED -eq 'false') {
+        $json.cloudflareEnabled = $false
+        $changed = $true
+    }
+    elseif ($env:CLOUDFLARE_ENABLED -eq 'true') {
+        $json.cloudflareEnabled = $true
+        $changed = $true
+    }
+    if ($changed) {
+        $json | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configPath -Encoding UTF8
+    }
+    if (-not $json.cloudflareSiteKey) {
+        Write-Host "AVERTISSEMENT : cloudflareSiteKey vide en PROD — definir CLOUDFLARE_SITE_KEY avant build ou editer assets/config/config.json sur le serveur." -ForegroundColor Yellow
     }
 }
 

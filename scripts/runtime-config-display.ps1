@@ -93,6 +93,28 @@ function Write-OtpAuthBlock {
     }
 }
 
+function Write-CloudflareBlock {
+    Write-RuntimeSection "Cloudflare Turnstile (public-api)"
+    $enabled = [Environment]::GetEnvironmentVariable('CLOUDFLARE_ENABLED')
+    if ([string]::IsNullOrWhiteSpace($enabled)) {
+        $enabled = 'true (defaut Spring)'
+    }
+    Write-EnvLine "CLOUDFLARE_ENABLED" $enabled
+    Write-EnvLine "CLOUDFLARE_SITE_KEY" (Get-EnvDisplayValue -Name 'CLOUDFLARE_SITE_KEY' -DefaultDisplay '(non defini)')
+    Write-EnvLine "CLOUDFLARE_SECRET_KEY" (Get-EnvDisplayValue -Name 'CLOUDFLARE_SECRET_KEY' -Secret -DefaultDisplay '(non defini)')
+    $site = [Environment]::GetEnvironmentVariable('CLOUDFLARE_SITE_KEY')
+    $secret = [Environment]::GetEnvironmentVariable('CLOUDFLARE_SECRET_KEY')
+    if ($enabled -eq 'false') {
+        Write-Host "  -> Cloudflare DESACTIVE" -ForegroundColor Yellow
+    }
+    elseif ([string]::IsNullOrWhiteSpace($site) -or [string]::IsNullOrWhiteSpace($secret)) {
+        Write-Host "  -> Cloudflare ACTIVE mais cles incompletes" -ForegroundColor Red
+    }
+    else {
+        Write-Host "  -> Cloudflare ACTIVE (config chargee)" -ForegroundColor Green
+    }
+}
+
 function Import-LocalSecrets {
     param([Parameter(Mandatory = $true)][string]$ScriptRoot)
 

@@ -101,6 +101,16 @@ try {
     if (-not $env:APP_AUTH_OTP_MAX_ATTEMPTS) { $env:APP_AUTH_OTP_MAX_ATTEMPTS = "5" }
     if (-not $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS) { $env:APP_AUTH_OTP_RESEND_DELAY_SECONDS = "60" }
 
+    # Cloudflare Turnstile — PROD : activé par défaut ; clés via env / secrets.local.ps1 (jamais en Git)
+    if (-not $env:CLOUDFLARE_ENABLED) { $env:CLOUDFLARE_ENABLED = "true" }
+    if (-not $env:CLOUDFLARE_SITE_KEY -or -not $env:CLOUDFLARE_SECRET_KEY) {
+        Write-Host ""
+        Write-Host "!!! Cloudflare : CLOUDFLARE_SITE_KEY et/ou CLOUDFLARE_SECRET_KEY manquants !!!" -ForegroundColor Red
+        Write-Host "    Injectez-les via l'environnement serveur ou scripts\secrets.local.ps1" -ForegroundColor Yellow
+        Write-Host "    (ne jamais committer la secret key PROD)." -ForegroundColor Yellow
+        Write-Host ""
+    }
+
     # ------------------------------------------------------------
     # Build JAR (optionnel)
     # ------------------------------------------------------------
@@ -179,6 +189,7 @@ Construire d'abord (choisir une option) :
 
     Write-GoogleOAuthBlock
     Write-OtpAuthBlock
+    Write-CloudflareBlock
     Write-SpringDatabaseBlock
 
     Write-RuntimeSection "Frontend voyageur (OTP)"

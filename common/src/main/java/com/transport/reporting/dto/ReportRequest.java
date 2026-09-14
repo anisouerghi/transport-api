@@ -40,4 +40,12 @@ public class ReportRequest {
     private String description;
 
     private PassengerRequest passenger;
+
+    /**
+     * Token Cloudflare Turnstile (optionnel côté schéma ; obligatoire si Turnstile est activé côté serveur).
+     * Jamais persisté — utilisé uniquement pour la validation anti-bot à la création.
+     */
+    @Size(max = 2048)
+    @Schema(description = "Token Turnstile renvoyé par le widget Cloudflare")
+    private String turnstileToken;
 }

@@ -15,6 +15,7 @@ Write-Host ""
 Write-Host "Frontend : http://localhost:$Port/connexion" -ForegroundColor Green
 Write-Host "API      : http://localhost:8081 (lancer run-public-api.ps1)" -ForegroundColor Green
 Write-Host "OTP      : active si APP_AUTH_OTP_ENABLED=true sur public-api" -ForegroundColor Green
+Write-Host "Cloudflare: cles de TEST dans development/config.json (site key publique)" -ForegroundColor Green
 Write-Host ""
 Write-Host "Ordre de demarrage DEV :" -ForegroundColor Yellow
 Write-Host "  1) .\scripts\run-public-api.ps1" -ForegroundColor Gray

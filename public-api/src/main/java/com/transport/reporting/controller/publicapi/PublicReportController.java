@@ -8,6 +8,7 @@ import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.service.PublicTrackingService;
 import com.transport.reporting.service.ReportService;
+import com.transport.reporting.service.TurnstileValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -39,16 +40,23 @@ public class PublicReportController {
 
     private final ReportService reportService;
     private final PublicTrackingService publicTrackingService;
-    public PublicReportController(ReportService reportService, PublicTrackingService publicTrackingService) {
+    private final TurnstileValidationService turnstileValidationService;
+
+    public PublicReportController(
+            ReportService reportService,
+            PublicTrackingService publicTrackingService,
+            TurnstileValidationService turnstileValidationService) {
         this.reportService = reportService;
         this.publicTrackingService = publicTrackingService;
+        this.turnstileValidationService = turnstileValidationService;
     }
 
 
     @PostMapping(value = "/api/public/signalements", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Créer un signalement (type et pièces jointes optionnels)",
-            description = "La priorité n'est pas acceptée côté voyageur : elle est initialisée automatiquement (MEDIUM) et gérée ensuite par les agents.",
+            description = "La priorité n'est pas acceptée côté voyageur : elle est initialisée automatiquement (MEDIUM) et gérée ensuite par les agents."
+                    + " Si Cloudflare Turnstile est activé, le champ turnstileToken est obligatoire et vérifié côté serveur.",
             requestBody = @RequestBody(content = @Content(
                     mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                     encoding = {
@@ -61,6 +69,7 @@ public class PublicReportController {
             @Valid @RequestPart("report")
             @Schema(implementation = ReportRequest.class) ReportRequest request,
             @RequestPart(value = "files", required = false) MultipartFile[] files) {
+        turnstileValidationService.verifyOrThrow(request.getTurnstileToken());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Report created", reportService.create(request, files)));
     }
