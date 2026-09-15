@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -55,10 +56,36 @@ public class GlobalExceptionHandler {
                 null, request.getRequestURI(), null);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Contrainte d'intégrité sur {} : {}", request.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        String path = request.getRequestURI() != null ? request.getRequestURI() : "";
+        if (path.contains("/api/public/auth/register") || looksLikeDuplicateEmail(ex)) {
+            return build(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Un compte existe déjà avec cet e-mail. Connectez-vous.",
+                    "EMAIL_ALREADY_EXISTS",
+                    path,
+                    null);
+        }
+        return build(
+                HttpStatus.CONFLICT,
+                "Cette opération entre en conflit avec des données existantes.",
+                "DATA_CONFLICT",
+                path,
+                null);
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ErrorResponse> handleDataAccess(DataAccessException ex, HttpServletRequest request) {
         log.error("Erreur base de données sur {}", request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, rootMessage(ex), null, request.getRequestURI(), null);
+    }
+
+    private static boolean looksLikeDuplicateEmail(DataIntegrityViolationException ex) {
+        String msg = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase();
+        return msg.contains("email") || msg.contains("passenger") || msg.contains("duplicate") || msg.contains("unique");
     }
 
     @ExceptionHandler(Exception.class)

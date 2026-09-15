@@ -15,6 +15,7 @@ import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.security.GoogleOAuthCallbackCodeStore;
 import com.transport.reporting.security.RevokedTokenService;
 import com.transport.reporting.service.PassengerAuthService;
+import com.transport.reporting.service.TurnstileValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,16 +51,19 @@ public class PublicPassengerAuthController {
     private final GoogleOAuthProperties googleOAuthProperties;
     private final GoogleOAuthCallbackCodeStore callbackCodeStore;
     private final RevokedTokenService revokedTokenService;
+    private final TurnstileValidationService turnstileValidationService;
 
     public PublicPassengerAuthController(
             PassengerAuthService passengerAuthService,
             GoogleOAuthProperties googleOAuthProperties,
             ObjectProvider<GoogleOAuthCallbackCodeStore> callbackCodeStore,
-            RevokedTokenService revokedTokenService) {
+            RevokedTokenService revokedTokenService,
+            TurnstileValidationService turnstileValidationService) {
         this.passengerAuthService = passengerAuthService;
         this.googleOAuthProperties = googleOAuthProperties;
         this.callbackCodeStore = callbackCodeStore.getIfAvailable();
         this.revokedTokenService = revokedTokenService;
+        this.turnstileValidationService = turnstileValidationService;
     }
 
 
@@ -67,6 +71,7 @@ public class PublicPassengerAuthController {
     @Operation(summary = "Créer un compte voyageur")
     public ResponseEntity<ApiResponse<PassengerOtpPendingResponse>> register(
             @Valid @RequestBody PassengerRegisterRequest request) {
+        turnstileValidationService.verifyOrThrow(request.getTurnstileToken());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
                         "Un code de vérification a été envoyé à votre adresse e-mail.",
@@ -77,6 +82,7 @@ public class PublicPassengerAuthController {
     @Operation(summary = "Connexion voyageur")
     public ResponseEntity<ApiResponse<?>> login(
             @Valid @RequestBody PassengerLoginRequest request) {
+        turnstileValidationService.verifyOrThrow(request.getTurnstileToken());
         var result = passengerAuthService.login(request);
         if (result.isOtpRequired()) {
             var pending = result.getOtpPending();

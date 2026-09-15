@@ -19,6 +19,13 @@ juste avant les boutons Retour / Envoyer (`app-turnstile-widget`).
 
 Si `CLOUDFLARE_ENABLED=false`, le widget est masqué et la validation serveur est ignorée.
 
+Également requis sur :
+
+- `POST /api/public/auth/register` (inscription) — champ JSON `turnstileToken`
+- `POST /api/public/auth/login` (connexion e-mail/mdp) — champ JSON `turnstileToken`
+
+**Non** appliqué : OTP verify/resend, Google OAuth.
+
 ---
 
 ## Variables

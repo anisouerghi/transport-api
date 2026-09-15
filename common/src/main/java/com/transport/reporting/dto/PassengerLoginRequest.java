@@ -15,4 +15,11 @@ public class PassengerLoginRequest {
     @NotBlank
     @Size(min = 8, max = 100)
     private String password;
+
+    /**
+     * Token Cloudflare Turnstile (obligatoire si Turnstile est activé côté serveur).
+     * Jamais persisté.
+     */
+    @Size(max = 2048)
+    private String turnstileToken;
 }

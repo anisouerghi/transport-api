@@ -27,4 +27,11 @@ public class PassengerRegisterRequest {
     private Double latitude;
     private Double longitude;
     private Double gpsAccuracy;
+
+    /**
+     * Token Cloudflare Turnstile (obligatoire si Turnstile est activé côté serveur).
+     * Jamais persisté.
+     */
+    @Size(max = 2048)
+    private String turnstileToken;
 }

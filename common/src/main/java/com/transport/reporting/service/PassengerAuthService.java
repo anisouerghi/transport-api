@@ -51,12 +51,18 @@ public class PassengerAuthService {
         Passenger passenger;
         if (existing.isPresent()) {
             passenger = existing.get();
-            if (StringUtils.hasText(passenger.getGoogleSubject())) {
-                throw new BusinessException("Un compte Google existe déjà avec cet e-mail. Connectez-vous avec Google.");
+            if (StringUtils.hasText(passenger.getGoogleSubject())
+                    && !StringUtils.hasText(passenger.getPasswordHash())) {
+                throw new BusinessException(
+                        "Un compte Google existe déjà avec cet e-mail. Connectez-vous avec Google.",
+                        "EMAIL_GOOGLE_EXISTS");
             }
-            if (StringUtils.hasText(passenger.getPasswordHash()) && passenger.isEmailVerified()) {
-                throw new BusinessException("Un compte existe déjà avec cet e-mail. Connectez-vous.");
+            if (passenger.isEmailVerified()) {
+                throw new BusinessException(
+                        "Un compte existe déjà avec cet e-mail. Connectez-vous.",
+                        "EMAIL_ALREADY_EXISTS");
             }
+            // Compte local non vérifié : reprendre l'inscription (nouveau mot de passe + OTP)
             if (StringUtils.hasText(request.getName())) {
                 passenger.setName(request.getName().trim());
             }
