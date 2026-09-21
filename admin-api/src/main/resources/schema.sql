@@ -94,10 +94,10 @@ CREATE TABLE passenger (
     gps_captured_at      DATETIME(6) NULL,
     last_auth_at         DATETIME(6) NULL,
     PRIMARY KEY (passenger_id),
-    UNIQUE KEY uk_passenger_google_subject (google_subject),
+    UNIQUE KEY uk_passenger_google_subject (google_subject(191)),
     KEY idx_passenger_active (active),
-    KEY idx_passenger_email (email)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    KEY idx_passenger_email (email(191))
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE passenger_otp_challenge (
     challenge_id   BIGINT NOT NULL AUTO_INCREMENT,
@@ -128,8 +128,8 @@ CREATE TABLE app_user (
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_app_user_uuid (uuid),
     UNIQUE KEY uk_app_user_username (username),
-    UNIQUE KEY uk_app_user_email (email)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY uk_app_user_email (email(191))
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE role (
     role_id     BIGINT       NOT NULL AUTO_INCREMENT,

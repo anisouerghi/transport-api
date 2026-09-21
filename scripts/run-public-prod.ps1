@@ -39,11 +39,11 @@ try {
 
     # ============================================================
     # PUBLIC API - PRODUCTION (JAR)
-    # Test prod : 192.168.1.55:8081
+    # Test prod : 10.0.80.1:8081
     # ============================================================
 
     $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-    $HostIp = "192.168.1.55"
+    $HostIp = "10.0.80.1"
 
     # ------------------------------------------------------------
     # Profil Spring
@@ -72,7 +72,7 @@ try {
     # Le code ajoute report/{uuid} et report-followup/{uuid} a APP_*_BASE_URL
     $env:APP_QR_BASE_URL = "http://${HostIp}/sig/"
     $env:APP_FRONTEND_PUBLIC_BASE_URL = "http://${HostIp}/sig/"
-    $env:CORS_ALLOWED_ORIGINS = "http://${HostIp},http://${HostIp}:4200,http://${HostIp}:4500,http://localhost:4200,http://localhost:4500"
+    $env:CORS_ALLOWED_ORIGINS = "http://${HostIp},http://${HostIp}:4200,http://${HostIp}:4500,http://localhost:4200,http://localhost:4500,http://${HostIp}/sig/,http://${HostIp}/admin/"
 
     # ------------------------------------------------------------
     # Google OAuth (secret via GOOGLE_CLIENT_SECRET - ne jamais committer)
