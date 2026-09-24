@@ -1,25 +1,30 @@
 package com.transport.reporting.mapper;
 
+import com.transport.reporting.common.i18n.LocalizedLabels;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.dto.StatusResponse;
-import com.transport.reporting.mapper.TransportSupportMapper;
-import com.transport.reporting.mapper.PassengerMapper;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.Status;
 import org.springframework.stereotype.Component;
+
 /**
- * Mapper Signalement : conversion Entity <-> DTO.
+ * Mapper Signalement : conversion Entity &lt;-&gt; DTO.
  */
 @Component
 public class ReportMapper {
 
     private final TransportSupportMapper transportSupportMapper;
     private final PassengerMapper passengerMapper;
-    public ReportMapper(TransportSupportMapper transportSupportMapper, PassengerMapper passengerMapper) {
+    private final StatusMapper statusMapper;
+
+    public ReportMapper(
+            TransportSupportMapper transportSupportMapper,
+            PassengerMapper passengerMapper,
+            StatusMapper statusMapper) {
         this.transportSupportMapper = transportSupportMapper;
         this.passengerMapper = passengerMapper;
+        this.statusMapper = statusMapper;
     }
-
 
     public ReportResponse toResponse(Report report) {
         return ReportResponse.builder()
@@ -40,21 +45,16 @@ public class ReportMapper {
                     ? null
                     : transportSupportMapper.toResponse(report.getTransportSupport()))
                 .reportTypeCode(report.getReportType().getCode())
-                .reportTypeLabel(report.getReportType().getLabel())
+                .reportTypeLabel(LocalizedLabels.of(report.getReportType()))
                 .natureId(report.getNature() != null ? report.getNature().getReportNatureId() : null)
                 .natureCode(report.getNature() != null ? report.getNature().getCode() : null)
-                .natureLabel(report.getNature() != null ? report.getNature().getLabel() : null)
+                .natureLabel(report.getNature() != null ? LocalizedLabels.of(report.getNature()) : null)
                 .passenger(passengerMapper.toResponse(report.getPassenger()))
                 .status(toStatusResponse(report.getStatus()))
                 .build();
     }
 
     public StatusResponse toStatusResponse(Status status) {
-        return StatusResponse.builder()
-                .statusId(status.getStatusId())
-                .code(status.getCode())
-                .label(status.getLabel())
-                .displayOrder(status.getDisplayOrder())
-                .build();
+        return statusMapper.toResponse(status);
     }
 }

@@ -18,6 +18,12 @@ public class ReportTypeRequest {
     @Size(max = 150)
     private String label;
 
+    @Size(max = 150)
+    private String labelAr;
+
+    @Size(max = 150)
+    private String labelEn;
+
     @Size(max = 500)
     private String description;
 }

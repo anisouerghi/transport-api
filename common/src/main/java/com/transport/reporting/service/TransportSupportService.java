@@ -105,7 +105,9 @@ public class TransportSupportService {
                         .label(s.getLabel())
                         .supportTypeId(s.getSupportType() != null ? s.getSupportType().getSupportTypeId() : null)
                         .supportTypeCode(s.getSupportType() != null ? s.getSupportType().getCode() : null)
-                        .supportTypeLabel(s.getSupportType() != null ? s.getSupportType().getLabel() : null)
+                        .supportTypeLabel(s.getSupportType() != null
+                                ? com.transport.reporting.common.i18n.LocalizedLabels.of(s.getSupportType())
+                                : null)
                         .build())
                 .collect(Collectors.toList());
     }

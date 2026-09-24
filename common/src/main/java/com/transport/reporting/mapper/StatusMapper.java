@@ -1,35 +1,45 @@
 package com.transport.reporting.mapper;
 
+import com.transport.reporting.common.i18n.LocalizedLabels;
 import com.transport.reporting.dto.StatusRequest;
 import com.transport.reporting.dto.StatusResponse;
 import com.transport.reporting.entity.Status;
 import org.springframework.stereotype.Component;
 
 /**
- * Mapper Status : conversion Entity <-> DTO.
+ * Mapper Status : conversion Entity &lt;-&gt; DTO.
  */
 @Component
 public class StatusMapper {
 
     public Status toEntity(StatusRequest request) {
-        return Status.builder()
+        Status status = Status.builder()
                 .code(request.getCode())
-                .label(request.getLabel())
                 .displayOrder(request.getDisplayOrder())
                 .build();
+        LocalizedLabels.applyFrench(status, request.getLabel());
+        status.setLabelAr(LocalizedLabels.trimToNull(request.getLabelAr()));
+        status.setLabelEn(LocalizedLabels.trimToNull(request.getLabelEn()));
+        return status;
     }
 
     public void updateEntity(Status status, StatusRequest request) {
         status.setCode(request.getCode());
-        status.setLabel(request.getLabel());
+        LocalizedLabels.applyFrench(status, request.getLabel());
+        status.setLabelAr(LocalizedLabels.trimToNull(request.getLabelAr()));
+        status.setLabelEn(LocalizedLabels.trimToNull(request.getLabelEn()));
         status.setDisplayOrder(request.getDisplayOrder());
     }
 
     public StatusResponse toResponse(Status status) {
+        String fr = LocalizedLabels.frOf(status.getLabelFr(), status.getLabel());
         return StatusResponse.builder()
                 .statusId(status.getStatusId())
                 .code(status.getCode())
-                .label(status.getLabel())
+                .label(LocalizedLabels.of(status))
+                .labelFr(fr)
+                .labelAr(status.getLabelAr())
+                .labelEn(status.getLabelEn())
                 .displayOrder(status.getDisplayOrder())
                 .build();
     }

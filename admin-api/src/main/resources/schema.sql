@@ -27,8 +27,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE support_type (
     support_type_id BIGINT NOT NULL AUTO_INCREMENT,
-    code            VARCHAR(50)  NOT NULL,
-    label           VARCHAR(150) NOT NULL,
+    code            VARCHAR(50)  NOT NULL COMMENT 'Code metier unique independant de la langue',
+    label           VARCHAR(150) NOT NULL COMMENT 'Libelle historique (miroir FR = label_fr)',
+    label_fr        VARCHAR(150) NULL COMMENT 'Libelle du type de support en francais',
+    label_ar        VARCHAR(150) NULL COMMENT 'Libelle du type de support en arabe',
+    label_en        VARCHAR(150) NULL COMMENT 'Libelle du type de support en anglais',
     PRIMARY KEY (support_type_id),
     UNIQUE KEY uk_support_type_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -45,8 +48,11 @@ CREATE TABLE district (
 
 CREATE TABLE report_type (
     report_type_id BIGINT       NOT NULL AUTO_INCREMENT,
-    code           VARCHAR(50)  NOT NULL,
-    label          VARCHAR(150) NOT NULL,
+    code           VARCHAR(50)  NOT NULL COMMENT 'Code metier unique independant de la langue',
+    label          VARCHAR(150) NOT NULL COMMENT 'Libelle historique (miroir FR = label_fr)',
+    label_fr       VARCHAR(150) NULL COMMENT 'Libelle du type de signalement en francais',
+    label_ar       VARCHAR(150) NULL COMMENT 'Libelle du type de signalement en arabe',
+    label_en       VARCHAR(150) NULL COMMENT 'Libelle du type de signalement en anglais',
     description    VARCHAR(500) NULL,
     active         TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (report_type_id),
@@ -55,8 +61,11 @@ CREATE TABLE report_type (
 
 CREATE TABLE report_nature (
     report_nature_id BIGINT       NOT NULL AUTO_INCREMENT,
-    code             VARCHAR(50)  NOT NULL,
-    label            VARCHAR(150) NOT NULL,
+    code             VARCHAR(50)  NOT NULL COMMENT 'Code metier unique independant de la langue',
+    label            VARCHAR(150) NOT NULL COMMENT 'Libelle historique (miroir FR = label_fr)',
+    label_fr         VARCHAR(150) NULL COMMENT 'Libelle de la nature en francais',
+    label_ar         VARCHAR(150) NULL COMMENT 'Libelle de la nature en arabe',
+    label_en         VARCHAR(150) NULL COMMENT 'Libelle de la nature en anglais',
     description      VARCHAR(500) NULL,
     active           TINYINT(1)   NOT NULL DEFAULT 1,
     created_at       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -67,8 +76,11 @@ CREATE TABLE report_nature (
 
 CREATE TABLE report_status (
     status_id     BIGINT NOT NULL AUTO_INCREMENT,
-    code          VARCHAR(50)  NOT NULL,
-    label         VARCHAR(100) NOT NULL,
+    code          VARCHAR(50)  NOT NULL COMMENT 'Code metier unique independant de la langue',
+    label         VARCHAR(100) NOT NULL COMMENT 'Libelle historique (miroir FR = label_fr)',
+    label_fr      VARCHAR(100) NULL COMMENT 'Libelle du statut en francais',
+    label_ar      VARCHAR(100) NULL COMMENT 'Libelle du statut en arabe',
+    label_en      VARCHAR(100) NULL COMMENT 'Libelle du statut en anglais',
     display_order INT          NOT NULL,
     PRIMARY KEY (status_id),
     UNIQUE KEY uk_report_status_code (code)

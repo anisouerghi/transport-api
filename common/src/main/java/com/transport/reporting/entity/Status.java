@@ -25,9 +25,18 @@ public class Status {
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
-    /** Libelle affiche du statut. */
+    /** Libelle historique (miroir FR = label_fr). */
     @Column(name = "label", nullable = false, length = 100)
     private String label;
+
+    @Column(name = "label_fr", length = 100)
+    private String labelFr;
+
+    @Column(name = "label_ar", length = 100)
+    private String labelAr;
+
+    @Column(name = "label_en", length = 100)
+    private String labelEn;
 
     /** Ordre d'affichage dans le workflow / listes. */
     @Column(name = "display_order", nullable = false)

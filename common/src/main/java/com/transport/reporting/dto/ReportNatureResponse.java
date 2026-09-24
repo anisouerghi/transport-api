@@ -12,6 +12,9 @@ public class ReportNatureResponse {
     private Long reportNatureId;
     private String code;
     private String label;
+    private String labelFr;
+    private String labelAr;
+    private String labelEn;
     private String description;
     private boolean active;
     private Instant createdAt;

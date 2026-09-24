@@ -58,7 +58,7 @@ public class AdminReportController {
     @Operation(summary = "Lister les priorités disponibles")
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> priorities() {
         List<Map<String, String>> values = Arrays.stream(Priority.values())
-                .map(p -> Map.of("code", p.name(), "label", priorityLabel(p)))
+                .map(p -> Map.of("code", p.name(), "label", com.transport.reporting.common.i18n.LocalizedLabels.priority(p)))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.ok(values));
     }
@@ -90,14 +90,5 @@ public class AdminReportController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Nature updated",
                 reportService.updateNature(id, request.getReportNatureId())));
-    }
-
-    private static String priorityLabel(Priority priority) {
-        return switch (priority) {
-            case LOW -> "Faible";
-            case MEDIUM -> "Normale";
-            case HIGH -> "Élevée";
-            case CRITICAL -> "Critique";
-        };
     }
 }

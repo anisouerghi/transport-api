@@ -1,5 +1,6 @@
 package com.transport.reporting.mapper;
 
+import com.transport.reporting.common.i18n.LocalizedLabels;
 import com.transport.reporting.dto.ReportNatureRequest;
 import com.transport.reporting.dto.ReportNatureResponse;
 import com.transport.reporting.entity.ReportNature;
@@ -9,25 +10,34 @@ import org.springframework.stereotype.Component;
 public class ReportNatureMapper {
 
     public ReportNature toEntity(ReportNatureRequest request) {
-        return ReportNature.builder()
+        ReportNature entity = ReportNature.builder()
                 .code(normalizeCode(request.getCode()))
-                .label(request.getLabel().trim())
                 .description(trimToNull(request.getDescription()))
                 .active(true)
                 .build();
+        LocalizedLabels.applyFrench(entity, request.getLabel());
+        entity.setLabelAr(LocalizedLabels.trimToNull(request.getLabelAr()));
+        entity.setLabelEn(LocalizedLabels.trimToNull(request.getLabelEn()));
+        return entity;
     }
 
     public void updateEntity(ReportNature entity, ReportNatureRequest request) {
         entity.setCode(normalizeCode(request.getCode()));
-        entity.setLabel(request.getLabel().trim());
+        LocalizedLabels.applyFrench(entity, request.getLabel());
+        entity.setLabelAr(LocalizedLabels.trimToNull(request.getLabelAr()));
+        entity.setLabelEn(LocalizedLabels.trimToNull(request.getLabelEn()));
         entity.setDescription(trimToNull(request.getDescription()));
     }
 
     public ReportNatureResponse toResponse(ReportNature entity) {
+        String fr = LocalizedLabels.frOf(entity.getLabelFr(), entity.getLabel());
         return ReportNatureResponse.builder()
                 .reportNatureId(entity.getReportNatureId())
                 .code(entity.getCode())
-                .label(entity.getLabel())
+                .label(LocalizedLabels.of(entity))
+                .labelFr(fr)
+                .labelAr(entity.getLabelAr())
+                .labelEn(entity.getLabelEn())
                 .description(entity.getDescription())
                 .active(entity.isActive())
                 .createdAt(entity.getCreatedAt())
@@ -40,10 +50,6 @@ public class ReportNatureMapper {
     }
 
     private static String trimToNull(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return LocalizedLabels.trimToNull(value);
     }
 }

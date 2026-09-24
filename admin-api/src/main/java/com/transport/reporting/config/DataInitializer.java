@@ -44,30 +44,30 @@ public class DataInitializer {
         return args -> {
             // ============ INITIALISATION DES STATUS ============
             if (statusRepository.count() == 0) {
-                statusRepository.save(Status.builder().code("NEW").label("Nouveau").displayOrder(1).build());
-                statusRepository.save(Status.builder().code("IN_PROGRESS").label("En cours").displayOrder(2).build());
-                statusRepository.save(Status.builder().code("RESOLVED").label("Résolu").displayOrder(3).build());
-                statusRepository.save(Status.builder().code("CLOSED").label("Clôturé").displayOrder(4).build());
+                statusRepository.save(i18nStatus("NEW", "Nouveau", "جديد", "New", 1));
+                statusRepository.save(i18nStatus("IN_PROGRESS", "En cours", "قيد المعالجة", "In progress", 2));
+                statusRepository.save(i18nStatus("RESOLVED", "Résolu", "محلول", "Resolved", 3));
+                statusRepository.save(i18nStatus("CLOSED", "Clôturé", "مغلق", "Closed", 4));
                 log.info("✅ Status initialized");
             }
 
             // ============ INITIALISATION DES TYPES DE SUPPORT ============
             if (supportTypeRepository.count() == 0) {
-                supportTypeRepository.save(SupportType.builder().code("BUS").label("Bus").build());
-                supportTypeRepository.save(SupportType.builder().code("METRO").label("Métro").build());
-                supportTypeRepository.save(SupportType.builder().code("TRAIN").label("Train").build());
-                supportTypeRepository.save(SupportType.builder().code("STATION").label("Station").build());
+                supportTypeRepository.save(i18nSupportType("BUS", "Bus", "حافلة", "Bus"));
+                supportTypeRepository.save(i18nSupportType("METRO", "Métro", "مترو", "Metro"));
+                supportTypeRepository.save(i18nSupportType("TRAIN", "Train", "قطار", "Train"));
+                supportTypeRepository.save(i18nSupportType("STATION", "Station", "محطة", "Station"));
                 log.info("✅ Support types initialized");
             }
 
             // ============ INITIALISATION DES TYPES DE RAPPORT ============
             if (reportTypeRepository.count() == 0) {
-                reportTypeRepository.save(ReportType.builder()
-                        .code("INCIDENT").label("Incident").description("Incident technique ou sécurité").build());
-                reportTypeRepository.save(ReportType.builder()
-                        .code("COMPLAINT").label("Réclamation").description("Réclamation voyageur").build());
-                reportTypeRepository.save(ReportType.builder()
-                        .code("SUGGESTION").label("Suggestion").description("Suggestion d'amélioration").build());
+                reportTypeRepository.save(i18nReportType(
+                        "INCIDENT", "Incident", "حادث", "Incident", "Incident technique ou sécurité"));
+                reportTypeRepository.save(i18nReportType(
+                        "COMPLAINT", "Réclamation", "شكوى", "Complaint", "Réclamation voyageur"));
+                reportTypeRepository.save(i18nReportType(
+                        "SUGGESTION", "Suggestion", "اقتراح", "Suggestion", "Suggestion d'amélioration"));
                 log.info("✅ Report types initialized");
             }
 
@@ -243,5 +243,38 @@ public class DataInitializer {
                 .build());
 
         log.info("✅ {} demo reports created", reportRepository.count());
+    }
+
+    private static Status i18nStatus(String code, String fr, String ar, String en, int order) {
+        return Status.builder()
+                .code(code)
+                .label(fr)
+                .labelFr(fr)
+                .labelAr(ar)
+                .labelEn(en)
+                .displayOrder(order)
+                .build();
+    }
+
+    private static SupportType i18nSupportType(String code, String fr, String ar, String en) {
+        return SupportType.builder()
+                .code(code)
+                .label(fr)
+                .labelFr(fr)
+                .labelAr(ar)
+                .labelEn(en)
+                .build();
+    }
+
+    private static ReportType i18nReportType(String code, String fr, String ar, String en, String description) {
+        return ReportType.builder()
+                .code(code)
+                .label(fr)
+                .labelFr(fr)
+                .labelAr(ar)
+                .labelEn(en)
+                .description(description)
+                .active(true)
+                .build();
     }
 }

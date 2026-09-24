@@ -63,7 +63,7 @@ public class TransportSupportMapper {
                 .supportStatus(support.getSupportStatus())
                 .supportTypeId(support.getSupportType().getSupportTypeId())
                 .supportTypeCode(support.getSupportType().getCode())
-                .supportTypeLabel(support.getSupportType().getLabel())
+                .supportTypeLabel(com.transport.reporting.common.i18n.LocalizedLabels.of(support.getSupportType()))
                 .districtId(support.getDistrict().getDistrictId())
                 .districtCode(support.getDistrict().getCodeDistrict())
                 .districtLabel(support.getDistrict().getLibelleDistrict())

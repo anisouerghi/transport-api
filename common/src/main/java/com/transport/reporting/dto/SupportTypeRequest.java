@@ -15,8 +15,16 @@ public class SupportTypeRequest {
     @Size(max = 50)
     private String code;
 
-    /** Libelle affiche dans l'interface admin. */
+    /** Libelle affiche (localise selon Accept-Language). */
     @NotBlank
     @Size(max = 150)
     private String label;
+
+    /** Libelle arabe (edition admin). */
+    @Size(max = 150)
+    private String labelAr;
+
+    /** Libelle anglais (edition admin). */
+    @Size(max = 150)
+    private String labelEn;
 }

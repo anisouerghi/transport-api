@@ -16,6 +16,15 @@ public class SupportTypeResponse {
     /** Code metier unique. */
     private String code;
 
-    /** Libelle affiche. */
+    /** Libelle affiche (localise selon Accept-Language). */
     private String label;
+
+    /** Libelle francais (edition admin). */
+    private String labelFr;
+
+    /** Libelle arabe (edition admin). */
+    private String labelAr;
+
+    /** Libelle anglais (edition admin). */
+    private String labelEn;
 }

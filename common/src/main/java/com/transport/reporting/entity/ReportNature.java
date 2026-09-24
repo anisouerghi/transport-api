@@ -31,6 +31,15 @@ public class ReportNature {
     @Column(name = "label", nullable = false, length = 150)
     private String label;
 
+    @Column(name = "label_fr", length = 150)
+    private String labelFr;
+
+    @Column(name = "label_ar", length = 150)
+    private String labelAr;
+
+    @Column(name = "label_en", length = 150)
+    private String labelEn;
+
     @Column(name = "description", length = 500)
     private String description;
 

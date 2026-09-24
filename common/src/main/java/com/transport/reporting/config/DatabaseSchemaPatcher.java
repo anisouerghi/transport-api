@@ -26,6 +26,7 @@ public final class DatabaseSchemaPatcher {
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
+        ensureI18nLabelColumns(jdbcTemplate);
     }
 
     private static void ensurePassengerPasswordHashColumn(JdbcTemplate jdbcTemplate) {
@@ -153,6 +154,45 @@ public final class DatabaseSchemaPatcher {
         } catch (Exception ex) {
             log.warn("Impossible de rendre report.transport_support_id optionnelle : {}", ex.getMessage());
         }
+    }
+
+    /**
+     * Colonnes i18n V1 (label_fr / label_ar / label_en) — complementary au script SQL doc.
+     * Copie {@code label} → {@code label_fr} si vide. Les traductions AR/EN restent
+     * à appliquer via {@code documentation/migration-i18n-param-labels.sql} ou seeders.
+     */
+    private static void ensureI18nLabelColumns(JdbcTemplate jdbcTemplate) {
+        try {
+            ensureCatalogI18n(jdbcTemplate, "support_type", 150);
+            ensureCatalogI18n(jdbcTemplate, "report_type", 150);
+            ensureCatalogI18n(jdbcTemplate, "report_nature", 150);
+            ensureCatalogI18n(jdbcTemplate, "report_status", 100);
+        } catch (Exception ex) {
+            log.warn("Impossible de vérifier/ajouter les colonnes i18n label_* : {}", ex.getMessage());
+        }
+    }
+
+    private static void ensureCatalogI18n(JdbcTemplate jdbcTemplate, String table, int maxLen) {
+        if (!tableExists(jdbcTemplate, table)) {
+            return;
+        }
+        addColumnIfMissing(jdbcTemplate, table, "label_fr",
+                "ALTER TABLE " + table + " ADD COLUMN label_fr VARCHAR(" + maxLen + ") NULL");
+        addColumnIfMissing(jdbcTemplate, table, "label_ar",
+                "ALTER TABLE " + table + " ADD COLUMN label_ar VARCHAR(" + maxLen + ") NULL");
+        addColumnIfMissing(jdbcTemplate, table, "label_en",
+                "ALTER TABLE " + table + " ADD COLUMN label_en VARCHAR(" + maxLen + ") NULL");
+        jdbcTemplate.execute(
+                "UPDATE " + table + " SET label_fr = label WHERE label_fr IS NULL OR TRIM(label_fr) = ''");
+    }
+
+    private static boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.TABLES "
+                        + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+                Integer.class,
+                tableName);
+        return count != null && count > 0;
     }
 
     private static boolean columnExists(JdbcTemplate jdbcTemplate, String tableName, String columnName) {

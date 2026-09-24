@@ -1,5 +1,6 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.i18n.LocalizedLabels;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.dto.PublicHomepageReplyResponse;
 import com.transport.reporting.dto.PublicReportListItemResponse;
@@ -62,10 +63,10 @@ public class PublicTrackingService {
                 .reference(report.getReference())
                 .creationDate(report.getCreationDate())
                 .description(report.getDescription())
-                .reportTypeLabel(report.getReportType() != null ? report.getReportType().getLabel() : null)
+                .reportTypeLabel(report.getReportType() != null ? LocalizedLabels.of(report.getReportType()) : null)
                 .supportLabel(supportLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
-                .statusLabel(report.getStatus() != null ? report.getStatus().getLabel() : null)
+                .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .replies(replies)
                 .build();
     }
@@ -119,7 +120,7 @@ public class PublicTrackingService {
         String typeLabel = null;
         String passengerName = null;
         if (report != null && report.getReportType() != null) {
-            typeLabel = report.getReportType().getLabel();
+            typeLabel = LocalizedLabels.of(report.getReportType());
         }
         if (report != null && report.getPassenger() != null) {
             passengerName = report.getPassenger().getName();
@@ -141,7 +142,7 @@ public class PublicTrackingService {
                     ? report.getTransportSupport().getLabel()
                     : report.getTransportSupport().getReference();
             if (report.getTransportSupport().getSupportType() != null) {
-                supportTypeLabel = report.getTransportSupport().getSupportType().getLabel();
+                supportTypeLabel = LocalizedLabels.of(report.getTransportSupport().getSupportType());
             }
         }
         return PublicReportListItemResponse.builder()
@@ -151,7 +152,7 @@ public class PublicTrackingService {
                 .supportLabel(supportLabel)
                 .supportTypeLabel(supportTypeLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
-                .statusLabel(report.getStatus() != null ? report.getStatus().getLabel() : null)
+                .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .build();
     }
 
