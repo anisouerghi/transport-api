@@ -61,13 +61,20 @@ public class DataInitializer {
             }
 
             // ============ INITIALISATION DES TYPES DE RAPPORT ============
+            // Seed de secours (dev) : ReportTypeDataInitializer assure aussi les 6 codes en prod.
             if (reportTypeRepository.count() == 0) {
-                reportTypeRepository.save(i18nReportType(
-                        "INCIDENT", "Incident", "حادث", "Incident", "Incident technique ou sécurité"));
                 reportTypeRepository.save(i18nReportType(
                         "COMPLAINT", "Réclamation", "شكوى", "Complaint", "Réclamation voyageur"));
                 reportTypeRepository.save(i18nReportType(
+                        "ASSAULT", "Agression", "اعتداء", "Assault", "Signalement d'agression ou de violence"));
+                reportTypeRepository.save(i18nReportType(
+                        "INCIDENT", "Incident", "حادث", "Incident", "Incident technique ou sécurité"));
+                reportTypeRepository.save(i18nReportType(
                         "SUGGESTION", "Suggestion", "اقتراح", "Suggestion", "Suggestion d'amélioration"));
+                reportTypeRepository.save(i18nReportType(
+                        "THANKS", "Remerciement", "شكر", "Thank you", "Remerciement"));
+                reportTypeRepository.save(i18nReportType(
+                        "OTHER", "Autre", "أخرى", "Other", "Autre nature de signalement"));
                 log.info("✅ Report types initialized");
             }
 

@@ -373,9 +373,12 @@ INSERT INTO support_type (code, label) VALUES
 ('STATION', 'Station');
 
 INSERT INTO report_type (code, label, description, active) VALUES
-('INCIDENT', 'Incident', 'Incident technique ou securite', 1),
 ('COMPLAINT', 'Reclamation', 'Reclamation voyageur', 1),
-('SUGGESTION', 'Suggestion', 'Suggestion d''amelioration', 1);
+('ASSAULT', 'Agression', 'Signalement d''agression ou de violence', 1),
+('INCIDENT', 'Incident', 'Incident technique ou securite', 1),
+('SUGGESTION', 'Suggestion', 'Suggestion d''amelioration', 1),
+('THANKS', 'Remerciement', 'Remerciement', 1),
+('OTHER', 'Autre', 'Autre nature de signalement', 1);
 
 INSERT INTO report_nature (code, label, description, active) VALUES
 ('AGRESSION', 'Agression', 'Signalements lies a une agression ou violence', 1),

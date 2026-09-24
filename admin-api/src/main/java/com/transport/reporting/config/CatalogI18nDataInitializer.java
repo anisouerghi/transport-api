@@ -32,9 +32,12 @@ public class CatalogI18nDataInitializer {
     );
 
     private static final Map<String, String[]> REPORT_TYPES = Map.of(
-            "INCIDENT", new String[]{"Incident", "حادث", "Incident"},
             "COMPLAINT", new String[]{"Réclamation", "شكوى", "Complaint"},
-            "SUGGESTION", new String[]{"Suggestion", "اقتراح", "Suggestion"}
+            "ASSAULT", new String[]{"Agression", "اعتداء", "Assault"},
+            "INCIDENT", new String[]{"Incident", "حادث", "Incident"},
+            "SUGGESTION", new String[]{"Suggestion", "اقتراح", "Suggestion"},
+            "THANKS", new String[]{"Remerciement", "شكر", "Thank you"},
+            "OTHER", new String[]{"Autre", "أخرى", "Other"}
     );
 
     private static final Map<String, String[]> STATUSES = Map.of(

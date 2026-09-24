@@ -72,10 +72,13 @@ UPDATE support_type SET label_en = 'Metro',   label_ar = 'مترو'    WHERE cod
 UPDATE support_type SET label_en = 'Train',   label_ar = 'قطار'    WHERE code = 'TRAIN';
 UPDATE support_type SET label_en = 'Station', label_ar = 'محطة'    WHERE code = 'STATION';
 
--- report_type
-UPDATE report_type SET label_en = 'Incident',   label_ar = 'حادث'      WHERE code = 'INCIDENT';
+-- report_type (6 natures voyageur)
 UPDATE report_type SET label_en = 'Complaint',  label_ar = 'شكوى'      WHERE code = 'COMPLAINT';
+UPDATE report_type SET label_en = 'Assault',    label_ar = 'اعتداء'    WHERE code = 'ASSAULT';
+UPDATE report_type SET label_en = 'Incident',   label_ar = 'حادث'      WHERE code = 'INCIDENT';
 UPDATE report_type SET label_en = 'Suggestion', label_ar = 'اقتراح'    WHERE code = 'SUGGESTION';
+UPDATE report_type SET label_en = 'Thank you',  label_ar = 'شكر'       WHERE code = 'THANKS';
+UPDATE report_type SET label_en = 'Other',      label_ar = 'أخرى'      WHERE code = 'OTHER';
 
 -- report_nature
 UPDATE report_nature SET label_en = 'Assault',        label_ar = 'اعتداء'       WHERE code = 'AGRESSION';
@@ -100,9 +103,12 @@ UPDATE support_type SET label_fr = 'Métro', label = 'Métro' WHERE code = 'METR
 UPDATE support_type SET label_fr = 'Train', label = 'Train' WHERE code = 'TRAIN';
 UPDATE support_type SET label_fr = 'Station', label = 'Station' WHERE code = 'STATION';
 
-UPDATE report_type SET label_fr = 'Incident', label = 'Incident' WHERE code = 'INCIDENT';
 UPDATE report_type SET label_fr = 'Réclamation', label = 'Réclamation' WHERE code = 'COMPLAINT';
+UPDATE report_type SET label_fr = 'Agression', label = 'Agression' WHERE code = 'ASSAULT';
+UPDATE report_type SET label_fr = 'Incident', label = 'Incident' WHERE code = 'INCIDENT';
 UPDATE report_type SET label_fr = 'Suggestion', label = 'Suggestion' WHERE code = 'SUGGESTION';
+UPDATE report_type SET label_fr = 'Remerciement', label = 'Remerciement' WHERE code = 'THANKS';
+UPDATE report_type SET label_fr = 'Autre', label = 'Autre' WHERE code = 'OTHER';
 
 UPDATE report_nature SET label_fr = 'Agression', label = 'Agression' WHERE code = 'AGRESSION';
 UPDATE report_nature SET label_fr = 'Propreté', label = 'Propreté' WHERE code = 'PROPRETE';
