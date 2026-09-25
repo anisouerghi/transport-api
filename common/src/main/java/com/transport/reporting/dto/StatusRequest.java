@@ -19,6 +19,12 @@ public class StatusRequest {
     @Size(max = 100, message = "Le libellé ne doit pas dépasser 100 caractères")
     private String label;
 
+    @Size(max = 100)
+    private String labelAr;
+
+    @Size(max = 100)
+    private String labelEn;
+
     @NotNull(message = "L'ordre d'affichage est obligatoire")
     private Integer displayOrder;
 }

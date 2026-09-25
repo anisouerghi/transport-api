@@ -25,7 +25,19 @@ public class SupportType {
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
-    /** Libelle affiche du type de support. */
+    /** Libelle historique (miroir FR = label_fr) — conserve pour recherche / tri. */
     @Column(name = "label", nullable = false, length = 150)
     private String label;
+
+    /** Libelle francais. */
+    @Column(name = "label_fr", length = 150)
+    private String labelFr;
+
+    /** Libelle arabe. */
+    @Column(name = "label_ar", length = 150)
+    private String labelAr;
+
+    /** Libelle anglais. */
+    @Column(name = "label_en", length = 150)
+    private String labelEn;
 }

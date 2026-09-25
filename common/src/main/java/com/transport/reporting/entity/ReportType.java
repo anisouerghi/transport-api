@@ -25,9 +25,18 @@ public class ReportType {
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
-    /** Libelle affiche du type de signalement. */
+    /** Libelle historique (miroir FR = label_fr). */
     @Column(name = "label", nullable = false, length = 150)
     private String label;
+
+    @Column(name = "label_fr", length = 150)
+    private String labelFr;
+
+    @Column(name = "label_ar", length = 150)
+    private String labelAr;
+
+    @Column(name = "label_en", length = 150)
+    private String labelEn;
 
     /** Description detaillee du type de signalement. */
     @Column(name = "description", length = 500)
