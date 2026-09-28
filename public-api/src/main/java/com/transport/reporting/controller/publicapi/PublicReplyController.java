@@ -30,12 +30,13 @@ public class PublicReplyController {
     @Operation(
             summary = "Lister les réponses visibles à l'accueil",
             description = "Accès anonyme. Filtre : signalement.publish = true. "
-                    + "15 dernières réponses max, pagination 5 par page. Retourne le message du signalement, "
+                    + "Au plus 12 réponses (3 pages × 4). Les paramètres page/size sont bornés côté serveur "
+                    + "(page 0..2, size ≤ 4). Retourne le message du signalement, "
                     + "le message de la réponse et le nom du voyageur."
     )
     public ResponseEntity<ApiResponse<PageResponse<PublicHomepageReplyResponse>>> homepage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "4") int size) {
         return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.listHomepageReplies(page, size)));
     }
 }

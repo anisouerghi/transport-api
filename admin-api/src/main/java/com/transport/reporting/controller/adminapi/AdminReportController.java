@@ -8,6 +8,7 @@ import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.dto.UpdateNatureRequest;
 import com.transport.reporting.dto.UpdatePriorityRequest;
+import com.transport.reporting.dto.UpdateReportTypeRequest;
 import com.transport.reporting.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -90,5 +91,16 @@ public class AdminReportController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Nature updated",
                 reportService.updateNature(id, request.getReportNatureId())));
+    }
+
+    @PatchMapping("/{id}/report-type")
+    @PreAuthorize("@perm.hasAny('REPORT', 'EDIT', 'REPLY')")
+    @Operation(summary = "Modifier le type (nature voyageur / ReportType) d'un signalement")
+    public ResponseEntity<ApiResponse<ReportResponse>> updateReportType(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateReportTypeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Report type updated",
+                reportService.updateReportType(id, request.getReportTypeId())));
     }
 }

@@ -17,6 +17,7 @@ public enum AuditAction {
     STATUS_CHANGE,
     PRIORITY_CHANGE,
     NATURE_CHANGE,
+    REPORT_TYPE_CHANGE,
     EMAIL_SEND,
     UPLOAD,
     OTHER
