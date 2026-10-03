@@ -38,6 +38,7 @@ public class ReportTypeService {
             "code", "code",
             "label", "label",
             "description", "description",
+            "priority", "priority",
             "active", "active"
     );
 
@@ -162,6 +163,8 @@ public class ReportTypeService {
     private static String snapshot(ReportType entity) {
         return "code=" + entity.getCode()
                 + ";label=" + entity.getLabel()
+                + ";priority=" + entity.getPriority()
+                + ";icon=" + entity.getIcon()
                 + ";active=" + entity.isActive();
     }
 }

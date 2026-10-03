@@ -28,6 +28,8 @@ public final class DatabaseSchemaPatcher {
         ensureReportSupportNullable(jdbcTemplate);
         ensureI18nLabelColumns(jdbcTemplate);
         ensureSixPublicReportTypes(jdbcTemplate);
+        ensureReportTypePriority(jdbcTemplate);
+        ensureReportTypeIcon(jdbcTemplate);
     }
 
     /**
@@ -85,6 +87,63 @@ public final class DatabaseSchemaPatcher {
                     code, labelFr, description);
         }
         log.info("report_type {} créé (nature voyageur).", code);
+    }
+
+    /**
+     * Ajoute {@code report_type.priority} et renseigne l'ordre initial
+     * uniquement lorsque la valeur est encore vide.
+     */
+    private static void ensureReportTypePriority(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "report_type")) {
+            return;
+        }
+        try {
+            if (!columnExists(jdbcTemplate, "report_type", "priority")) {
+                jdbcTemplate.execute("ALTER TABLE report_type ADD COLUMN priority INT NULL");
+                log.info("Colonne report_type.priority ajoutée.");
+            }
+            jdbcTemplate.update("UPDATE report_type SET priority = 1 WHERE code = 'URGENCE' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 2 WHERE code = 'COMPLAINT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 3 WHERE code = 'INCIDENT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 4 WHERE code = 'SUGGESTION' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 5 WHERE code = 'THANKS' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 6 WHERE code = 'OTHER' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 7 WHERE code = 'ASSAULT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 100 WHERE priority IS NULL");
+            jdbcTemplate.execute("ALTER TABLE report_type MODIFY COLUMN priority INT NOT NULL DEFAULT 100");
+        } catch (Exception ex) {
+            log.warn("Impossible d'assurer report_type.priority : {}", ex.getMessage());
+        }
+    }
+
+    /** Enregistre le nom Material Symbols déjà utilisé par le frontend. */
+    private static void ensureReportTypeIcon(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "report_type")) {
+            return;
+        }
+        try {
+            if (!columnExists(jdbcTemplate, "report_type", "icon")) {
+                jdbcTemplate.execute("ALTER TABLE report_type ADD COLUMN icon VARCHAR(80) NULL");
+                log.info("Colonne report_type.icon ajoutée.");
+            }
+            setIconIfBlank(jdbcTemplate, "URGENCE", "crisis_alert");
+            setIconIfBlank(jdbcTemplate, "COMPLAINT", "rate_review");
+            setIconIfBlank(jdbcTemplate, "INCIDENT", "photo_camera");
+            setIconIfBlank(jdbcTemplate, "SUGGESTION", "tips_and_updates");
+            setIconIfBlank(jdbcTemplate, "THANKS", "thumb_up");
+            setIconIfBlank(jdbcTemplate, "OTHER", "contact_support");
+            setIconIfBlank(jdbcTemplate, "ASSAULT", "shield");
+            jdbcTemplate.update(
+                    "UPDATE report_type SET icon = 'shield' WHERE code = 'ASSAULT' AND icon = 'emergency'");
+        } catch (Exception ex) {
+            log.warn("Impossible d'assurer report_type.icon : {}", ex.getMessage());
+        }
+    }
+
+    private static void setIconIfBlank(JdbcTemplate jdbcTemplate, String code, String icon) {
+        jdbcTemplate.update(
+                "UPDATE report_type SET icon = ? WHERE code = ? AND (icon IS NULL OR TRIM(icon) = '')",
+                icon, code);
     }
 
     private static void ensurePassengerPasswordHashColumn(JdbcTemplate jdbcTemplate) {
