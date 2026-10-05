@@ -861,7 +861,7 @@ sudo ss -lntp | grep -E '8081|8082'
 
 Sur Windows (scripts) : logs console Maven / `java -jar`.
 
-Note : `spring.mail.properties.mail.debug=true` est activé dans `application.properties` — verbosité SMTP élevée ; à revoir en PROD (voir §17).
+Note : `spring.mail.properties.mail.debug=false` est configure dans `application.properties` pour eviter l'exposition de donnees SMTP dans les logs.
 
 ---
 
@@ -952,9 +952,9 @@ Voir `documentation/authentication-otp.md` (chemin SMTP / smart-host). Vérifier
 
 | Fichier / zone | Raison | Modification proposée | Impact |
 |----------------|--------|----------------------|--------|
-| `public-api/.../application.properties` (et admin) `spring.mail.password=…` | Mot de passe SMTP **en clair dans le dépôt** | Activer le binding `${SMTP_PASSWORD:}` (lignes déjà commentées) + injecter via env | Sécurité critique |
+| `public-api/.../application.properties` (et admin) `spring.mail.password=${SMTP_PASSWORD:}` | Secret SMTP injecté par défaut vide | Fournir `SMTP_PASSWORD` via le gestionnaire de secrets | Sécurité critique |
 | `app.security.jwt.secret` défaut | Secret JWT faible / connu | Imposer `JWT_SECRET` fort via env (déjà supporté) | Auth |
-| `spring.mail.properties.mail.debug=true` | Logs SMTP verbeux | Passer à `false` en prod | Logs / perf |
+| `spring.mail.properties.mail.debug=false` | Debug SMTP desactive | Conserver `false` en prod | Logs / exposition de donnees |
 | Dépendance Actuator absente | `/actuator/health` inutilisable | Ajouter `spring-boot-starter-actuator` + sécuriser les endpoints | Monitoring |
 | `application-prod.properties` URLs placeholder (`transport.mon-domaine.com`, `signalement.transport.tn`) | Valeurs d’exemple | Toujours surcharger via `APP_QR_BASE_URL` / `APP_FRONTEND_PUBLIC_BASE_URL` | Liens e-mail / QR |
 | Front `production/config.json` `cloudflareSiteKey: ""` | Vide en source | Injecter `<SITE_KEY_PROD>` au build/deploy | Turnstile |

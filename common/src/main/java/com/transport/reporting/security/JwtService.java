@@ -109,6 +109,9 @@ public class JwtService {
     }
 
     private static byte[] decodeSecret(String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be configured and contain at least 256 bits");
+        }
         try {
             byte[] decoded = Decoders.BASE64.decode(secret);
             if (decoded.length >= 32) {

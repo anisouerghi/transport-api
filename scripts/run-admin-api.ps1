@@ -9,6 +9,8 @@ $ErrorActionPreference = "Stop"
 
 try {
 
+    $secretsFile = Import-LocalSecrets -ScriptRoot $PSScriptRoot
+
     # ============================================================
     # ADMIN API - Maven spring-boot:run
     # DEV  : 8082
@@ -53,6 +55,7 @@ try {
     Write-EnvLine "Commande" $mavenCmd
     Write-EnvLine "Maven" $mvn.Source
     Write-EnvLine "Racine projet" $Root
+    Write-EnvLine "Secrets locaux" ($(if ($secretsFile) { $secretsFile } else { '(aucun - secrets.local.ps1 absent)' }))
 
     Write-RuntimeSection "Spring / Serveur"
     Write-EnvLine "SPRING_PROFILES_ACTIVE" $env:SPRING_PROFILES_ACTIVE -ValueColor Green

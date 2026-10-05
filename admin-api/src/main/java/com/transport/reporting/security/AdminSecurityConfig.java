@@ -83,14 +83,11 @@ public class AdminSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        java.util.LinkedHashSet<String> patterns = new java.util.LinkedHashSet<>();
-        Arrays.stream(allowedOrigins.split(","))
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .forEach(patterns::add);
-        patterns.add("http://localhost:*");
-        patterns.add("http://127.0.0.1:*");
-        config.setAllowedOriginPatterns(List.copyOf(patterns));
+            .toList();
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

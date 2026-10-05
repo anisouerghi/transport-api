@@ -191,10 +191,12 @@ public class QrCodeService {
         }
         try {
             Path path = Path.of(support.getQrCodePath()).toAbsolutePath().normalize();
-            if (!Files.exists(path)) {
+            Path qrRoot = sharedStoragePaths.qrRoot().toAbsolutePath().normalize();
+            if (!path.startsWith(qrRoot) || !Files.isRegularFile(path)) {
                 // Repli : même UUID sous le répertoire QR partagé (après migration de chemin)
-                Path shared = sharedStoragePaths.qrRoot().resolve(path.getFileName()).normalize();
-                if (!shared.startsWith(sharedStoragePaths.qrRoot()) || !Files.exists(shared)) {
+                Path fileName = path.getFileName();
+                Path shared = fileName == null ? qrRoot : qrRoot.resolve(fileName).normalize();
+                if (!shared.startsWith(qrRoot) || !Files.isRegularFile(shared)) {
                     throw new BusinessException("QR code file not found on disk");
                 }
                 path = shared;

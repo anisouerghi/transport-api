@@ -2,6 +2,25 @@
 
 ## Principe
 
+## Configuration obligatoire des secrets
+
+Les secrets ne doivent jamais avoir de valeur de secours dans les fichiers de configuration versionnes.
+Avant un demarrage, fournir au minimum :
+
+- `JWT_SECRET` : secret aleatoire d'au moins 32 octets (ou equivalent Base64) ;
+- `INITIAL_ADMIN_PASSWORD` : utilise uniquement lors de la creation initiale du compte `admin` ;
+- `SMTP_USERNAME` et `SMTP_PASSWORD` si l'envoi d'e-mails est active ;
+- `GOOGLE_CLIENT_SECRET` et `CLOUDFLARE_SECRET_KEY` si les fonctions correspondantes sont activees.
+
+Le compte initial n'est plus cree avec un mot de passe connu par defaut. Les secrets qui ont ete
+commits ou places dans un fichier local expose doivent etre immediatement revoques et remplaces.
+
+Les origines CORS sont comparees exactement aux valeurs de `CORS_ALLOWED_ORIGINS`. Les jokers de
+ports localhost ne sont pas autorises par defaut, y compris avec `allowCredentials=true`.
+
+Les fichiers QR et les pieces jointes sont lus uniquement sous leurs repertoires de stockage dedies.
+Un chemin en base qui sort de cette racine est refuse.
+
 ```
 AppUser ──< user_role >── Role ──< role_permission >── Permission
 ```
@@ -76,7 +95,7 @@ Le seed ajoute les menus manquants sans écraser les existants.
 
 ## Compte seed
 
-`admin` / `admin123` — rôle `ADMIN` (toutes les permissions de la matrice)
+Le compte `admin` initial reçoit le mot de passe fourni par `INITIAL_ADMIN_PASSWORD`.
 
 ## Extension
 

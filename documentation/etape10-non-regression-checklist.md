@@ -94,7 +94,7 @@ Au démarrage, chaque JVM logue :
 - [ ] Changer langue FR / AR / EN
 
 ### Admin (`http://localhost:4300` → API 8082)
-- [ ] Login `admin` / `admin123`
+- [ ] Login avec le compte admin initial et le mot de passe fourni par `INITIAL_ADMIN_PASSWORD`
 - [ ] Liste / filtres signalements
 - [ ] Priorité, nature, réponse + option e-mail
 - [ ] Prévisualiser / télécharger PJ (après redémarrage chemins partagés)

@@ -12,7 +12,7 @@
 --
 -- Compte admin :
 --   Après ce script, démarrer admin-api (dev ou prod).
---   SecurityDataInitializer crée : admin / admin123 (rôle ADMIN).
+--   SecurityDataInitializer crée le compte admin avec INITIAL_ADMIN_PASSWORD (rôle ADMIN).
 -- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS signalement
@@ -554,7 +554,7 @@ INSERT INTO app_menu (code, label, url, icon, display_order, permission_code, ac
 
 -- -----------------------------------------------------------------------------
 -- Utilisateur admin : créé au 1er démarrage de admin-api
--- (SecurityDataInitializer → admin / admin123)
+-- (SecurityDataInitializer → mot de passe fourni par INITIAL_ADMIN_PASSWORD)
 -- Ne pas insérer de password_hash à la main ici.
 -- -----------------------------------------------------------------------------
 

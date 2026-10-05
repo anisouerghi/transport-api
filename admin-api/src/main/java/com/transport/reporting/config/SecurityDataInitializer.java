@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,7 +40,8 @@ public class SecurityDataInitializer {
             RoleRepository roleRepository,
             AppMenuRepository appMenuRepository,
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            @Value("${app.security.initial-admin-password:}") String initialAdminPassword) {
         return args -> {
             seedPermissions(permissionRepository);
             seedRoles(permissionRepository, roleRepository);
@@ -51,7 +53,7 @@ public class SecurityDataInitializer {
                     "NATURE_VIEW", "NATURE_ADD", "NATURE_EDIT", "NATURE_SEARCH",
                     "NATURE_ACTIVATE", "NATURE_DEACTIVATE");
             seedMenus(appMenuRepository);
-            seedAdminUser(userRepository, roleRepository, passwordEncoder);
+            seedAdminUser(userRepository, roleRepository, passwordEncoder, initialAdminPassword);
         };
     }
 
@@ -275,22 +277,29 @@ public class SecurityDataInitializer {
     private void seedAdminUser(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            String initialAdminPassword) {
         Role adminRole = roleRepository.findByCode("ADMIN").orElseThrow();
-        AppUser admin = userRepository.findByUsernameWithRolesAndPermissions("admin")
-                .orElseGet(() -> AppUser.builder()
-                        .username("admin")
-                        .name("Administrator")
-                        .email("admin@transport.transtu.tn")
-                        .passwordHash(passwordEncoder.encode("admin123"))
-                        .active(true)
-                        .build());
+        AppUser admin = userRepository.findByUsernameWithRolesAndPermissions("admin").orElse(null);
+        if (admin == null) {
+            if (initialAdminPassword == null || initialAdminPassword.isBlank()) {
+                throw new IllegalStateException(
+                        "INITIAL_ADMIN_PASSWORD must be configured before creating the initial admin user");
+            }
+            admin = AppUser.builder()
+                    .username("admin")
+                    .name("Administrator")
+                    .email("admin@transport.transtu.tn")
+                    .passwordHash(passwordEncoder.encode(initialAdminPassword))
+                    .active(true)
+                    .build();
+        }
         if (admin.getRoles() == null) {
             admin.setRoles(new HashSet<>());
         }
         admin.getRoles().add(adminRole);
         userRepository.save(admin);
-        log.info("Admin user ready (admin / admin123) with role ADMIN");
+        log.info("Admin user ready with role ADMIN");
     }
 
     private static Permission p(String module, String moduleLabel, String action, String label) {

@@ -55,7 +55,7 @@ function Write-SpringDatabaseBlock {
     Write-EnvLine "DATABASE_URL" (Get-EnvDisplayValue -Name 'DATABASE_URL' -DefaultDisplay '(defaut Spring)')
     Write-EnvLine "DATABASE_USERNAME" (Get-EnvDisplayValue -Name 'DATABASE_USERNAME' -DefaultDisplay '(defaut Spring)')
     Write-EnvLine "DATABASE_PASSWORD" (Get-EnvDisplayValue -Name 'DATABASE_PASSWORD' -Secret -DefaultDisplay '(defaut Spring - vide)')
-    Write-EnvLine "JWT_SECRET" (Get-EnvDisplayValue -Name 'JWT_SECRET' -Secret -DefaultDisplay '(defaut Spring)')
+    Write-EnvLine "JWT_SECRET" (Get-EnvDisplayValue -Name 'JWT_SECRET' -Secret -DefaultDisplay '(OBLIGATOIRE)')
     Write-EnvLine "JWT_EXPIRATION_MS" (Get-EnvDisplayValue -Name 'JWT_EXPIRATION_MS' -DefaultDisplay '(defaut Spring - 86400000)')
 }
 
