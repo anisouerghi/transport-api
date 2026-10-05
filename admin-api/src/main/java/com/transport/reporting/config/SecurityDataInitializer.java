@@ -51,7 +51,8 @@ public class SecurityDataInitializer {
             syncRolePermissions(permissionRepository, roleRepository, "RESPONSABLE",
                     "REPORT_ASSIGN_NATURE",
                     "NATURE_VIEW", "NATURE_ADD", "NATURE_EDIT", "NATURE_SEARCH",
-                    "NATURE_ACTIVATE", "NATURE_DEACTIVATE");
+                    "NATURE_ACTIVATE", "NATURE_DEACTIVATE",
+                    "PASSENGER_EDIT");
             seedMenus(appMenuRepository);
             seedAdminUser(userRepository, roleRepository, passwordEncoder, initialAdminPassword);
         };
@@ -135,6 +136,7 @@ public class SecurityDataInitializer {
                 // Voyageurs
                 p("PASSENGER", "Voyageurs", "VIEW", "Consulter les voyageurs"),
                 p("PASSENGER", "Voyageurs", "SEARCH", "Rechercher les voyageurs"),
+                p("PASSENGER", "Voyageurs", "EDIT", "Modifier un voyageur"),
                 p("PASSENGER", "Voyageurs", "ACTIVATE", "Activer un voyageur"),
                 p("PASSENGER", "Voyageurs", "DEACTIVATE", "Désactiver un voyageur"),
 
@@ -200,7 +202,7 @@ public class SecurityDataInitializer {
                         "TRANSPORT_SUPPORT_VIEW", "TRANSPORT_SUPPORT_ADD", "TRANSPORT_SUPPORT_EDIT",
                         "TRANSPORT_SUPPORT_SEARCH", "TRANSPORT_SUPPORT_PRINT",
                         "TRANSPORT_SUPPORT_ACTIVATE", "TRANSPORT_SUPPORT_DEACTIVATE",
-                        "PASSENGER_VIEW", "PASSENGER_SEARCH", "PASSENGER_ACTIVATE", "PASSENGER_DEACTIVATE",
+                        "PASSENGER_VIEW", "PASSENGER_SEARCH", "PASSENGER_EDIT", "PASSENGER_ACTIVATE", "PASSENGER_DEACTIVATE",
                         "REPORT_STATISTICS_VIEW",
                         "AUDIT_VIEW", "AUDIT_SEARCH", "AUDIT_EXPORT",
                         "STATUS_VIEW"))

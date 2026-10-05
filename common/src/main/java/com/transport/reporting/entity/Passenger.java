@@ -1,9 +1,13 @@
 package com.transport.reporting.entity;
 
+import com.transport.reporting.converter.IntegerListJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Entite Voyageur (declarant) - table passenger.
@@ -93,4 +97,24 @@ public class Passenger {
     /** Dernière authentification réussie (login / OTP / Google). */
     @Column(name = "last_auth_at")
     private Instant lastAuthAt;
+
+    /**
+     * Notifications souscrites par le voyageur, tableau d'identifiants (ex. {@code [1,3,8]}).
+     * Liste libre sans table de référence : la sémantique des IDs est pilotée par le frontend.
+     * {@code null} = preference non renseignée.
+     *
+     * <p>Sérialisé via {@link IntegerListJsonConverter} : MariaDB ne Managed pas
+     * {@code CAST(? AS json)}, que produirait {@code @JdbcTypeCode(SqlTypes.JSON)}.
+     */
+    @Convert(converter = IntegerListJsonConverter.class)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "notifications", columnDefinition = "json")
+    private List<Integer> notifications;
+
+    /**
+     * Langue préférée du voyageur (code ISO 639-1 : {@code FR}, {@code AR}, {@code EN}).
+     * {@code null} = preference non renseignée, le client applique alors sa langue par défaut.
+     */
+    @Column(name = "language", length = 2)
+    private String language;
 }

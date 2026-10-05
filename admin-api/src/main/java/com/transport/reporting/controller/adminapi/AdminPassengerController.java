@@ -4,22 +4,25 @@ import com.transport.reporting.common.dto.SearchRequest;
 import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.dto.PassengerCriteria;
+import com.transport.reporting.dto.PassengerRequest;
 import com.transport.reporting.dto.PassengerResponse;
 import com.transport.reporting.service.PassengerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Contrôleur admin : voyageurs (consultation, recherche, activation).
+ * Contrôleur admin : voyageurs (consultation, recherche, modification, activation).
  */
 @RestController
 @RequestMapping("/api/admin/passengers")
@@ -45,6 +48,15 @@ public class AdminPassengerController {
     @Operation(summary = "Détail d'un voyageur")
     public ResponseEntity<ApiResponse<PassengerResponse>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(passengerService.findById(id)));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('PASSENGER', 'EDIT')")
+    @Operation(summary = "Modifier un voyageur (identité, langue, notifications)")
+    public ResponseEntity<ApiResponse<PassengerResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody PassengerRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok("Passenger updated", passengerService.update(id, request)));
     }
 
     @PatchMapping("/{id}/activate")

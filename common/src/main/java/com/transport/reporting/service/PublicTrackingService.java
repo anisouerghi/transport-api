@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,25 @@ public class PublicTrackingService {
     public PublicReportTrackingResponse findByUuid(UUID uuid) {
         Report report = reportRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", uuid));
+        return toTrackingResponse(report);
+    }
 
+    /**
+     * Charge le détail public d'un signalement à partir de sa référence métier
+     * ({@code SIG-yyyyMMdd-xxxxxx}), sans authentification.
+     *
+     * <p>Même projection restreinte que {@link #findByUuid(UUID)} : la référence étant
+     * devinable (6 chiffres par jour) contrairement à l'UUID du lien e-mail, ce point
+     * d'entrée ne doit rien exposer de plus que le suivi public.
+     */
+    public PublicReportTrackingResponse findByReference(String reference) {
+        String normalized = reference.trim().toUpperCase(Locale.ROOT);
+        Report report = reportRepository.findByReference(normalized)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", normalized));
+        return toTrackingResponse(report);
+    }
+
+    private PublicReportTrackingResponse toTrackingResponse(Report report) {
         List<PublicReportTrackingResponse.PublicReplyView> replies =
                 replyRepository.findByReport_ReportIdAndPublicResponseTrueOrderByReplyDateAsc(report.getReportId())
                         .stream()

@@ -81,7 +81,7 @@ Admin login → POST /api/auth/login → JWT typ=ADMIN
 | `PublicSupportController` | `GET /api/public/supports`, `GET /api/public/supports/{uuid}` |
 | `PublicReportTypeController` | `GET /api/public/report-types` |
 | `PublicReportController` | `POST /api/public/signalements`, `GET .../mine`, follow-up, `GET /api/public/suivi/{uuid}` |
-| `PublicPassengerAuthController` | `POST /api/public/auth/register\|login`, `GET /api/public/auth/me` |
+| `PublicPassengerAuthController` | `POST /api/public/auth/register\|login`, `GET\|PUT /api/public/auth/me` |
 | `PublicReplyController` | `GET /api/public/reponses` (accueil) |
 
 ### 3.2 Controllers — Admin API

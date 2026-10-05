@@ -50,7 +50,7 @@ Actions supportées (selon le module) :
 
 | Module | Codes | Menu |
 |--------|-------|------|
-| `PASSENGER` | `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE` | Voyageurs → `/passengers` |
+| `PASSENGER` | `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_EDIT`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE` | Voyageurs → `/passengers` |
 | `REPORT_STATISTICS` | `REPORT_STATISTICS_VIEW` | Rapports & Statistiques → `/statistics` |
 | `REPORT` | … + `REPORT_UPDATE_PRIORITY`, `REPORT_ASSIGN_NATURE` | Priorité / nature des signalements |
 | `NATURE` | `NATURE_VIEW`, `ADD`, `EDIT`, `DELETE`, `SEARCH`, `ACTIVATE`, `DEACTIVATE` | Natures → `/report-natures` |

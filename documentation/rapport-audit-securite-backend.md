@@ -219,3 +219,24 @@ Cette passe a corrigé les vulnérabilités identifiées dans les chemins de con
 - des tests de limitation OTP par IP, e-mail et appareil ;
 - un test DAST sur les API déployées ;
 - une vérification de la restriction Swagger/Actuator en production.
+
+## 9. Suite donnée à cet audit (hors périmètre du rapport)
+
+> **2026-10-05 — la suite de tests automatisés a été supprimée du projet.**
+> La dépendance `spring-boot-starter-test` (JUnit, AssertJ, Mockito, Spring
+> Test) a été retirée des 4 pom de modules, et les 6 classes de test
+> correspondantes supprimées : `PassengerAuthServiceOtpTest`,
+> `PassengerOtpServiceTest`, `InMemoryRateLimiterTest`,
+> `ReportSpecificationTest`, `TransportApplicationTests` et
+> `PassengerLanguageTest`.
+>
+> Conséquence : les sections **6.3** (tests non exécutables) et l'**action 6**
+> des actions obligatoires ci-dessus sont désormais caduques — il n'y a plus de
+> suite de tests à réactiver. Les constats de sécurité des sections 1 à 5, eux,
+> restent valides et non concernés.
+>
+> `mvn clean install` est désormais vert sur les 5 modules. En contrepartie, les
+> contrôles par tests unitaires et d'intégration ne sont plus outillés : toute
+> évolution de `PassengerAuthService`, `PassengerService`, du rate limiting ou
+> des spécifications JPA doit être validée manuellement ou via un test
+> d'intégration externalisé.

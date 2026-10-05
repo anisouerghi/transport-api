@@ -92,7 +92,11 @@ public class PublicRateLimitFilter extends OncePerRequestFilter {
             return Rule.subject("otp-verify", properties.getOtpVerify(), "otpTransactionId");
         }
         if (HttpMethod.GET.matches(method)
-                && (path.startsWith("/api/public/suivi/") || path.matches("/api/public/signalements/[^/]+/follow-up"))) {
+                && (path.startsWith("/api/public/suivi/")
+                || path.matches("/api/public/signalements/[^/]+/follow-up")
+                || path.matches("/api/public/signalements/reference/[^/]+"))) {
+            // Même bucket que le suivi par UUID : la référence est devinable,
+            // ce point d'entrée public ne doit pas être plus permissif que le lien e-mail.
             return Rule.ip("suivi", properties.getSuivi());
         }
         if (HttpMethod.GET.matches(method) && "/api/public/reponses".equals(path)) {

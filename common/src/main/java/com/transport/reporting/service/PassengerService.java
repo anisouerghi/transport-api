@@ -11,6 +11,7 @@ import com.transport.reporting.dto.PassengerCriteria;
 import com.transport.reporting.dto.PassengerRequest;
 import com.transport.reporting.dto.PassengerResponse;
 import com.transport.reporting.entity.Passenger;
+import com.transport.reporting.exception.BusinessException;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.mapper.PassengerMapper;
 import com.transport.reporting.repository.PassengerRepository;
@@ -102,6 +103,44 @@ public class PassengerService {
                 .description((active ? "Activation" : "Désactivation") + " du voyageur " + id)
                 .build());
         return passengerMapper.toResponse(passenger);
+    }
+
+    public PassengerResponse update(Long id, PassengerRequest request) {
+        Passenger passenger = getEntity(id);
+        String oldValue = snapshot(passenger);
+        String oldEmail = passenger.getEmail();
+
+        passengerMapper.updateEntity(passenger, request);
+
+        if (passenger.getEmail() != null && !passenger.getEmail().equals(oldEmail)) {
+            passengerRepository.findByEmailIgnoreCase(passenger.getEmail())
+                    .filter(existing -> !existing.getPassengerId().equals(id))
+                    .ifPresent(existing -> {
+                        throw new BusinessException("Un compte existe déjà avec cet e-mail.");
+                    });
+        }
+
+        passenger = passengerRepository.save(passenger);
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(AuditActors.currentAdminUserId())
+                .actionType(AuditAction.UPDATE)
+                .module(AuditModule.PASSENGERS)
+                .entityName("Passenger")
+                .entityId(String.valueOf(id))
+                .oldValue(oldValue)
+                .newValue(snapshot(passenger))
+                .description("Modification du voyageur " + id)
+                .build());
+        return passengerMapper.toResponse(passenger);
+    }
+
+    /** Instantané des champs éditables pour le journal d'audit. */
+    private static String snapshot(Passenger passenger) {
+        return "name=" + passenger.getName()
+                + ", email=" + passenger.getEmail()
+                + ", phoneNumber=" + passenger.getPhoneNumber()
+                + ", language=" + passenger.getLanguage()
+                + ", notifications=" + passenger.getNotifications();
     }
 
     Passenger getEntity(Long id) {

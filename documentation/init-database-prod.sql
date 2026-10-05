@@ -122,6 +122,8 @@ CREATE TABLE passenger (
     gps_accuracy         DOUBLE NULL,
     gps_captured_at      DATETIME(6) NULL,
     last_auth_at         DATETIME(6) NULL,
+    notifications        JSON NULL,
+    language             VARCHAR(2) NULL,
     PRIMARY KEY (passenger_id),
     UNIQUE KEY uk_passenger_google_subject (google_subject(191)),
     KEY idx_passenger_active (active),
@@ -474,6 +476,7 @@ INSERT INTO permission (code, label, description, module_code, module_label, act
 
 ('PASSENGER_VIEW', 'Consulter les voyageurs', 'Consulter les voyageurs', 'PASSENGER', 'Voyageurs', 'VIEW', 1),
 ('PASSENGER_SEARCH', 'Rechercher les voyageurs', 'Rechercher les voyageurs', 'PASSENGER', 'Voyageurs', 'SEARCH', 1),
+('PASSENGER_EDIT', 'Modifier un voyageur', 'Modifier un voyageur', 'PASSENGER', 'Voyageurs', 'EDIT', 1),
 ('PASSENGER_ACTIVATE', 'Activer un voyageur', 'Activer un voyageur', 'PASSENGER', 'Voyageurs', 'ACTIVATE', 1),
 ('PASSENGER_DEACTIVATE', 'Desactiver un voyageur', 'Desactiver un voyageur', 'PASSENGER', 'Voyageurs', 'DEACTIVATE', 1),
 
@@ -527,7 +530,7 @@ JOIN permission p ON p.code IN (
   'TRANSPORT_SUPPORT_VIEW', 'TRANSPORT_SUPPORT_ADD', 'TRANSPORT_SUPPORT_EDIT',
   'TRANSPORT_SUPPORT_SEARCH', 'TRANSPORT_SUPPORT_PRINT',
   'TRANSPORT_SUPPORT_ACTIVATE', 'TRANSPORT_SUPPORT_DEACTIVATE',
-  'PASSENGER_VIEW', 'PASSENGER_SEARCH', 'PASSENGER_ACTIVATE', 'PASSENGER_DEACTIVATE',
+  'PASSENGER_VIEW', 'PASSENGER_SEARCH', 'PASSENGER_EDIT', 'PASSENGER_ACTIVATE', 'PASSENGER_DEACTIVATE',
   'REPORT_STATISTICS_VIEW',
   'AUDIT_VIEW', 'AUDIT_SEARCH', 'AUDIT_EXPORT',
   'STATUS_VIEW'

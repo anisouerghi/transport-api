@@ -23,6 +23,7 @@ public final class DatabaseSchemaPatcher {
         ensurePassengerPasswordHashColumn(jdbcTemplate);
         ensurePassengerGoogleOAuthColumns(jdbcTemplate);
         ensurePassengerEnrichmentColumns(jdbcTemplate);
+        ensurePassengerPreferencesColumns(jdbcTemplate);
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
@@ -201,6 +202,23 @@ public final class DatabaseSchemaPatcher {
                     "ALTER TABLE passenger ADD COLUMN last_auth_at DATETIME(6) NULL");
         } catch (Exception ex) {
             log.warn("Impossible de vérifier/ajouter les colonnes d'enrichissement passenger : {}",
+                    ex.getMessage());
+        }
+    }
+
+    /**
+     * Préférences de profil voyageur : {@code notifications} (tableau JSON) et
+     * {@code language} (code ISO 639-1 sur 2 lettres). Les deux sont optionnelles :
+     * aucune valeur par défaut n'est injectée sur les lignes existantes.
+     */
+    private static void ensurePassengerPreferencesColumns(JdbcTemplate jdbcTemplate) {
+        try {
+            addColumnIfMissing(jdbcTemplate, "passenger", "notifications",
+                    "ALTER TABLE passenger ADD COLUMN notifications JSON NULL");
+            addColumnIfMissing(jdbcTemplate, "passenger", "language",
+                    "ALTER TABLE passenger ADD COLUMN language VARCHAR(2) NULL");
+        } catch (Exception ex) {
+            log.warn("Impossible de vérifier/ajouter les préférences de profil passenger : {}",
                     ex.getMessage());
         }
     }

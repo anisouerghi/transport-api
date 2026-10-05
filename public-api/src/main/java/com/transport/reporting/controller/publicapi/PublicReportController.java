@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Contrôleur public : création et suivi des signalements voyageur.
@@ -37,6 +38,13 @@ import java.util.UUID;
 @RestController
 @Tag(name = "Public - Reports")
 public class PublicReportController {
+
+    /**
+     * Format des références métier produites par
+     * {@code ReportService#generateReference()} : {@code SIG-yyyyMMdd-xxxxxx}.
+     * Validé en amont pour rejeter les requêtes mal formées sans toucher la base.
+     */
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile("^SIG-\\d{8}-\\d{6}$");
 
     private final ReportService reportService;
     private final PublicTrackingService publicTrackingService;
@@ -102,6 +110,30 @@ public class PublicReportController {
     )
     public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> followUpByUuid(@PathVariable UUID uuid) {
         return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid)));
+    }
+
+    /**
+     * Consultation publique par référence métier ({@code SIG-yyyyMMdd-xxxxxx}).
+     * Aucune authentification : la référence seule suffit, comme l'UUID du lien e-mail.
+     * Retourne exactement la même projection restreinte que le suivi par UUID.
+     */
+    @GetMapping("/api/public/signalements/reference/{reference}")
+    @Operation(
+            summary = "Consulter un signalement par référence",
+            description = "Accès public sans authentification. Référence au format SIG-yyyyMMdd-xxxxxx. "
+                    + "Retourne uniquement les informations destinées au voyageur et les réponses visibles, "
+                    + "à l'identique de GET /api/public/signalements/{uuid}/follow-up. "
+                    + "Sujet à rate limiting par IP."
+    )
+    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> byReference(
+            @PathVariable String reference) {
+        if (!REFERENCE_PATTERN.matcher(reference.trim()).matches()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.of(false,
+                            "Référence invalide (attendu SIG-yyyyMMdd-xxxxxx).",
+                            "INVALID_REFERENCE", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByReference(reference)));
     }
 
     /**

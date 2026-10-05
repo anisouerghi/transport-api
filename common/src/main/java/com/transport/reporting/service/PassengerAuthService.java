@@ -1,5 +1,6 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.enums.PassengerLanguage;
 import com.transport.reporting.common.util.RequestMetadata;
 import com.transport.reporting.common.util.UserAgentParser;
 import com.transport.reporting.dto.*;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Authentification publique des voyageurs.
@@ -257,6 +259,15 @@ public class PassengerAuthService {
                     StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null);
         }
 
+        // Préférences optionnelles : champ absent = inchangé.
+        // [] vide = désactivation explicite des notifications ; "" = langue effacée.
+        if (request.getNotifications() != null) {
+            passenger.setNotifications(List.copyOf(request.getNotifications()));
+        }
+        if (request.getLanguage() != null) {
+            passenger.setLanguage(PassengerLanguage.normalizeOrThrow(request.getLanguage()));
+        }
+
         if (StringUtils.hasText(request.getPassword())) {
             if (request.getPassword().length() < 8 || request.getPassword().length() > 100) {
                 throw new BusinessException("Le nouveau mot de passe doit contenir entre 8 et 100 caractères.");
@@ -287,6 +298,8 @@ public class PassengerAuthService {
         response.setProfilePictureUrl(passenger.getProfilePictureUrl());
         response.setAuthProvider(
                 passenger.getAuthProvider() != null ? passenger.getAuthProvider().name() : null);
+        response.setNotifications(passenger.getNotifications());
+        response.setLanguage(passenger.getLanguage());
         return response;
     }
 

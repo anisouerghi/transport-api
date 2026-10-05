@@ -106,6 +106,7 @@ Package `com.transport.reporting.security` : JWT, filter, UserDetails, `@PreAuth
 - DTO `PublicHomepageReplyResponse` : `message`, `replyDate`, `reportTypeLabel` (pas de voyageur, UUID, référence, support nominatif)
 - `sendEmail` : notification si le voyageur a une adresse e-mail
 - `PassengerResponse.anonymous` : sans nom / e-mail / téléphone
+- `PassengerResponse.notifications` / `.language` : préférences de profil voyageur (colonnes `passenger.notifications` JSON et `passenger.language` VARCHAR(2), toutes deux optionnelles — voir [`passenger-auth.md`](passenger-auth.md))
 - Liste admin : `ReportResponse.replied` = au moins une ligne `reply` (toute réponse enregistrée)
 - Filtre search : `ReportCriteria.replied` (`true` / `false` / omis) via EXISTS / NOT EXISTS — pagination serveur
 
@@ -120,10 +121,10 @@ E-mails de réponse + suivi UUID : [`email-tracking.md`](email-tracking.md).
 | `entity/Passenger` | Table `passenger` (+ `active`) |
 | `dto/PassengerCriteria`, `PassengerResponse` | Recherche / réponse |
 | `specification/PassengerSpecification` | Filtres (dont état actif) |
-| `service/PassengerService` | `search`, `findById`, `setActive`, `findOrCreate` |
-| `controller/adminapi/AdminPassengerController` | `POST /search`, `GET /{id}`, `PATCH …/activate\|deactivate` |
+| `service/PassengerService` | `search`, `findById`, `update`, `setActive`, `findOrCreate` |
+| `controller/adminapi/AdminPassengerController` | `POST /search`, `GET /{id}`, `PUT /{id}`, `PATCH …/activate\|deactivate` |
 
-Permissions : `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE`.
+Permissions : `PASSENGER_VIEW`, `PASSENGER_SEARCH`, `PASSENGER_EDIT`, `PASSENGER_ACTIVATE`, `PASSENGER_DEACTIVATE`.
 
 ## Module Rapports & Statistiques (squelette)
 
