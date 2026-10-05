@@ -1,6 +1,7 @@
 package com.transport.reporting.security;
 
 import com.transport.reporting.config.GoogleOAuthProperties;
+import com.transport.reporting.security.ratelimit.PublicRateLimitFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +40,7 @@ public class PublicSecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PublicRateLimitFilter publicRateLimitFilter;
     private final GoogleOAuthProperties googleOAuthProperties;
     private final PublicSecurityExceptionHandler publicSecurityExceptionHandler;
     private final GoogleOAuth2LoginSuccessHandler googleOAuth2LoginSuccessHandler;
@@ -49,11 +51,13 @@ public class PublicSecurityConfig {
 
     public PublicSecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            PublicRateLimitFilter publicRateLimitFilter,
             GoogleOAuthProperties googleOAuthProperties,
             PublicSecurityExceptionHandler publicSecurityExceptionHandler,
             @Autowired(required = false) GoogleOAuth2LoginSuccessHandler googleOAuth2LoginSuccessHandler,
             @Autowired(required = false) GoogleOAuth2LoginFailureHandler googleOAuth2LoginFailureHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.publicRateLimitFilter = publicRateLimitFilter;
         this.googleOAuthProperties = googleOAuthProperties;
         this.publicSecurityExceptionHandler = publicSecurityExceptionHandler;
         this.googleOAuth2LoginSuccessHandler = googleOAuth2LoginSuccessHandler;
@@ -98,7 +102,8 @@ public class PublicSecurityConfig {
                     .failureHandler(googleOAuth2LoginFailureHandler));
         }
 
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(publicRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, PublicRateLimitFilter.class);
         return http.build();
     }
 

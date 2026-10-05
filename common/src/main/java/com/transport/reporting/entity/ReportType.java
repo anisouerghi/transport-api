@@ -42,6 +42,15 @@ public class ReportType {
     @Column(name = "description", length = 500)
     private String description;
 
+    /** Ordre d'affichage public : 1 s'affiche en premier. */
+    @Builder.Default
+    @Column(name = "priority", nullable = false)
+    private Integer priority = 100;
+
+    /** Nom Material Symbols déjà utilisé par le frontend (ex. crisis_alert). */
+    @Column(name = "icon", length = 80)
+    private String icon;
+
     /** Indique si le type est actif (visible / utilisable). */
     @Builder.Default
     @Column(name = "active", nullable = false)

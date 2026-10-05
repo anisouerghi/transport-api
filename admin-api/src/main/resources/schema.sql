@@ -54,6 +54,8 @@ CREATE TABLE report_type (
     label_ar       VARCHAR(150) NULL COMMENT 'Libelle du type de signalement en arabe',
     label_en       VARCHAR(150) NULL COMMENT 'Libelle du type de signalement en anglais',
     description    VARCHAR(500) NULL,
+    priority       INT          NOT NULL DEFAULT 100 COMMENT 'Ordre d affichage public, 1 = premier',
+    icon           VARCHAR(80)  NULL COMMENT 'Nom Material Symbols, ex. crisis_alert',
     active         TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (report_type_id),
     UNIQUE KEY uk_report_type_code (code)

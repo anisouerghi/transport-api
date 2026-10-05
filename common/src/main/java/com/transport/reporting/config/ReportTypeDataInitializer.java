@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 /**
- * Assure le référentiel public des types de signalement (6 natures voyageur, FR/AR/EN).
+ * Assure le référentiel public des types de signalement (7 natures voyageur, FR/AR/EN).
  * Exécuté par public-api et admin-api (module common).
  * Idempotent : crée les codes manquants, complète les libellés i18n vides.
  */
@@ -25,17 +25,19 @@ public class ReportTypeDataInitializer {
     /** Ordre d'affichage souhaité côté formulaire public. */
     private static final List<TypeSeed> SEEDS = List.of(
             new TypeSeed("COMPLAINT", "Réclamation", "شكوى", "Complaint",
-                    "Réclamation voyageur"),
+                    "Réclamation voyageur", 2, "rate_review"),
             new TypeSeed("ASSAULT", "Agression", "اعتداء", "Assault",
-                    "Signalement d'agression ou de violence"),
+                    "Signalement d'agression ou de violence", 7, "shield"),
             new TypeSeed("INCIDENT", "Incident", "حادث", "Incident",
-                    "Incident technique ou sécurité"),
+                    "Incident technique ou sécurité", 3, "photo_camera"),
             new TypeSeed("SUGGESTION", "Suggestion", "اقتراح", "Suggestion",
-                    "Suggestion d'amélioration"),
+                    "Suggestion d'amélioration", 4, "tips_and_updates"),
             new TypeSeed("THANKS", "Remerciement", "شكر", "Thank you",
-                    "Remerciement"),
+                    "Remerciement", 5, "thumb_up"),
             new TypeSeed("OTHER", "Autre", "أخرى", "Other",
-                    "Autre nature de signalement")
+                    "Autre nature de signalement", 6, "contact_support"),
+            new TypeSeed("URGENCE", "Urgence", "حالة طارئة أو خطر مباشر؟", "Emergency",
+                    "Appel d'urgence 197 / 198", 1, "crisis_alert")
     );
 
     @Bean
@@ -54,6 +56,8 @@ public class ReportTypeDataInitializer {
                             .labelAr(seed.labelAr())
                             .labelEn(seed.labelEn())
                             .description(seed.description())
+                            .priority(seed.priority())
+                            .icon(seed.icon())
                             .active(true)
                             .build());
                     created++;
@@ -76,6 +80,14 @@ public class ReportTypeDataInitializer {
                         entity.setActive(true);
                         changed = true;
                     }
+                    if (entity.getPriority() == null) {
+                        entity.setPriority(seed.priority());
+                        changed = true;
+                    }
+                    if (!StringUtils.hasText(entity.getIcon())) {
+                        entity.setIcon(seed.icon());
+                        changed = true;
+                    }
                     if (changed) {
                         if (!StringUtils.hasText(entity.getLabel())) {
                             entity.setLabel(entity.getLabelFr());
@@ -89,6 +101,7 @@ public class ReportTypeDataInitializer {
         };
     }
 
-    private record TypeSeed(String code, String labelFr, String labelAr, String labelEn, String description) {
+    private record TypeSeed(String code, String labelFr, String labelAr, String labelEn, String description,
+                             int priority, String icon) {
     }
 }

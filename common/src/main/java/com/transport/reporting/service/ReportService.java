@@ -284,6 +284,65 @@ public class ReportService {
         return toResponseWithAttachments(report);
     }
 
+    /**
+     * Met à jour le type ({@code ReportType}) d'un signalement — natures voyageur.
+     * {@code reportTypeId} null = retirer le type.
+     */
+    public ReportResponse updateReportType(Long id, Long reportTypeId) {
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+
+        ReportType previous = report.getReportType();
+        Long previousId = previous != null ? previous.getReportTypeId() : null;
+        if ((previousId == null && reportTypeId == null)
+                || (previousId != null && previousId.equals(reportTypeId))) {
+            return toResponseWithAttachments(report);
+        }
+
+        ReportType next = null;
+        if (reportTypeId != null) {
+            next = reportTypeRepository.findById(reportTypeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("ReportType", reportTypeId));
+            if (!next.isActive()) {
+                throw new BusinessException("Cannot assign an inactive report type");
+            }
+        }
+
+        report.setReportType(next);
+        report = reportRepository.save(report);
+
+        AppUser actor = resolveCurrentUser();
+        Status currentStatus = report.getStatus();
+        if (currentStatus == null) {
+            currentStatus = statusService.findByCode("NEW");
+        }
+        String oldLabel = previous != null ? previous.getLabel() : "Non définie";
+        String newLabel = next != null ? next.getLabel() : "Non définie";
+        reportHistoryRepository.save(ReportHistory.builder()
+                .oldStatus(currentStatus)
+                .newStatus(currentStatus)
+                .comments("Type : " + oldLabel + " → " + newLabel)
+                .report(report)
+                .appUser(actor)
+                .build());
+
+        auditLogService.record(AuditLogEvent.builder()
+                .userId(actor != null ? actor.getUserId() : AuditActors.currentAdminUserId())
+                .username(actor != null ? actor.getUsername() : null)
+                .userFullName(actor != null ? actor.getName() : null)
+                .actionType(AuditAction.REPORT_TYPE_CHANGE)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(id))
+                .oldValue("reportType=" + (previous != null ? previous.getCode() : "null"))
+                .newValue("reportType=" + (next != null ? next.getCode() : "null"))
+                .description("Modification du type du signalement " + report.getReference()
+                        + " (" + oldLabel + " → " + newLabel + ")")
+                .build());
+
+        return toResponseWithAttachments(report);
+    }
+
     private AppUser resolveCurrentUser() {
         Long userId = SecurityUtils.currentUserIdOrNull();
         if (userId == null) {

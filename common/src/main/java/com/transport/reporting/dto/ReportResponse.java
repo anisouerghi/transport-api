@@ -29,6 +29,7 @@ public class ReportResponse {
     private Boolean publicResponse;
     private Instant publicResponseDate;
     private TransportSupportResponse transportSupport;
+    private Long reportTypeId;
     private String reportTypeCode;
     private String reportTypeLabel;
     private Long natureId;

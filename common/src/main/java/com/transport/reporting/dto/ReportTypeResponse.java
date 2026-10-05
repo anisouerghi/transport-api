@@ -18,5 +18,8 @@ public class ReportTypeResponse {
     private String labelAr;
     private String labelEn;
     private String description;
+    private Integer priority;
+    /** Nom Material Symbols (ex. crisis_alert). */
+    private String icon;
     private boolean active;
 }

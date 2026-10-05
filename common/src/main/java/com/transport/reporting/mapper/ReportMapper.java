@@ -44,8 +44,9 @@ public class ReportMapper {
                 .transportSupport(report.getTransportSupport() == null
                     ? null
                     : transportSupportMapper.toResponse(report.getTransportSupport()))
-                .reportTypeCode(report.getReportType().getCode())
-                .reportTypeLabel(LocalizedLabels.of(report.getReportType()))
+                .reportTypeId(report.getReportType() != null ? report.getReportType().getReportTypeId() : null)
+                .reportTypeCode(report.getReportType() != null ? report.getReportType().getCode() : null)
+                .reportTypeLabel(report.getReportType() != null ? LocalizedLabels.of(report.getReportType()) : null)
                 .natureId(report.getNature() != null ? report.getNature().getReportNatureId() : null)
                 .natureCode(report.getNature() != null ? report.getNature().getCode() : null)
                 .natureLabel(report.getNature() != null ? LocalizedLabels.of(report.getNature()) : null)

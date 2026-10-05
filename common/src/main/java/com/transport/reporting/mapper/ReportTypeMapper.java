@@ -16,6 +16,8 @@ public class ReportTypeMapper {
         ReportType entity = ReportType.builder()
                 .code(request.getCode())
                 .description(request.getDescription())
+                .priority(request.getPriority() == null ? 100 : request.getPriority())
+                .icon(trimIcon(request.getIcon()))
                 .active(true)
                 .build();
         LocalizedLabels.applyFrench(entity, request.getLabel());
@@ -30,6 +32,18 @@ public class ReportTypeMapper {
         entity.setLabelAr(LocalizedLabels.trimToNull(request.getLabelAr()));
         entity.setLabelEn(LocalizedLabels.trimToNull(request.getLabelEn()));
         entity.setDescription(request.getDescription());
+        if (request.getPriority() != null) {
+            entity.setPriority(request.getPriority());
+        }
+        entity.setIcon(trimIcon(request.getIcon()));
+    }
+
+    private static String trimIcon(String icon) {
+        if (icon == null) {
+            return null;
+        }
+        String value = icon.trim();
+        return value.isEmpty() ? null : value;
     }
 
     public ReportTypeResponse toResponse(ReportType entity) {
@@ -42,6 +56,8 @@ public class ReportTypeMapper {
                 .labelAr(entity.getLabelAr())
                 .labelEn(entity.getLabelEn())
                 .description(entity.getDescription())
+                .priority(entity.getPriority())
+                .icon(entity.getIcon())
                 .active(entity.isActive())
                 .build();
     }

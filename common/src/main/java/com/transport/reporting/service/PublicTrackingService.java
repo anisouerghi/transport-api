@@ -27,8 +27,10 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PublicTrackingService {
 
-    private static final int HOMEPAGE_REPLY_LIMIT = 15;
-    private static final int HOMEPAGE_PAGE_SIZE = 5;
+    private static final int HOMEPAGE_REPLY_LIMIT = 12;
+    private static final int HOMEPAGE_PAGE_SIZE = 4;
+    /** Index 0-based : pages autorisées = 0, 1, 2. */
+    private static final int HOMEPAGE_MAX_PAGE_INDEX = 2;
 
     private final ReportRepository reportRepository;
     private final ReplyRepository replyRepository;
@@ -89,17 +91,45 @@ public class PublicTrackingService {
     }
 
     /**
-     * Accueil public : 15 dernières réponses des signalements {@code publish} (case « Visible à l'accueil »),
-     * paginées par 5, plus récentes d'abord.
+     * Accueil public : au plus 12 réponses des signalements {@code publish},
+     * paginées par 4 (pages 0..2), plus récentes d'abord.
+     * {@code size} et {@code page} sont bornés côté serveur (non contournables).
      */
     public PageResponse<PublicHomepageReplyResponse> listHomepageReplies(int page, int size) {
         int safeSize = size <= 0 ? HOMEPAGE_PAGE_SIZE : Math.min(size, HOMEPAGE_PAGE_SIZE);
-        List<Reply> latest = replyRepository.findTop15ByReport_PublishTrueOrderByReplyDateDesc();
-        int total = Math.min(latest.size(), HOMEPAGE_REPLY_LIMIT);
-        int totalPages = total == 0 ? 0 : (int) Math.ceil(total / (double) safeSize);
-        int safePage = Math.max(page, 0);
+        List<Reply> latest = replyRepository.findTop12ByReport_PublishTrueOrderByReplyDateDesc()
+                .stream()
+                .sorted(Comparator.comparing(
+                        Reply::getReplyDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .limit(HOMEPAGE_REPLY_LIMIT)
+                .collect(Collectors.toList());
+        int total = latest.size();
+        int totalPages = total == 0
+                ? 0
+                : Math.min((int) Math.ceil(total / (double) safeSize), HOMEPAGE_MAX_PAGE_INDEX + 1);
+
+        // page hors plage autorisée (ex. page=3) → contenu vide, pas de fuite via clamp
+        if (page < 0 || page > HOMEPAGE_MAX_PAGE_INDEX) {
+            return PageResponse.<PublicHomepageReplyResponse>builder()
+                    .content(List.of())
+                    .totalElements(total)
+                    .totalPages(totalPages)
+                    .page(page < 0 ? 0 : page)
+                    .size(safeSize)
+                    .build();
+        }
+
+        int safePage = page;
         if (totalPages > 0 && safePage >= totalPages) {
-            safePage = totalPages - 1;
+            // page dans 0..2 mais au-delà des données disponibles → vide
+            return PageResponse.<PublicHomepageReplyResponse>builder()
+                    .content(List.of())
+                    .totalElements(total)
+                    .totalPages(totalPages)
+                    .page(safePage)
+                    .size(safeSize)
+                    .build();
         }
         int from = Math.min(safePage * safeSize, total);
         int to = Math.min(from + safeSize, total);
