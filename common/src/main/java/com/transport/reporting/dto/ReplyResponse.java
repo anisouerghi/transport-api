@@ -26,6 +26,12 @@ public class ReplyResponse {
     private boolean publicResponse;
     private Long reportId;
     private Long userId;
+    /** {@link com.transport.reporting.common.enums.ReplyType} fixé par le serveur. */
+    private String replyType;
+    /** {@link com.transport.reporting.common.enums.ReplyAuthorType} fixé par le serveur. */
+    private String authorType;
+    /** Voyageur auteur, seulement pour une réponse de complément. */
+    private Long passengerId;
     /** Flag publication accueil (niveau signalement, legacy). */
     private Boolean publish;
 

@@ -1,12 +1,15 @@
 package com.transport.reporting.controller.publicapi;
 
 import com.transport.reporting.common.response.ApiResponse;
+import com.transport.reporting.dto.PassengerReplyRequest;
 import com.transport.reporting.dto.PublicReportListItemResponse;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
+import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.service.PublicTrackingService;
+import com.transport.reporting.service.ReplyService;
 import com.transport.reporting.service.ReportService;
 import com.transport.reporting.service.TurnstileValidationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,14 +51,17 @@ public class PublicReportController {
 
     private final ReportService reportService;
     private final PublicTrackingService publicTrackingService;
+    private final ReplyService replyService;
     private final TurnstileValidationService turnstileValidationService;
 
     public PublicReportController(
             ReportService reportService,
             PublicTrackingService publicTrackingService,
+            ReplyService replyService,
             TurnstileValidationService turnstileValidationService) {
         this.reportService = reportService;
         this.publicTrackingService = publicTrackingService;
+        this.replyService = replyService;
         this.turnstileValidationService = turnstileValidationService;
     }
 
@@ -97,6 +103,28 @@ public class PublicReportController {
         }
         return ResponseEntity.ok(ApiResponse.ok(
                 publicTrackingService.listMine(principal.getPassengerId(), reference)));
+    }
+
+    /**
+     * Réponse du voyageur authentifié à une demande de complément.
+     * L'identité est celle du jeton, jamais un identifiant envoyé par le client.
+     */
+    @PostMapping("/api/public/signalements/{uuid}/reponses")
+    @Operation(
+            summary = "Répondre à une demande de complément",
+            description = "Réservé au voyageur propriétaire du signalement. "
+                    + "Refusé si le signalement est clôturé ou si aucune demande de complément n'est ouverte."
+    )
+    public ResponseEntity<ApiResponse<ReplyResponse>> replyToComplement(
+            @PathVariable UUID uuid,
+            @AuthenticationPrincipal PassengerPrincipal principal,
+            @Valid @org.springframework.web.bind.annotation.RequestBody PassengerReplyRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(false, "Authentification requise.", "AUTH_REQUIRED", null));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("Reply created", replyService.addPassengerComplement(uuid, request.getMessage())));
     }
 
     /**

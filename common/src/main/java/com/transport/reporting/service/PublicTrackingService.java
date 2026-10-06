@@ -1,5 +1,6 @@
 package com.transport.reporting.service;
 
+import com.transport.reporting.common.enums.ReplyType;
 import com.transport.reporting.common.i18n.LocalizedLabels;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.dto.PublicHomepageReplyResponse;
@@ -10,6 +11,7 @@ import com.transport.reporting.entity.Report;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,11 +68,15 @@ public class PublicTrackingService {
     }
 
     private PublicReportTrackingResponse toTrackingResponse(Report report) {
-        List<PublicReportTrackingResponse.PublicReplyView> replies =
-                replyRepository.findByReport_ReportIdAndPublicResponseTrueOrderByReplyDateAsc(report.getReportId())
-                        .stream()
-                        .map(this::toPublicReply)
-                        .collect(Collectors.toList());
+        List<Reply> visible = ReplyService.chronological(
+                        replyRepository.findByReport_ReportIdAndPublicResponseTrueAndReplyTypeNotOrderByReplyDateAscReplyIdAsc(
+                                report.getReportId(), ReplyType.INTERNAL_NOTE))
+                .stream()
+                .filter(Reply::isVisibleToPassenger)
+                .collect(Collectors.toList());
+        List<PublicReportTrackingResponse.PublicReplyView> replies = visible.stream()
+                .map(this::toPublicReply)
+                .collect(Collectors.toList());
 
         String supportLabel = null;
         if (report.getTransportSupport() != null) {
@@ -88,6 +94,7 @@ public class PublicTrackingService {
                 .supportLabel(supportLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
+                .canPassengerReply(!ReplyService.isClosed(report) && ReplyService.hasPendingComplement(visible))
                 .replies(replies)
                 .build();
     }
@@ -116,11 +123,14 @@ public class PublicTrackingService {
      */
     public PageResponse<PublicHomepageReplyResponse> listHomepageReplies(int page, int size) {
         int safeSize = size <= 0 ? HOMEPAGE_PAGE_SIZE : Math.min(size, HOMEPAGE_PAGE_SIZE);
-        List<Reply> latest = replyRepository.findTop12ByReport_PublishTrueOrderByReplyDateDesc()
+        List<Reply> latest = replyRepository.findPublicHomepageReplies(
+                        ReplyType.INTERNAL_NOTE, PageRequest.of(0, HOMEPAGE_REPLY_LIMIT))
                 .stream()
-                .sorted(Comparator.comparing(
-                        Reply::getReplyDate,
-                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .filter(Reply::isVisibleToPassenger)
+                .sorted(Comparator
+                        .comparing(Reply::getReplyDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Reply::getReplyId, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .reversed())
                 .limit(HOMEPAGE_REPLY_LIMIT)
                 .collect(Collectors.toList());
         int total = latest.size();
@@ -209,6 +219,8 @@ public class PublicTrackingService {
         return PublicReportTrackingResponse.PublicReplyView.builder()
                 .message(reply.getMessage())
                 .replyDate(reply.getReplyDate())
+                .replyType(reply.effectiveType().name())
+                .authorType(reply.effectiveAuthor().name())
                 .build();
     }
 }

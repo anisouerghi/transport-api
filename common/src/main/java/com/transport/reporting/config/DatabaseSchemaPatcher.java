@@ -26,6 +26,7 @@ public final class DatabaseSchemaPatcher {
         ensurePassengerPreferencesColumns(jdbcTemplate);
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
+        ensureReplyConversationColumns(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
         ensureI18nLabelColumns(jdbcTemplate);
         ensureSixPublicReportTypes(jdbcTemplate);
@@ -276,6 +277,56 @@ public final class DatabaseSchemaPatcher {
         } catch (Exception ex) {
             log.warn("Impossible de vérifier/ajouter reply.public_response : {}", ex.getMessage());
         }
+    }
+
+    /**
+     * Colonnes de conversation sur {@code reply}, sans suppression ni renommage.
+     * Les messages déjà présents deviennent une réponse agent.
+     */
+    private static void ensureReplyConversationColumns(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "reply")) {
+            return;
+        }
+        try {
+            if (!columnExists(jdbcTemplate, "reply", "reply_type")) {
+                jdbcTemplate.execute("ALTER TABLE reply ADD COLUMN reply_type VARCHAR(40) NULL");
+            }
+            jdbcTemplate.update(
+                    "UPDATE reply SET reply_type = 'RESPONSE' WHERE reply_type IS NULL OR TRIM(reply_type) = ''");
+            jdbcTemplate.execute(
+                    "ALTER TABLE reply MODIFY COLUMN reply_type VARCHAR(40) NOT NULL DEFAULT 'RESPONSE'");
+
+            if (!columnExists(jdbcTemplate, "reply", "author_type")) {
+                jdbcTemplate.execute("ALTER TABLE reply ADD COLUMN author_type VARCHAR(20) NULL");
+            }
+            jdbcTemplate.update(
+                    "UPDATE reply SET author_type = 'AGENT' WHERE author_type IS NULL OR TRIM(author_type) = ''");
+            jdbcTemplate.execute(
+                    "ALTER TABLE reply MODIFY COLUMN author_type VARCHAR(20) NOT NULL DEFAULT 'AGENT'");
+
+            if (!columnExists(jdbcTemplate, "reply", "passenger_id")) {
+                jdbcTemplate.execute("ALTER TABLE reply ADD COLUMN passenger_id BIGINT NULL");
+            }
+            if (!foreignKeyExists(jdbcTemplate, "reply", "fk_reply_passenger")) {
+                jdbcTemplate.execute(
+                        "ALTER TABLE reply ADD CONSTRAINT fk_reply_passenger "
+                                + "FOREIGN KEY (passenger_id) REFERENCES passenger (passenger_id)");
+            }
+            log.info("Colonnes de conversation reply assurées.");
+        } catch (Exception ex) {
+            log.warn("Impossible d'assurer les colonnes de conversation reply : {}", ex.getMessage());
+        }
+    }
+
+    private static boolean foreignKeyExists(JdbcTemplate jdbcTemplate, String tableName, String constraintName) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS "
+                        + "WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = ? "
+                        + "AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = 'FOREIGN KEY'",
+                Integer.class,
+                tableName,
+                constraintName);
+        return count != null && count > 0;
     }
 
     private static void ensureReportSupportNullable(JdbcTemplate jdbcTemplate) {

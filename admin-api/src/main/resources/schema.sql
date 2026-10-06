@@ -303,14 +303,19 @@ CREATE TABLE reply (
     reply_date       DATETIME(6) NOT NULL,
     email_sent       BIT(1)      NOT NULL DEFAULT 0,
     public_response  TINYINT(1)  NOT NULL DEFAULT 1,
+    reply_type       VARCHAR(40) NOT NULL DEFAULT 'RESPONSE',
+    author_type      VARCHAR(20) NOT NULL DEFAULT 'AGENT',
     report_id        BIGINT      NOT NULL,
     user_id          BIGINT      NULL,
+    passenger_id     BIGINT      NULL,
     PRIMARY KEY (reply_id),
     UNIQUE KEY uk_reply_uuid (uuid),
     CONSTRAINT fk_reply_report
         FOREIGN KEY (report_id) REFERENCES report (report_id),
     CONSTRAINT fk_reply_user
-        FOREIGN KEY (user_id) REFERENCES app_user (user_id)
+        FOREIGN KEY (user_id) REFERENCES app_user (user_id),
+    CONSTRAINT fk_reply_passenger
+        FOREIGN KEY (passenger_id) REFERENCES passenger (passenger_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE audit_log (

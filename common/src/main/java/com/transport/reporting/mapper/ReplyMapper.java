@@ -19,6 +19,9 @@ public class ReplyMapper {
                 .publicResponse(reply.isPublicResponse())
                 .reportId(reply.getReport().getReportId())
                 .userId(reply.getAppUser() != null ? reply.getAppUser().getUserId() : null)
+                .replyType(reply.effectiveType().name())
+                .authorType(reply.effectiveAuthor().name())
+                .passengerId(reply.getPassenger() != null ? reply.getPassenger().getPassengerId() : null)
                 .publish(reply.getReport() != null ? reply.getReport().getPublish() : null)
                 .build();
     }
