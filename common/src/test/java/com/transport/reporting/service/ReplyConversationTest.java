@@ -104,6 +104,7 @@ class ReplyConversationTest {
     @Test
     void agentComplementRequestOpensStatusAndStaysPublic() {
         Report report = openReport();
+        report.setPassenger(trackedPassenger());
         Status waiting = status("DEMANDE_COMPLEMENT", 4L);
         when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
         when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
@@ -119,6 +120,43 @@ class ReplyConversationTest {
         assertTrue(result.getReply().isPublicResponse());
         assertEquals("DEMANDE_COMPLEMENT", report.getStatus().getCode());
         verify(reportHistoryRepository).save(any());
+    }
+
+    @Test
+    void complementRequestRefusedWithoutTrackedAccount() {
+        Report withoutPassenger = openReport();
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(withoutPassenger));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        BusinessException missing = assertThrows(BusinessException.class,
+                () -> replyService.create(1L, request(ReplyType.COMPLEMENT_REQUEST)));
+        assertEquals("COMPLEMENT_NOT_ALLOWED", missing.getErrorCode());
+
+        Report contactOnly = openReport();
+        Passenger contact = passenger(5L);
+        contact.setEmail("contact@example.com");
+        contactOnly.setPassenger(contact);
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(contactOnly));
+        BusinessException anonymous = assertThrows(BusinessException.class,
+                () -> replyService.create(1L, request(ReplyType.COMPLEMENT_REQUEST)));
+        assertEquals("COMPLEMENT_NOT_ALLOWED", anonymous.getErrorCode());
+
+        verify(replyRepository, never()).save(any());
+        verify(reportHistoryRepository, never()).save(any());
+    }
+
+    @Test
+    void agentResponseRemainsAllowedOnAnonymousReport() {
+        Report report = openReport();
+        Passenger contact = passenger(5L);
+        contact.setEmail("contact@example.com");
+        report.setPassenger(contact);
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
+
+        assertEquals("RESPONSE", result.getReply().getReplyType());
     }
 
     @Test
@@ -319,6 +357,12 @@ class ReplyConversationTest {
     private static Passenger passenger(long id) {
         Passenger passenger = new Passenger();
         passenger.setPassengerId(id);
+        return passenger;
+    }
+
+    private static Passenger trackedPassenger() {
+        Passenger passenger = passenger(5L);
+        passenger.setPasswordHash("hash");
         return passenger;
     }
 

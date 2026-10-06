@@ -103,10 +103,17 @@ public class ReplyService {
 
         AppUser user = resolveActor(request.getUserId());
         ReplyType replyType = resolveAgentReplyType(request);
-        if (replyType == ReplyType.COMPLEMENT_REQUEST && isClosed(report)) {
-            throw new BusinessException(
-                    "Le signalement est clôturé : aucune demande de complément ne peut être envoyée.",
-                    "REPORT_CLOSED");
+        if (replyType == ReplyType.COMPLEMENT_REQUEST) {
+            if (isClosed(report)) {
+                throw new BusinessException(
+                        "Le signalement est clôturé : aucune demande de complément ne peut être envoyée.",
+                        "REPORT_CLOSED");
+            }
+            if (!hasTrackedPassenger(report)) {
+                throw new BusinessException(
+                        "Une demande de complément n'est possible que pour un signalement avec suivi.",
+                        "COMPLEMENT_NOT_ALLOWED");
+            }
         }
 
         if (replyType != ReplyType.COMPLEMENT_REQUEST
@@ -363,6 +370,16 @@ public class ReplyService {
                 .newValue("status=" + newStatus.getCode())
                 .description("Changement de statut du signalement " + report.getReference())
                 .build());
+    }
+
+    /**
+     * Une demande de complément n'a de sens que si le voyageur peut revenir
+     * sur le signalement avec son compte. Un dépôt anonyme, même avec un
+     * e-mail de contact, ne donne pas ce suivi.
+     */
+    private static boolean hasTrackedPassenger(Report report) {
+        Passenger passenger = report.getPassenger();
+        return passenger != null && passenger.hasTrackedAccount();
     }
 
     /**
