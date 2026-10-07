@@ -10,11 +10,18 @@ import com.transport.reporting.entity.Report;
 import com.transport.reporting.exception.ResourceNotFoundException;
 import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +37,8 @@ public class PublicTrackingService {
 
     private static final int HOMEPAGE_REPLY_LIMIT = 12;
     private static final int HOMEPAGE_PAGE_SIZE = 4;
+    /** Nombre maximal de signalements retournés pour « mes signalements ». */
+    private static final int MINE_LIMIT = 15;
     /** Index 0-based : pages autorisées = 0, 1, 2. */
     private static final int HOMEPAGE_MAX_PAGE_INDEX = 2;
 
@@ -94,19 +103,68 @@ public class PublicTrackingService {
 
     /**
      * 15 derniers signalements du voyageur authentifié (identité = JWT uniquement).
-     * Filtre optionnel par référence (partiel, insensible à la casse).
+     *
+     * <p>Filtres optionnels, tous combinés :
+     * <ul>
+     *   <li>{@code reference} — fragment partiel, insensible à la casse ;</li>
+     *   <li>{@code statusCode} — code métier exact (NEW, IN_PROGRESS, RESOLVED, CLOSED) ;</li>
+     *   <li>{@code creationDate} — journée UTC exacte (journée affichée dans la liste voyageur).</li>
+     * </ul>
+     *
+     * <p>Le bornage UTC est aligné sur {@code PublicReportListItemResponse.creationDate},
+     * sérialisé en ISO-8601 {@code ...Z} : le client applique le même filtre avec
+     * {@code creationDate.startsWith('yyyy-MM-dd')}.
      */
-    public List<PublicReportListItemResponse> listMine(Long passengerId, String reference) {
-        List<Report> reports = StringUtils.hasText(reference)
-                ? reportRepository.findTop15ByPassenger_PassengerIdAndReferenceContainingIgnoreCaseOrderByCreationDateDesc(
-                        passengerId, reference.trim())
-                : reportRepository.findTop15ByPassenger_PassengerIdOrderByCreationDateDesc(passengerId);
+    public List<PublicReportListItemResponse> listMine(
+            Long passengerId, String reference, String statusCode, LocalDate creationDate) {
+        Specification<Report> filters =
+                buildMineFilters(passengerId, reference, statusCode, creationDate);
+        Pageable top15 = PageRequest.of(0, MINE_LIMIT, Sort.by(Sort.Direction.DESC, "creationDate"));
 
-        return reports.stream()
-                .sorted(Comparator.comparing(Report::getCreationDate, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(15)
+        // Le tri et la limite sont appliqués par la base : le top-15 est donc
+        // calculé APRÈS filtrage (un filtre ne peut pas faire tomber des lignes
+        // pertinentes hors des 15 premières).
+        return reportRepository.findAll(filters, top15).stream()
                 .map(this::toListItem)
                 .collect(Collectors.toList());
+    }
+
+    private Specification<Report> buildMineFilters(
+            Long passengerId, String reference, String statusCode, LocalDate creationDate) {
+        // Restreint toujours aux signalements du voyageur dont le JWT fait foi.
+        Specification<Report> filters =
+                (root, query, cb) -> cb.equal(root.get("passenger").get("passengerId"), passengerId);
+
+        if (StringUtils.hasText(reference)) {
+            String pattern = escapeLike(reference.trim().toLowerCase(Locale.ROOT));
+            filters = filters.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("reference")), "%" + pattern + "%", '\\'));
+        }
+
+        if (StringUtils.hasText(statusCode)) {
+            String code = statusCode.trim();
+            filters = filters.and((root, query, cb) ->
+                    cb.equal(root.get("status").get("code"), code));
+        }
+
+        if (creationDate != null) {
+            Instant from = creationDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+            Instant to = creationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+            filters = filters.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("creationDate"), from));
+            filters = filters.and((root, query, cb) ->
+                    cb.lessThan(root.get("creationDate"), to));
+        }
+
+        return filters;
+    }
+
+    /** Neutralise les jokers SQL (% et _) saisis par l'utilisateur. */
+    private String escapeLike(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 
     /**

@@ -103,7 +103,10 @@ public class PublicRateLimitFilter extends OncePerRequestFilter {
             return Rule.ip("reponses", properties.getReponses());
         }
         if (HttpMethod.GET.matches(method)
-                && ("/api/public/report-types".equals(path) || path.startsWith("/api/public/supports"))) {
+                && ("/api/public/report-types".equals(path)
+                || "/api/public/status".equals(path)
+                || path.startsWith("/api/public/supports"))) {
+            // Catalogue de référence (types, statuts, supports) : même bucket.
             return Rule.ip("catalog", properties.getCatalog());
         }
         return null;

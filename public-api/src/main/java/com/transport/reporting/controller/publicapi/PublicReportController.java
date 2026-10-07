@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -86,17 +89,39 @@ public class PublicReportController {
     @Operation(
             summary = "Lister mes 15 derniers signalements",
             description = "Réservé au voyageur authentifié. L'identité vient uniquement du JWT : "
-                    + "aucun identifiant voyageur n'est accepté en paramètre. Filtre optionnel par référence."
+                    + "aucun identifiant voyageur n'est accepté en paramètre. "
+                    + "Filtres optionnels combinables entre eux : "
+                    + "reference (fragment partiel, insensible à la casse), "
+                    + "statusCode (code exact, ex. NEW / IN_PROGRESS / RESOLVED / CLOSED) et "
+                    + "creationDate (journee au format yyyy-MM-dd, fuseau UTC). "
+                    + "La limite de 15 s'applique après filtrage."
     )
     public ResponseEntity<ApiResponse<List<PublicReportListItemResponse>>> mine(
             @AuthenticationPrincipal PassengerPrincipal principal,
-            @RequestParam(required = false) String reference) {
+            @RequestParam(required = false) String reference,
+            @RequestParam(required = false) String statusCode,
+            @RequestParam(required = false) String creationDate) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.of(false, "Authentification requise.", "AUTH_REQUIRED", null));
         }
+
+        LocalDate creationDay;
+        if (StringUtils.hasText(creationDate)) {
+            try {
+                creationDay = LocalDate.parse(creationDate.trim());
+            } catch (DateTimeParseException ex) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.of(false,
+                                "Date de création invalide (attendu yyyy-MM-dd).",
+                                "INVALID_DATE", null));
+            }
+        } else {
+            creationDay = null;
+        }
+
         return ResponseEntity.ok(ApiResponse.ok(
-                publicTrackingService.listMine(principal.getPassengerId(), reference)));
+                publicTrackingService.listMine(principal.getPassengerId(), reference, statusCode, creationDay)));
     }
 
     /**

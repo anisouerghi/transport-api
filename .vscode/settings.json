@@ -1,4 +1,4 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "opencodeChat.permissionMode": "strict"
+    "opencodeChat.permissionMode": "default"
 }

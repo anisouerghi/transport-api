@@ -80,7 +80,8 @@ Admin login → POST /api/auth/login → JWT typ=ADMIN
 |--------|------------------|
 | `PublicSupportController` | `GET /api/public/supports`, `GET /api/public/supports/{uuid}` |
 | `PublicReportTypeController` | `GET /api/public/report-types` |
-| `PublicReportController` | `POST /api/public/signalements`, `GET .../mine`, follow-up, `GET /api/public/suivi/{uuid}` |
+| `PublicReportController` | `POST /api/public/signalements`, `GET .../mine` (filtres `reference` / `statusCode` / `creationDate`), `GET .../reference/{reference}`, follow-up, `GET /api/public/suivi/{uuid}` |
+| `PublicStatusController` | `GET /api/public/status` (copie publique de `GET /api/admin/status`) |
 | `PublicPassengerAuthController` | `POST /api/public/auth/register\|login`, `GET\|PUT /api/public/auth/me` |
 | `PublicReplyController` | `GET /api/public/reponses` (accueil) |
 
