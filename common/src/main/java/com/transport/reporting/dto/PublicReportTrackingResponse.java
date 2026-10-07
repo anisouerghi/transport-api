@@ -24,6 +24,11 @@ public class PublicReportTrackingResponse {
     private String supportLabel;
     private String statusCode;
     private String statusLabel;
+    /**
+     * Vrai lorsqu'un cycle de complément est ouvert et que le signalement
+     * n'est pas clôturé. Calculé par le serveur, indépendamment du client.
+     */
+    private boolean canPassengerReply;
     private List<PublicReplyView> replies;
 
     @Data
@@ -31,5 +36,9 @@ public class PublicReportTrackingResponse {
     public static class PublicReplyView {
         private String message;
         private Instant replyDate;
+        /** {@link com.transport.reporting.common.enums.ReplyType}. */
+        private String replyType;
+        /** {@link com.transport.reporting.common.enums.ReplyAuthorType}. */
+        private String authorType;
     }
 }

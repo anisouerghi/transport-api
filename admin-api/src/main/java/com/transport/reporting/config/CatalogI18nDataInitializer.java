@@ -44,7 +44,9 @@ public class CatalogI18nDataInitializer {
             "NEW", new String[]{"Nouveau", "جديد", "New"},
             "IN_PROGRESS", new String[]{"En cours", "قيد المعالجة", "In progress"},
             "RESOLVED", new String[]{"Résolu", "محلول", "Resolved"},
-            "CLOSED", new String[]{"Clôturé", "مغلق", "Closed"}
+            "CLOSED", new String[]{"Clôturé", "مغلق", "Closed"},
+            "DEMANDE_COMPLEMENT", new String[]{"Demande de complément", "طلب استكمال", "Request for additional information"},
+            "DEMANDE_CLARIFICATION", new String[]{"Demande de clarification", "طلب توضيح", "Request for clarification"}
     );
 
     @Bean

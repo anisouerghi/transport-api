@@ -117,4 +117,16 @@ public class Passenger {
      */
     @Column(name = "language", length = 2)
     private String language;
+
+    /**
+     * Compte permettant un suivi ultérieur : mot de passe local ou identité Google.
+     * Un contact saisi lors d'un dépôt anonyme n'a ni l'un ni l'autre.
+     */
+    public boolean hasTrackedAccount() {
+        return hasText(passwordHash) || hasText(googleSubject);
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
 }

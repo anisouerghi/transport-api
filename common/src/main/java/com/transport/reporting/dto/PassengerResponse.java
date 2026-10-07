@@ -21,6 +21,12 @@ public class PassengerResponse {
      */
     private boolean anonymous;
 
+    /**
+     * Vrai lorsque le voyageur possède un compte (mot de passe ou Google)
+     * et peut donc répondre à une demande de complément.
+     */
+    private boolean tracked;
+
     /** Identifiants de notifications souscrites par le voyageur (ex. {@code [1,3,8]}). */
     private List<Integer> notifications;
 

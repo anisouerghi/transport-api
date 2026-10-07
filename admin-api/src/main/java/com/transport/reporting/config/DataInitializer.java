@@ -50,6 +50,8 @@ public class DataInitializer {
                 statusRepository.save(i18nStatus("CLOSED", "Clôturé", "مغلق", "Closed", 4));
                 log.info("✅ Status initialized");
             }
+            ensureStatus(statusRepository, "DEMANDE_COMPLEMENT", "Demande de complément", "طلب استكمال", "Request for additional information", 4);
+            ensureStatus(statusRepository, "DEMANDE_CLARIFICATION", "Demande de clarification", "طلب توضيح", "Request for clarification", 5);
 
             // ============ INITIALISATION DES TYPES DE SUPPORT ============
             if (supportTypeRepository.count() == 0) {
@@ -250,6 +252,21 @@ public class DataInitializer {
                 .build());
 
         log.info("✅ {} demo reports created", reportRepository.count());
+    }
+
+    /** Insère le statut seulement s'il n'existe pas encore (redémarrages sans doublon). */
+    private static void ensureStatus(
+            StatusRepository statusRepository,
+            String code,
+            String fr,
+            String ar,
+            String en,
+            int order) {
+        if (statusRepository.findByCode(code).isPresent()) {
+            return;
+        }
+        statusRepository.save(i18nStatus(code, fr, ar, en, order));
+        log.info("✅ Status {} inserted", code);
     }
 
     private static Status i18nStatus(String code, String fr, String ar, String en, int order) {

@@ -1,5 +1,6 @@
 package com.transport.reporting.dto;
 
+import com.transport.reporting.common.enums.ReplyType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -42,4 +43,13 @@ public class ReplyRequest {
      */
     @Schema(description = "Visible à l'auteur du signalement (suivi public)", defaultValue = "true")
     private Boolean publicResponse;
+
+    /**
+     * Optionnel. Absent = réponse agent classique.
+     * Une réponse de complément voyageur est refusée sur cet endpoint.
+     */
+    @Schema(description = "Type de message agent. Défaut : RESPONSE", allowableValues = {
+            "RESPONSE", "COMPLEMENT_REQUEST", "INTERNAL_NOTE"
+    })
+    private ReplyType replyType;
 }

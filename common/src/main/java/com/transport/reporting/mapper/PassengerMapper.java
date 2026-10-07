@@ -65,6 +65,7 @@ public class PassengerMapper {
                 .emailVerified(passenger.isEmailVerified())
                 .active(passenger.isActive())
                 .anonymous(anonymous)
+                .tracked(passenger.hasTrackedAccount())
                 .notifications(passenger.getNotifications())
                 .language(passenger.getLanguage())
                 .build();
