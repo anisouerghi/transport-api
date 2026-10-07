@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -97,6 +98,8 @@ public class PublicTrackingService {
                 .uuid(report.getUuid())
                 .reference(report.getReference())
                 .creationDate(report.getCreationDate())
+                .closureDate(report.getClosureDate())
+                .processingDurationSeconds(processingDurationSeconds(report.getCreationDate(), report.getClosureDate()))
                 .description(report.getDescription())
                 .reportTypeLabel(report.getReportType() != null ? LocalizedLabels.of(report.getReportType()) : null)
                 .supportLabel(supportLabel)
@@ -270,6 +273,17 @@ public class PublicTrackingService {
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .build();
+    }
+
+    /**
+     * Durée réelle dépôt → clôture. La clôture est l'instant serveur déjà enregistré,
+     * jamais l'heure de la consultation.
+     */
+    static Long processingDurationSeconds(Instant creation, Instant closure) {
+        if (creation == null || closure == null || closure.isBefore(creation)) {
+            return null;
+        }
+        return Duration.between(creation, closure).getSeconds();
     }
 
     private PublicReportTrackingResponse.PublicReplyView toPublicReply(Reply reply) {

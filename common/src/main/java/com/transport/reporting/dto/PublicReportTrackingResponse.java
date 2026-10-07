@@ -19,6 +19,13 @@ public class PublicReportTrackingResponse {
     /** Référence métier (informativ uniquement). */
     private String reference;
     private Instant creationDate;
+    /** Heure serveur enregistrée à la clôture (RESOLVED ou CLOSED). Null si le dossier est ouvert. */
+    private Instant closureDate;
+    /**
+     * Secondes entre {@code creationDate} et {@code closureDate}.
+     * Null si le dossier n'est pas clôturé, si la date de clôture manque, ou si elle précède le dépôt.
+     */
+    private Long processingDurationSeconds;
     private String description;
     private String reportTypeLabel;
     private String supportLabel;
