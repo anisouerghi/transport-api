@@ -90,7 +90,7 @@ Admin login → POST /api/auth/login → JWT typ=ADMIN
 | Classe | Base |
 |--------|------|
 | `AuthController` | `/api/auth` (login, me, update-password) — **reste côté Admin** |
-| `DashboardController` | `/api/admin/dashboard` (+ `/reports-by-type`, `/reports-by-status`) |
+| `DashboardController` | `/api/admin/dashboard` (+ `/reports-by-type`, `/reports-by-status`, `/reports-by-support-type`, `/reports-by-authentication`) |
 | `AdminReportController` | `/api/admin/signalements` |
 | `AdminReplyController` | `/api/admin/reports/{id}/replies` |
 | `AdminAttachmentController` | pièces jointes admin |

@@ -50,6 +50,36 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
             """)
     List<Object[]> countReportsGroupedByStatus();
 
+    /**
+     * Nombre de signalements par type de support, du plus fréquent au moins fréquent.
+     * Le type est atteint via le support de transport du signalement.
+     * Chaque ligne est un couple {@code [SupportType, Long count]} ; le type vaut
+     * {@code null} pour le groupe des signalements rattachés à aucun support
+     * (bucket « Sans support »).
+     */
+    @Query("""
+            SELECT st, COUNT(r)
+            FROM Report r
+            LEFT JOIN r.transportSupport ts
+            LEFT JOIN ts.supportType st
+            GROUP BY st
+            ORDER BY COUNT(r) DESC
+            """)
+    List<Object[]> countReportsGroupedBySupportType();
+
+    /**
+     * Signalements authentifiés : voyageur rattaché ayant validé son adresse e-mail.
+     */
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.passenger IS NOT NULL AND r.passenger.emailVerified = true")
+    long countAuthenticatedReports();
+
+    /**
+     * Signalements anonymes : sans voyageur rattaché ou voyageur dont l'adresse
+     * e-mail n'a pas été validée.
+     */
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.passenger IS NULL OR r.passenger.emailVerified = false")
+    long countAnonymousReports();
+
     boolean existsByReference(String reference);
 
 

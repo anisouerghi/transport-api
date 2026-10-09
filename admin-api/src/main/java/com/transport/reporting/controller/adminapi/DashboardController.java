@@ -4,6 +4,8 @@ import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.dto.DashboardResponse;
 import com.transport.reporting.dto.ReportTypeCountResponse;
 import com.transport.reporting.dto.ReportStatusCountResponse;
+import com.transport.reporting.dto.ReportSupportTypeCountResponse;
+import com.transport.reporting.dto.ReportAuthenticationCountResponse;
 import com.transport.reporting.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,5 +57,30 @@ public class DashboardController {
     )
     public ResponseEntity<ApiResponse<List<ReportStatusCountResponse>>> reportsByStatus() {
         return ResponseEntity.ok(ApiResponse.ok(dashboardService.countReportsByStatus()));
+    }
+
+    @GetMapping("/reports-by-support-type")
+    @PreAuthorize("@perm.has('DASHBOARD', 'VIEW')")
+    @Operation(
+            summary = "Nombre de signalements par type de support",
+            description = "Répartition des signalements par type de support (via le support de transport), "
+                    + "du plus fréquent au moins fréquent. Les signalements sans support sont regroupés "
+                    + "dans le type synthétique « Sans support » (code NO_SUPPORT). "
+                    + "Le libellé suit l'en-tête Accept-Language (fr/ar/en)."
+    )
+    public ResponseEntity<ApiResponse<List<ReportSupportTypeCountResponse>>> reportsBySupportType() {
+        return ResponseEntity.ok(ApiResponse.ok(dashboardService.countReportsBySupportType()));
+    }
+
+    @GetMapping("/reports-by-authentication")
+    @PreAuthorize("@perm.has('DASHBOARD', 'VIEW')")
+    @Operation(
+            summary = "Nombre de signalements anonymes / authentifiés",
+            description = "Répartition des signalements entre anonymes et authentifiés. "
+                    + "Un signalement est authentifié lorsque son voyageur a validé son adresse e-mail "
+                    + "(passenger.email_verified) ; tous les autres cas sont anonymes."
+    )
+    public ResponseEntity<ApiResponse<ReportAuthenticationCountResponse>> reportsByAuthentication() {
+        return ResponseEntity.ok(ApiResponse.ok(dashboardService.countReportsByAuthentication()));
     }
 }

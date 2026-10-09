@@ -6,6 +6,9 @@ import com.transport.reporting.dto.ReportTypeCountResponse;
 import com.transport.reporting.entity.ReportType;
 import com.transport.reporting.dto.ReportStatusCountResponse;
 import com.transport.reporting.entity.Status;
+import com.transport.reporting.dto.ReportSupportTypeCountResponse;
+import com.transport.reporting.entity.SupportType;
+import com.transport.reporting.dto.ReportAuthenticationCountResponse;
 import com.transport.reporting.repository.PassengerRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
@@ -86,5 +89,54 @@ public class DashboardService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Répartition des signalements par type de support, triée du plus fréquent au moins fréquent.
+     *
+     * <p>Le type est atteint via le support de transport du signalement. Les
+     * signalements sans support sont regroupés dans un bucket synthétique
+     * « Sans support » ({@code code = "NO_SUPPORT"}, {@code supportTypeId = null}).
+     * Le libellé suit l'{@code Accept-Language} de l'appelant via {@link LocalizedLabels}.
+     */
+    public List<ReportSupportTypeCountResponse> countReportsBySupportType() {
+        return reportRepository.countReportsGroupedBySupportType().stream()
+                .map(row -> {
+                    SupportType supportType = (SupportType) row[0];
+                    long count = ((Number) row[1]).longValue();
+                    if (supportType == null) {
+                        return ReportSupportTypeCountResponse.builder()
+                                .supportTypeId(null)
+                                .code("NO_SUPPORT")
+                                .label(LocalizedLabels.resolve("Sans support", "بدون دعم", "No support"))
+                                .count(count)
+                                .build();
+                    }
+                    return ReportSupportTypeCountResponse.builder()
+                            .supportTypeId(supportType.getSupportTypeId())
+                            .code(supportType.getCode())
+                            .label(LocalizedLabels.of(supportType))
+                            .count(count)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Répartition des signalements anonymes vs authentifiés.
+     *
+     * <p>Un signalement est authentifié lorsque son voyageur a validé son adresse
+     * e-mail ({@code passenger.email_verified = 1}) ; tous les autres cas sont
+     * comptés comme anonymes. Les deux compteurs partitionnent donc l'ensemble
+     * des signalements et leur somme est égale au total.</p>
+     */
+    public ReportAuthenticationCountResponse countReportsByAuthentication() {
+        long authenticated = reportRepository.countAuthenticatedReports();
+        long anonymous = reportRepository.countAnonymousReports();
+        return ReportAuthenticationCountResponse.builder()
+                .total(authenticated + anonymous)
+                .authenticated(authenticated)
+                .anonymous(anonymous)
+                .build();
     }
 }
