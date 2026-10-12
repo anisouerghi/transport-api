@@ -46,9 +46,15 @@ public class PublicTrackingService {
 
     private final ReportRepository reportRepository;
     private final ReplyRepository replyRepository;
-    public PublicTrackingService(ReportRepository reportRepository, ReplyRepository replyRepository) {
+    private final ReportSatisfactionService satisfactionService;
+
+    public PublicTrackingService(
+            ReportRepository reportRepository,
+            ReplyRepository replyRepository,
+            ReportSatisfactionService satisfactionService) {
         this.reportRepository = reportRepository;
         this.replyRepository = replyRepository;
+        this.satisfactionService = satisfactionService;
     }
 
 
@@ -56,9 +62,17 @@ public class PublicTrackingService {
      * Charge le détail public d'un signalement et les réponses visibles au voyageur.
      */
     public PublicReportTrackingResponse findByUuid(UUID uuid) {
+        return findByUuid(uuid, null);
+    }
+
+    /**
+     * Suivi par le lien UUID. {@code passengerId} est l'identité du jeton, s'il y en a un.
+     * L'avis n'est proposé que sur ce canal, pas via la référence devinable.
+     */
+    public PublicReportTrackingResponse findByUuid(UUID uuid, Long passengerId) {
         Report report = reportRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", uuid));
-        return toTrackingResponse(report);
+        return toTrackingResponse(report, true, passengerId);
     }
 
     /**
@@ -73,10 +87,10 @@ public class PublicTrackingService {
         String normalized = reference.trim().toUpperCase(Locale.ROOT);
         Report report = reportRepository.findByReference(normalized)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", normalized));
-        return toTrackingResponse(report);
+        return toTrackingResponse(report, false, null);
     }
 
-    private PublicReportTrackingResponse toTrackingResponse(Report report) {
+    private PublicReportTrackingResponse toTrackingResponse(Report report, boolean secureLink, Long passengerId) {
         List<Reply> visible = ReplyService.chronological(
                         replyRepository.findByReport_ReportIdAndPublicResponseTrueAndReplyTypeNotOrderByReplyDateAscReplyIdAsc(
                                 report.getReportId(), ReplyType.INTERNAL_NOTE))
@@ -106,6 +120,9 @@ public class PublicTrackingService {
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .canPassengerReply(!ReplyService.isClosed(report) && ReplyService.hasPendingComplement(visible))
+                .satisfaction(secureLink ? satisfactionService.findForReport(report.getReportId()) : null)
+                .canSubmitSatisfaction(secureLink && satisfactionService.canSubmit(report, passengerId))
+                .satisfactionLoginRequired(secureLink && satisfactionService.loginRequired(report, passengerId))
                 .replies(replies)
                 .build();
     }

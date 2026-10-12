@@ -91,6 +91,9 @@ public class PublicRateLimitFilter extends OncePerRequestFilter {
         if (HttpMethod.POST.matches(method) && "/api/public/auth/otp/verify".equals(path)) {
             return Rule.subject("otp-verify", properties.getOtpVerify(), "otpTransactionId");
         }
+        if (HttpMethod.POST.matches(method) && path.matches("/api/public/signalements/[^/]+/satisfaction")) {
+            return Rule.ip("suivi", properties.getSuivi());
+        }
         if (HttpMethod.GET.matches(method)
                 && (path.startsWith("/api/public/suivi/")
                 || path.matches("/api/public/signalements/[^/]+/follow-up")

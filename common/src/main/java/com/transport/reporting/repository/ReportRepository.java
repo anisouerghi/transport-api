@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,5 +87,23 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
     boolean existsByTransportSupportTransportSupportId(Long transportSupportId);
 
     boolean existsByNature_ReportNatureId(Long reportNatureId);
+
+    /**
+     * Dossiers clôturés (RESOLVED ou CLOSED) correspondant au filtre d'indicateurs.
+     * Une période exclut les clôtures sans date.
+     */
+    @Query("""
+            SELECT COUNT(r) FROM Report r
+            WHERE r.status.code IN ('RESOLVED', 'CLOSED')
+              AND (:from IS NULL OR r.closureDate >= :from)
+              AND (:to IS NULL OR r.closureDate < :to)
+              AND (:typeId IS NULL OR r.reportType.reportTypeId = :typeId)
+              AND (:supportId IS NULL OR r.transportSupport.transportSupportId = :supportId)
+            """)
+    long countClosedEligible(
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            @Param("typeId") Long typeId,
+            @Param("supportId") Long supportId);
 
 }

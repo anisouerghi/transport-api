@@ -32,7 +32,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), ex.getErrorCode(), request.getRequestURI(), null);
+        HttpStatus status = "AUTH_REQUIRED".equals(ex.getErrorCode())
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.UNPROCESSABLE_ENTITY;
+        return build(status, ex.getMessage(), ex.getErrorCode(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

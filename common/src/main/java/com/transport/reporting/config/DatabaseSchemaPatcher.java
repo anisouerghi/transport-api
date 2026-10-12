@@ -27,6 +27,7 @@ public final class DatabaseSchemaPatcher {
         ensurePassengerOtpChallengeTable(jdbcTemplate);
         ensureReplyPublicResponseColumn(jdbcTemplate);
         ensureReplyConversationColumns(jdbcTemplate);
+        ensureReportSatisfactionTable(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
         ensureI18nLabelColumns(jdbcTemplate);
         ensureSixPublicReportTypes(jdbcTemplate);
@@ -327,6 +328,33 @@ public final class DatabaseSchemaPatcher {
                 tableName,
                 constraintName);
         return count != null && count > 0;
+    }
+
+    /**
+     * Avis unique du voyageur. Les signalements déjà présents n'ont pas d'avis.
+     */
+    private static void ensureReportSatisfactionTable(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "report") || tableExists(jdbcTemplate, "report_satisfaction")) {
+            return;
+        }
+        try {
+            jdbcTemplate.execute("""
+                    CREATE TABLE report_satisfaction (
+                        satisfaction_id    BIGINT       NOT NULL AUTO_INCREMENT,
+                        report_id          BIGINT       NOT NULL,
+                        satisfaction_level VARCHAR(40)  NOT NULL,
+                        comment            TEXT         NULL,
+                        created_at         DATETIME(6)  NOT NULL,
+                        PRIMARY KEY (satisfaction_id),
+                        UNIQUE KEY uk_report_satisfaction_report (report_id),
+                        CONSTRAINT fk_report_satisfaction_report
+                            FOREIGN KEY (report_id) REFERENCES report (report_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    """);
+            log.info("Table report_satisfaction créée.");
+        } catch (Exception ex) {
+            log.warn("Impossible de créer report_satisfaction : {}", ex.getMessage());
+        }
     }
 
     private static void ensureReportSupportNullable(JdbcTemplate jdbcTemplate) {
