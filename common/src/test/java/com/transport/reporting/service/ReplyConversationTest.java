@@ -70,7 +70,7 @@ class ReplyConversationTest {
                 mock(com.transport.reporting.security.PermissionChecker.class),
                 mock(EmailService.class),
                 mock(ReplyEmailComposer.class));
-        trackingService = new PublicTrackingService(reportRepository, replyRepository);
+        trackingService = new PublicTrackingService(reportRepository, replyRepository, mock(ReportSatisfactionService.class));
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
             Reply reply = invocation.getArgument(0);
             if (reply.getReplyId() == null) {

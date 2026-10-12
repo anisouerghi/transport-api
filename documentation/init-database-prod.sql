@@ -281,6 +281,18 @@ CREATE TABLE report (
         FOREIGN KEY (status_id) REFERENCES report_status (status_id)
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE report_satisfaction (
+    satisfaction_id    BIGINT       NOT NULL AUTO_INCREMENT,
+    report_id          BIGINT       NOT NULL,
+    satisfaction_level VARCHAR(40)  NOT NULL,
+    comment            TEXT         NULL,
+    created_at         DATETIME(6)  NOT NULL,
+    PRIMARY KEY (satisfaction_id),
+    UNIQUE KEY uk_report_satisfaction_report (report_id),
+    CONSTRAINT fk_report_satisfaction_report
+        FOREIGN KEY (report_id) REFERENCES report (report_id)
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE attachment (
     attachment_id BIGINT NOT NULL AUTO_INCREMENT,
     uuid          VARCHAR(36)  NOT NULL,

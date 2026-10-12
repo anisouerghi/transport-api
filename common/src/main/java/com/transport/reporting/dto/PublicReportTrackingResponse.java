@@ -36,6 +36,12 @@ public class PublicReportTrackingResponse {
      * n'est pas clôturé. Calculé par le serveur, indépendamment du client.
      */
     private boolean canPassengerReply;
+    /** Avis déjà enregistré. Absent sur la recherche par référence. */
+    private PublicSatisfactionResponse satisfaction;
+    /** Le visiteur du lien UUID peut encore envoyer l'avis unique. */
+    private boolean canSubmitSatisfaction;
+    /** Dossier avec compte : le propriétaire doit se connecter. */
+    private boolean satisfactionLoginRequired;
     private List<PublicReplyView> replies;
 
     @Data

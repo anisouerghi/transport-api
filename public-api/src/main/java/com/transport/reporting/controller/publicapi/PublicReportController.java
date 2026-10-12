@@ -4,11 +4,14 @@ import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.dto.PassengerReplyRequest;
 import com.transport.reporting.dto.PublicReportListItemResponse;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
+import com.transport.reporting.dto.PublicSatisfactionRequest;
+import com.transport.reporting.dto.PublicSatisfactionResponse;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
 import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.service.PublicTrackingService;
+import com.transport.reporting.service.ReportSatisfactionService;
 import com.transport.reporting.service.ReplyService;
 import com.transport.reporting.service.ReportService;
 import com.transport.reporting.service.TurnstileValidationService;
@@ -56,16 +59,19 @@ public class PublicReportController {
     private final PublicTrackingService publicTrackingService;
     private final ReplyService replyService;
     private final TurnstileValidationService turnstileValidationService;
+    private final ReportSatisfactionService satisfactionService;
 
     public PublicReportController(
             ReportService reportService,
             PublicTrackingService publicTrackingService,
             ReplyService replyService,
-            TurnstileValidationService turnstileValidationService) {
+            TurnstileValidationService turnstileValidationService,
+            ReportSatisfactionService satisfactionService) {
         this.reportService = reportService;
         this.publicTrackingService = publicTrackingService;
         this.replyService = replyService;
         this.turnstileValidationService = turnstileValidationService;
+        this.satisfactionService = satisfactionService;
     }
 
 
@@ -161,8 +167,29 @@ public class PublicReportController {
             description = "Accès public via lien e-mail (UUID non prévisible). "
                     + "Retourne uniquement les informations destinées au voyageur et les réponses visibles."
     )
-    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> followUpByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid)));
+    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> followUpByUuid(
+            @PathVariable UUID uuid,
+            @AuthenticationPrincipal PassengerPrincipal principal) {
+        Long passengerId = principal == null ? null : principal.getPassengerId();
+        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid, passengerId)));
+    }
+
+    /**
+     * Avis unique sur un signalement clôturé.
+     * Un compte avec suivi exige le jeton du propriétaire. Un dossier sans compte
+     * utilise le lien UUID, jamais la référence devinable.
+     */
+    @PostMapping("/api/public/signalements/{uuid}/satisfaction")
+    @Operation(
+            summary = "Évaluer la réponse d'un signalement clôturé",
+            description = "Un seul avis par signalement. Refusé si le dossier n'est pas clôturé, "
+                    + "s'il appartient à un autre voyageur, ou si un avis existe déjà."
+    )
+    public ResponseEntity<ApiResponse<PublicSatisfactionResponse>> submitSatisfaction(
+            @PathVariable UUID uuid,
+            @Valid @org.springframework.web.bind.annotation.RequestBody PublicSatisfactionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("Satisfaction recorded", satisfactionService.submit(uuid, request)));
     }
 
     /**
@@ -198,7 +225,9 @@ public class PublicReportController {
             summary = "[Déprécié] Consulter le suivi d'un signalement par UUID",
             description = "Alias de GET /api/public/signalements/{uuid}/follow-up"
     )
-    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> suiviByUuid(@PathVariable UUID uuid) {
-        return followUpByUuid(uuid);
+    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> suiviByUuid(
+            @PathVariable UUID uuid,
+            @AuthenticationPrincipal PassengerPrincipal principal) {
+        return followUpByUuid(uuid, principal);
     }
 }
