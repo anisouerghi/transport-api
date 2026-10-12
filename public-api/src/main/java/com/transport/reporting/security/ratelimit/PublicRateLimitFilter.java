@@ -105,8 +105,9 @@ public class PublicRateLimitFilter extends OncePerRequestFilter {
         if (HttpMethod.GET.matches(method)
                 && ("/api/public/report-types".equals(path)
                 || "/api/public/status".equals(path)
-                || path.startsWith("/api/public/supports"))) {
-            // Catalogue de référence (types, statuts, supports) : même bucket.
+                || path.startsWith("/api/public/supports")
+                || path.startsWith("/api/public/statistics"))) {
+            // Catalogue de référence (types, statuts, supports, statistiques) : même bucket.
             return Rule.ip("catalog", properties.getCatalog());
         }
         return null;

@@ -82,6 +82,7 @@ Admin login → POST /api/auth/login → JWT typ=ADMIN
 | `PublicReportTypeController` | `GET /api/public/report-types` |
 | `PublicReportController` | `POST /api/public/signalements`, `GET .../mine` (filtres `reference` / `statusCode` / `creationDate`), `GET .../reference/{reference}`, follow-up, `GET /api/public/suivi/{uuid}` |
 | `PublicStatusController` | `GET /api/public/status` (copie publique de `GET /api/admin/status`) |
+| `PublicStatisticsController` | `GET /api/public/statistics/supports-by-type` — nombre de **supports** par type de support (indépendant des signalements) |
 | `PublicPassengerAuthController` | `POST /api/public/auth/register\|login`, `GET\|PUT /api/public/auth/me` |
 | `PublicReplyController` | `GET /api/public/reponses` (accueil) |
 

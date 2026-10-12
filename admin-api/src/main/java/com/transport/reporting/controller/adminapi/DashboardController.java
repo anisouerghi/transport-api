@@ -66,7 +66,8 @@ public class DashboardController {
             description = "Répartition des signalements par type de support (via le support de transport), "
                     + "du plus fréquent au moins fréquent. Les signalements sans support sont regroupés "
                     + "dans le type synthétique « Sans support » (code NO_SUPPORT). "
-                    + "Le libellé suit l'en-tête Accept-Language (fr/ar/en)."
+                    + "Le champ label suit l'en-tête Accept-Language (fr/ar/en) ; labelAr et labelEn "
+                    + "exposent toujours les libellés arabes (label_ar) et anglais (label_en)."
     )
     public ResponseEntity<ApiResponse<List<ReportSupportTypeCountResponse>>> reportsBySupportType() {
         return ResponseEntity.ok(ApiResponse.ok(dashboardService.countReportsBySupportType()));

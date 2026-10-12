@@ -24,4 +24,17 @@ public interface TransportSupportRepository extends JpaRepository<TransportSuppo
     boolean existsByReference(String reference);
 
     boolean existsByReferenceAndTransportSupportIdNot(String reference, Long transportSupportId);
+
+    /**
+     * Nombre de supports par type de support, du plus fréquent au moins fréquent.
+     * Chaque ligne est un couple {@code [SupportType, Long count]}.
+     */
+    @Query("""
+            SELECT s.supportType, COUNT(s)
+            FROM TransportSupport s
+            WHERE s.supportType IS NOT NULL
+            GROUP BY s.supportType
+            ORDER BY COUNT(s) DESC
+            """)
+    List<Object[]> countSupportsGroupedBySupportType();
 }

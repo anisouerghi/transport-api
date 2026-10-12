@@ -9,6 +9,7 @@ import com.transport.reporting.entity.Status;
 import com.transport.reporting.dto.ReportSupportTypeCountResponse;
 import com.transport.reporting.entity.SupportType;
 import com.transport.reporting.dto.ReportAuthenticationCountResponse;
+import com.transport.reporting.dto.SupportTypeCountResponse;
 import com.transport.reporting.repository.PassengerRepository;
 import com.transport.reporting.repository.ReportRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
@@ -109,6 +110,8 @@ public class DashboardService {
                                 .supportTypeId(null)
                                 .code("NO_SUPPORT")
                                 .label(LocalizedLabels.resolve("Sans support", "بدون دعم", "No support"))
+                                .labelAr("بدون دعم")
+                                .labelEn("No support")
                                 .count(count)
                                 .build();
                     }
@@ -116,6 +119,34 @@ public class DashboardService {
                             .supportTypeId(supportType.getSupportTypeId())
                             .code(supportType.getCode())
                             .label(LocalizedLabels.of(supportType))
+                            .labelAr(supportType.getLabelAr())
+                            .labelEn(supportType.getLabelEn())
+                            .count(count)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Répartition des <strong>supports de transport</strong> par type de support,
+     * triée du plus fréquent au moins fréquent.
+     *
+     * <p>Indépendant des signalements : agrégation de la table {@code transport_support}.
+     * Seuls les types ayant au moins un support sont retournés. Le libellé suit
+     * l'{@code Accept-Language} de l'appelant via {@link LocalizedLabels} ;
+     * {@code labelAr} et {@code labelEn} sont toujours renseignés.</p>
+     */
+    public List<SupportTypeCountResponse> countSupportsBySupportType() {
+        return transportSupportRepository.countSupportsGroupedBySupportType().stream()
+                .map(row -> {
+                    SupportType supportType = (SupportType) row[0];
+                    long count = ((Number) row[1]).longValue();
+                    return SupportTypeCountResponse.builder()
+                            .supportTypeId(supportType.getSupportTypeId())
+                            .code(supportType.getCode())
+                            .label(LocalizedLabels.of(supportType))
+                            .labelAr(supportType.getLabelAr())
+                            .labelEn(supportType.getLabelEn())
                             .count(count)
                             .build();
                 })

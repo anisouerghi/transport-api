@@ -14,5 +14,7 @@ public class ReportSupportTypeCountResponse {
     private Long supportTypeId;
     private String code;
     private String label;
+    private String labelAr;
+    private String labelEn;
     private long count;
 }
