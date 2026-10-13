@@ -284,6 +284,42 @@ public class ReplyService {
         return replyMapper.toResponse(reply);
     }
 
+    /**
+     * Commentaire libre du propriétaire connecté. Refusé si le dossier est clôturé
+     * ou si le jeton n'est pas celui du voyageur du signalement.
+     */
+    public ReplyResponse addPassengerComment(UUID reportUuid, String message) {
+        PassengerPrincipal principal = SecurityUtils.currentPassenger()
+                .orElseThrow(() -> new BusinessException("Authentification requise.", "AUTH_REQUIRED"));
+        if (!StringUtils.hasText(message) || message.trim().length() > 2000) {
+            throw new BusinessException("Le message est invalide.", "REPLY_MESSAGE_INVALID");
+        }
+        Report report = reportRepository.findByUuid(reportUuid)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", reportUuid));
+        if (report.getPassenger() == null
+                || !report.getPassenger().hasTrackedAccount()
+                || !principal.getPassengerId().equals(report.getPassenger().getPassengerId())) {
+            throw new BusinessException(
+                    "Vous n'êtes pas autorisé à commenter ce signalement.",
+                    "REPLY_FORBIDDEN");
+        }
+        if (isClosed(report)) {
+            throw new BusinessException("Le signalement est clôturé.", "REPORT_CLOSED");
+        }
+        Passenger passenger = passengerRepository.findById(principal.getPassengerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger", principal.getPassengerId()));
+        Reply reply = replyRepository.save(Reply.builder()
+                .message(message.trim())
+                .emailSent(false)
+                .publicResponse(true)
+                .replyType(ReplyType.RESPONSE)
+                .authorType(ReplyAuthorType.PASSENGER)
+                .report(report)
+                .passenger(passenger)
+                .build());
+        return replyMapper.toResponse(reply);
+    }
+
     private EmailSendResult sendReplyEmail(Report report, Reply reply, AppUser user, String passengerEmail) {
         String html = replyEmailComposer.buildHtml(report, reply);
         EmailSendResult result = emailService.sendHtml(passengerEmail, replyEmailComposer.subject(), html);

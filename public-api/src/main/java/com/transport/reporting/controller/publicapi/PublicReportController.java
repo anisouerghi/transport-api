@@ -159,6 +159,26 @@ public class PublicReportController {
     }
 
     /**
+     * Commentaire du propriétaire connecté. La référence consultée depuis l'accueil
+     * ne suffit pas : le service vérifie que le jeton est celui du voyageur.
+     */
+    @PostMapping("/api/public/signalements/{uuid}/commentaires")
+    @Operation(summary = "Ajouter un commentaire sur son signalement")
+    public ResponseEntity<ApiResponse<ReplyResponse>> addComment(
+            @PathVariable UUID uuid,
+            @AuthenticationPrincipal PassengerPrincipal principal,
+            @Valid @org.springframework.web.bind.annotation.RequestBody PassengerReplyRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(false, "Authentification requise.", "AUTH_REQUIRED", null));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(
+                        "Comment recorded",
+                        replyService.addPassengerComment(uuid, request.getMessage())));
+    }
+
+    /**
      * Suivi sécurisé par UUID (lien e-mail). N'expose que les réponses publiques.
      */
     @GetMapping("/api/public/signalements/{uuid}/follow-up")
@@ -206,14 +226,16 @@ public class PublicReportController {
                     + "Sujet à rate limiting par IP."
     )
     public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> byReference(
-            @PathVariable String reference) {
+            @PathVariable String reference,
+            @AuthenticationPrincipal PassengerPrincipal principal) {
         if (!REFERENCE_PATTERN.matcher(reference.trim()).matches()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.of(false,
                             "Référence invalide (attendu SIG-yyyyMMdd-xxxxxx).",
                             "INVALID_REFERENCE", null));
         }
-        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByReference(reference)));
+        Long passengerId = principal == null ? null : principal.getPassengerId();
+        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByReference(reference, passengerId)));
     }
 
     /**

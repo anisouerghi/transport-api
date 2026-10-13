@@ -85,6 +85,7 @@ public class PublicSecurityConfig {
             auth.requestMatchers(HttpMethod.POST, "/api/public/auth/logout").authenticated();
             auth.requestMatchers("/api/public/signalements/mine").authenticated();
             auth.requestMatchers(HttpMethod.POST, "/api/public/signalements/*/reponses").authenticated();
+            auth.requestMatchers(HttpMethod.POST, "/api/public/signalements/*/commentaires").authenticated();
             auth.requestMatchers(
                     "/api/public/**",
                     "/v3/api-docs/**",

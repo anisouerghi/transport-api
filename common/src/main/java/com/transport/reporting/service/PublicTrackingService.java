@@ -83,11 +83,11 @@ public class PublicTrackingService {
      * devinable (6 chiffres par jour) contrairement à l'UUID du lien e-mail, ce point
      * d'entrée ne doit rien exposer de plus que le suivi public.
      */
-    public PublicReportTrackingResponse findByReference(String reference) {
+    public PublicReportTrackingResponse findByReference(String reference, Long passengerId) {
         String normalized = reference.trim().toUpperCase(Locale.ROOT);
         Report report = reportRepository.findByReference(normalized)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", normalized));
-        return toTrackingResponse(report, false, null);
+        return toTrackingResponse(report, false, passengerId);
     }
 
     private PublicReportTrackingResponse toTrackingResponse(Report report, boolean secureLink, Long passengerId) {
@@ -108,6 +108,8 @@ public class PublicTrackingService {
                     : report.getTransportSupport().getReference();
         }
 
+        boolean owner = isOwner(report, passengerId);
+        boolean satisfactionVisible = secureLink || owner;
         return PublicReportTrackingResponse.builder()
                 .uuid(report.getUuid())
                 .reference(report.getReference())
@@ -120,11 +122,20 @@ public class PublicTrackingService {
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .canPassengerReply(!ReplyService.isClosed(report) && ReplyService.hasPendingComplement(visible))
-                .satisfaction(secureLink ? satisfactionService.findForReport(report.getReportId()) : null)
-                .canSubmitSatisfaction(secureLink && satisfactionService.canSubmit(report, passengerId))
-                .satisfactionLoginRequired(secureLink && satisfactionService.loginRequired(report, passengerId))
+                .canPassengerComment(owner && !ReplyService.isClosed(report))
+                .satisfaction(satisfactionVisible ? satisfactionService.findForReport(report.getReportId()) : null)
+                .canSubmitSatisfaction(satisfactionVisible && satisfactionService.canSubmit(report, passengerId))
+                .satisfactionLoginRequired(satisfactionVisible && satisfactionService.loginRequired(report, passengerId))
                 .replies(replies)
                 .build();
+    }
+
+    /** Propriétaire d'un compte avec suivi. La référence seule ne suffit pas. */
+    private static boolean isOwner(Report report, Long passengerId) {
+        if (passengerId == null || report.getPassenger() == null || !report.getPassenger().hasTrackedAccount()) {
+            return false;
+        }
+        return passengerId.equals(report.getPassenger().getPassengerId());
     }
 
     /**

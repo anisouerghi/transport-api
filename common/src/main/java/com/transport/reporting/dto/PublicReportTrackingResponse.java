@@ -36,7 +36,9 @@ public class PublicReportTrackingResponse {
      * n'est pas clôturé. Calculé par le serveur, indépendamment du client.
      */
     private boolean canPassengerReply;
-    /** Avis déjà enregistré. Absent sur la recherche par référence. */
+    /** Le propriétaire connecté peut ajouter un commentaire tant que le dossier n'est pas clôturé. */
+    private boolean canPassengerComment;
+    /** Avis déjà enregistré. Sur une recherche par référence, réservé au propriétaire connecté. */
     private PublicSatisfactionResponse satisfaction;
     /** Le visiteur du lien UUID peut encore envoyer l'avis unique. */
     private boolean canSubmitSatisfaction;
