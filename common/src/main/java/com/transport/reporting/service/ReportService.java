@@ -46,7 +46,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,8 +59,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ReportService {
-
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private static final Map<String, String> SORT_FIELDS = Map.of(
             "id", "reportId",
@@ -454,14 +451,52 @@ public class ReportService {
         return new HashSet<>(replyRepository.findReportIdsHavingReplies(reportIds));
     }
 
-    /** Génère une référence unique du type {@code SIG-yyyyMMdd-xxxxxx}. */
+    /**
+     * Génère une référence unique du type {@code SIG<AA>-<NNNN>-<XXXX>} :
+     * année sur 2 chiffres, numéro séquentiel annuel sur 4 chiffres (zéros à
+     * gauche) et suffixe aléatoire de 4 caractères {@code [0-9A-Z]}.
+     * Exemple : {@code SIG26-0001-K8YA}.
+     *
+     * <p>La séquence repart à 1 le 1er janvier (elle est déduite de la plus
+     * grande référence existante de l'année). Le suffixe aléatoire garantit
+     * l'unicité ; en cas de collision (même séquence + même suffixe déjà pris),
+     * on avance à la séquence suivante.</p>
+     */
     private String generateReference() {
-        String reference;
-        do {
-            int random = ThreadLocalRandom.current().nextInt(100000, 999999);
-            reference = "SIG-" + LocalDate.now().format(DATE_FORMAT) + "-" + random;
-        } while (reportRepository.existsByReference(reference));
-        return reference;
+        String yearPrefix = "SIG" + String.format("%02d", LocalDate.now().getYear() % 100) + "-";
+        long next = reportRepository.findTopByReferenceStartingWithOrderByReferenceDesc(yearPrefix)
+                .map(last -> parseSequence(last.getReference(), yearPrefix.length()) + 1)
+                .orElse(1L);
+        while (true) {
+            String candidate = yearPrefix + String.format("%04d", next) + "-" + randomSuffix(4);
+            if (!reportRepository.existsByReference(candidate)) {
+                return candidate;
+            }
+            next++;
+        }
+    }
+
+    /** Extrait la séquence sur 4 chiffres d'une référence {@code SIG<AA>-<NNNN>-...}. */
+    private static long parseSequence(String reference, int prefixLength) {
+        if (reference == null || reference.length() < prefixLength + 4) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(reference.substring(prefixLength, prefixLength + 4));
+        } catch (NumberFormatException ex) {
+            return 0L;
+        }
+    }
+
+    /** Suffixe aléatoire de {@code length} caractères parmi {@code [0-9A-Z]}. */
+    private static String randomSuffix(int length) {
+        final String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        StringBuilder suffix = new StringBuilder(length);
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (int i = 0; i < length; i++) {
+            suffix.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return suffix.toString();
     }
 
     /**

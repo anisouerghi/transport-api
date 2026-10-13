@@ -52,7 +52,7 @@ Le destinataire est **l'e-mail du voyageur** sur le signalement, pas celui de l'
 | GET | `/api/public/signalements/{uuid}/follow-up` | Suivi par UUID (lien e-mail) |
 | GET | `/api/public/suivi/{uuid}` | Alias déprécié (compatibilité) |
 
-- Accès par **UUID** uniquement — la référence métier (`SIG-…`) ne permet pas le suivi
+- Accès par **UUID** uniquement — la référence métier (`SIG<AA>-…`) ne permet pas le suivi
 - Réponses filtrées : `public_response = true` uniquement
 - Pas d'IDs internes, agents, priorité
 

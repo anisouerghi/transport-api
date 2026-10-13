@@ -77,11 +77,11 @@ public class PublicTrackingService {
 
     /**
      * Charge le détail public d'un signalement à partir de sa référence métier
-     * ({@code SIG-yyyyMMdd-xxxxxx}), sans authentification.
+     * ({@code SIG<AA>-<NNNN>-<XXXX>}), sans authentification.
      *
      * <p>Même projection restreinte que {@link #findByUuid(UUID)} : la référence étant
-     * devinable (6 chiffres par jour) contrairement à l'UUID du lien e-mail, ce point
-     * d'entrée ne doit rien exposer de plus que le suivi public.
+     * devinable (séquence + 4 caractères aléatoires) contrairement à l'UUID du lien
+     * e-mail, ce point d'entrée ne doit rien exposer de plus que le suivi public.
      */
     public PublicReportTrackingResponse findByReference(String reference, Long passengerId) {
         String normalized = reference.trim().toUpperCase(Locale.ROOT);
