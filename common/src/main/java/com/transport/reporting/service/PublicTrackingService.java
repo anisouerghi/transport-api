@@ -122,7 +122,7 @@ public class PublicTrackingService {
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
                 .canPassengerReply(!ReplyService.isClosed(report) && ReplyService.hasPendingComplement(visible))
-                .canPassengerComment(owner && !ReplyService.isClosed(report))
+                .canPassengerComment(false)
                 .satisfaction(satisfactionVisible ? satisfactionService.findForReport(report.getReportId()) : null)
                 .canSubmitSatisfaction(satisfactionVisible && satisfactionService.canSubmit(report, passengerId))
                 .satisfactionLoginRequired(satisfactionVisible && satisfactionService.loginRequired(report, passengerId))
