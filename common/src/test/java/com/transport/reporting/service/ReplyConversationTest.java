@@ -2,6 +2,7 @@ package com.transport.reporting.service;
 
 import com.transport.reporting.common.enums.ReplyAuthorType;
 import com.transport.reporting.common.enums.ReplyType;
+import com.transport.reporting.dto.EmailSendResult;
 import com.transport.reporting.dto.PublicReportTrackingResponse;
 import com.transport.reporting.dto.ReplyCreateResult;
 import com.transport.reporting.dto.ReplyRequest;
@@ -39,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,11 +55,17 @@ class ReplyConversationTest {
     private final StatusRepository statusRepository = mock(StatusRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
 
+    private final EmailService emailService = mock(EmailService.class);
+    private final ReplyEmailComposer replyEmailComposer = mock(ReplyEmailComposer.class);
+
     private ReplyService replyService;
     private PublicTrackingService trackingService;
 
     @BeforeEach
     void setUp() {
+        when(emailService.sendHtml(any(), any(), any())).thenReturn(EmailSendResult.ok("envoyé"));
+        when(replyEmailComposer.subject()).thenReturn("Réponse à votre signalement – TRANSTU");
+        when(replyEmailComposer.buildHtml(any(), any())).thenReturn("<p>message</p>");
         replyService = new ReplyService(
                 replyRepository,
                 reportRepository,
@@ -68,8 +76,8 @@ class ReplyConversationTest {
                 new ReplyMapper(),
                 auditLogService,
                 mock(com.transport.reporting.security.PermissionChecker.class),
-                mock(EmailService.class),
-                mock(ReplyEmailComposer.class));
+                emailService,
+                replyEmailComposer);
         trackingService = new PublicTrackingService(reportRepository, replyRepository, mock(ReportSatisfactionService.class));
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
             Reply reply = invocation.getArgument(0);
@@ -277,6 +285,81 @@ class ReplyConversationTest {
     }
 
     @Test
+    void visibleReplyWithEmailIsSentEvenWhenTheFlagIsOmitted() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
+
+        assertTrue(result.isReplySaved());
+        assertTrue(result.isSuccess());
+        verify(emailService).sendHtml(eq("voyageur@example.com"), any(), any());
+    }
+
+    @Test
+    void internalNoteDoesNotSendThePassengerEmail() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        ReplyRequest request = request(ReplyType.INTERNAL_NOTE);
+        request.setSendEmail(true);
+        ReplyCreateResult result = replyService.create(1L, request);
+
+        assertTrue(result.isReplySaved());
+        assertFalse(result.getReply().isPublicResponse());
+        verify(emailService, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void missingEmailKeepsTheReplyWithoutTryingToSend() {
+        Report report = openReport();
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        ReplyRequest request = request(ReplyType.RESPONSE);
+        request.setSendEmail(true);
+        ReplyCreateResult result = replyService.create(1L, request);
+
+        assertTrue(result.isReplySaved());
+        assertFalse(result.isSuccess());
+        assertEquals("EMAIL_NO_RECIPIENT", result.getErrorCode());
+        verify(emailService, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void explicitOptOutDoesNotSend() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+
+        ReplyRequest request = request(ReplyType.RESPONSE);
+        request.setSendEmail(false);
+        ReplyCreateResult result = replyService.create(1L, request);
+
+        assertTrue(result.isReplySaved());
+        assertTrue(result.isSuccess());
+        verify(emailService, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void smtpFailureKeepsTheSavedReply() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+        when(emailService.sendHtml(any(), any(), any()))
+                .thenReturn(EmailSendResult.fail("EMAIL_SEND_FAILED", "SMTP indisponible"));
+
+        ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
+
+        assertTrue(result.isReplySaved());
+        assertFalse(result.isSuccess());
+        assertEquals("EMAIL_SEND_FAILED", result.getErrorCode());
+        verify(replyRepository, atLeastOnce()).save(any(Reply.class));
+    }
+
+    @Test
     void chronologyOrdersByReplyDateThenReplyId() {
         Instant same = Instant.parse("2026-01-01T00:00:00Z");
         Reply laterId = message(8L, ReplyType.RESPONSE, true);
@@ -328,6 +411,14 @@ class ReplyConversationTest {
         report.setUuid(UUID.randomUUID());
         report.setPassenger(passenger(5L));
         authenticate(5L);
+        return report;
+    }
+
+    private static Report reportWithEmail(String email) {
+        Report report = openReport();
+        Passenger passenger = passenger(5L);
+        passenger.setEmail(email);
+        report.setPassenger(passenger);
         return report;
     }
 

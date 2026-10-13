@@ -144,9 +144,10 @@ public class ReplyService {
         report.setPublicResponseDate(publicResponse ? Instant.now() : null);
 
         String passengerEmail = resolvePassengerEmail(report);
-        boolean emailRequested = Boolean.TRUE.equals(request.getSendEmail());
-        // Sécurité : on n'envoie un e-mail au voyageur que si la réponse est visible pour lui.
-        boolean canSendEmail = emailRequested && publicResponse && StringUtils.hasText(passengerEmail);
+        // Un message visible part par e-mail dès qu'une adresse est valide.
+        // sendEmail=false reste le refus explicite déjà proposé dans la fenêtre de traitement.
+        boolean emailRequested = publicResponse && !Boolean.FALSE.equals(request.getSendEmail());
+        boolean canSendEmail = emailRequested && isDeliverableEmail(passengerEmail);
 
         Reply reply = Reply.builder()
                 .message(request.getMessage().trim())
@@ -169,18 +170,19 @@ public class ReplyService {
                 emailResult = EmailSendResult.fail("EMAIL_SEND_FAILED",
                         "L'e-mail n'a pas pu être envoyé. Détail : " + ex.getMessage());
             }
-        } else if (emailRequested && !publicResponse) {
-            // Réponse interne : jamais de lien e-mail, et jamais publiée dans le suivi voyageur.
+        } else if (!publicResponse && Boolean.TRUE.equals(request.getSendEmail())) {
             emailResult = EmailSendResult.fail(
                     "EMAIL_NOT_PUBLIC",
                     "Réponse enregistrée, mais l'e-mail n'a pas été envoyé car la visibilité voyageur est désactivée."
             );
             log.info("sendEmail requested for report {} but publicResponse=false", reportId);
             auditEmail(user, report, passengerEmail, false, emailResult.getMessage());
-        } else if (emailRequested) {
+        } else if (publicResponse && Boolean.FALSE.equals(request.getSendEmail())) {
+            emailResult = null;
+        } else if (publicResponse) {
             emailResult = EmailSendResult.fail("EMAIL_NO_RECIPIENT",
                     "La réponse a été enregistrée, mais aucun e-mail voyageur n'est renseigné : aucun envoi effectué.");
-            log.warn("sendEmail requested for report {} but passenger has no email", reportId);
+            log.warn("Réponse visible pour le report {} sans adresse e-mail voyageur", reportId);
             auditEmail(user, report, passengerEmail, false, emailResult.getMessage());
         }
 
@@ -336,10 +338,20 @@ public class ReplyService {
 
     private static String resolvePassengerEmail(Report report) {
         Passenger passenger = report.getPassenger();
-        if (passenger == null) {
+        if (passenger == null || !StringUtils.hasText(passenger.getEmail())) {
             return null;
         }
-        return StringUtils.hasText(passenger.getEmail()) ? passenger.getEmail().trim() : null;
+        String email = passenger.getEmail().trim();
+        return isDeliverableEmail(email) ? email : null;
+    }
+
+    private static boolean isDeliverableEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            return false;
+        }
+        int at = email.indexOf('@');
+        return at > 0 && at < email.length() - 1 && email.indexOf('@', at + 1) < 0
+                && !email.contains(" ") && email.indexOf('.', at) > at + 1;
     }
 
     private void applyStatusChange(Report report, Long newStatusId, AppUser user, String comments) {

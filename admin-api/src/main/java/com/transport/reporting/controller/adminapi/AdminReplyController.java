@@ -43,7 +43,7 @@ public class AdminReplyController {
     @Operation(
             summary = "Créer une réponse sur un signalement",
             description = "Enregistre la réponse agent. "
-                    + "Si sendEmail=true, tente l'envoi SMTP. "
+                    + "Un message visible par le voyageur déclenche l'e-mail si une adresse valide existe, sauf sendEmail=false. "
                     + "En cas d'échec e-mail : success=false, errorCode renseigné, data contient quand même la réponse enregistrée."
     )
     public ResponseEntity<ApiResponse<ReplyResponse>> create(

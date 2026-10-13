@@ -22,7 +22,9 @@ public class ReplyEmailComposer {
 
     private static final Logger log = LoggerFactory.getLogger(ReplyEmailComposer.class);
     private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withLocale(Locale.FRENCH);
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .withLocale(Locale.FRENCH)
+                    .withZone(ZoneId.of("Africa/Tunis"));
     private static final String REPLY_TEMPLATE = "email/reply.html";
     private static final String CONFIRMATION_TEMPLATE = "email/confirmation.html";
 
@@ -49,16 +51,17 @@ public class ReplyEmailComposer {
 
     public String buildHtml(Report report, Reply reply) {
         String trackingUrl = trackingUrl(report);
-        String replyDate = reply.getReplyDate() != null
-                ? DATE_FMT.format(reply.getReplyDate().atZone(ZoneId.systemDefault()))
-                : "";
+        String replyDate = reply.getReplyDate() != null ? DATE_FMT.format(reply.getReplyDate()) : "";
+        String status = report.getStatus() == null ? "" : frenchLabel(report.getStatus().getLabelFr(), report.getStatus().getLabel());
         String messageHtml = escapeHtml(reply.getMessage()).replace("\n", "<br/>");
+        String safeUrl = escapeHtml(trackingUrl);
         return replyTemplate
                 .replace("{{LOGO_CID}}", LOGO_CONTENT_ID)
                 .replace("{{REFERENCE}}", escapeHtml(report.getReference()))
                 .replace("{{REPLY_DATE}}", escapeHtml(replyDate))
+                .replace("{{STATUS}}", escapeHtml(status))
                 .replace("{{MESSAGE}}", messageHtml)
-                .replace("{{TRACKING_URL}}", trackingUrl);
+                .replace("{{TRACKING_URL}}", safeUrl);
     }
 
     public String buildConfirmationHtml(Report report) {
@@ -66,7 +69,7 @@ public class ReplyEmailComposer {
         return confirmationTemplate
                 .replace("{{LOGO_CID}}", LOGO_CONTENT_ID)
                 .replace("{{REFERENCE}}", escapeHtml(report.getReference()))
-                .replace("{{TRACKING_URL}}", trackingUrl);
+                .replace("{{TRACKING_URL}}", escapeHtml(trackingUrl));
     }
 
     private String trackingUrl(Report report) {
@@ -86,6 +89,13 @@ public class ReplyEmailComposer {
             log.error("Template e-mail introuvable : {}", classpathLocation, ex);
             return "<html><body><p>{{REFERENCE}}</p><p>{{MESSAGE}}</p><p><a href=\"{{TRACKING_URL}}\">{{TRACKING_URL}}</a></p></body></html>";
         }
+    }
+
+    private static String frenchLabel(String french, String fallback) {
+        if (french != null && !french.isBlank()) {
+            return french.trim();
+        }
+        return fallback == null ? "" : fallback.trim();
     }
 
     private static String escapeHtml(String value) {
