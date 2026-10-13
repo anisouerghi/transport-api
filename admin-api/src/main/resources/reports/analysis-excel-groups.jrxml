@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="analysis-excel-groups" pageWidth="900" pageHeight="700" columnWidth="860"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              isIgnorePagination="true" whenNoDataType="AllSectionsNoDetail">
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+    <property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+    <field name="kind" class="java.lang.String"/>
+    <field name="label" class="java.lang.String"/>
+    <field name="count" class="java.lang.Long"/>
+    <field name="rate" class="java.lang.Double"/>
+    <field name="lastReportAt" class="java.lang.String"/>
+    <columnHeader>
+        <band height="18">
+            <staticText>
+                <reportElement x="0" y="0" width="280" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Groupe]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="280" y="0" width="90" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Nombre]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="370" y="0" width="80" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Pourcentage]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="450" y="0" width="160" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Dernier signalement]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="610" y="0" width="90" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Niveau]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="16">
+            <textField>
+                <reportElement x="0" y="0" width="280" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{label}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="280" y="0" width="90" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{count}]]></textFieldExpression>
+            </textField>
+            <textField pattern="0.0">
+                <reportElement x="370" y="0" width="80" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="450" y="0" width="160" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{lastReportAt}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="610" y="0" width="90" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{kind}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

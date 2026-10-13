@@ -20,6 +20,7 @@ import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.entity.ReportNature;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportHistory;
+import com.transport.reporting.entity.ReportSatisfaction;
 import com.transport.reporting.entity.ReportType;
 import com.transport.reporting.entity.Status;
 import com.transport.reporting.entity.TransportSupport;
@@ -30,6 +31,7 @@ import com.transport.reporting.repository.ReplyRepository;
 import com.transport.reporting.repository.ReportHistoryRepository;
 import com.transport.reporting.repository.ReportNatureRepository;
 import com.transport.reporting.repository.ReportRepository;
+import com.transport.reporting.repository.ReportSatisfactionRepository;
 import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.repository.UserRepository;
@@ -84,7 +86,9 @@ public class ReportService {
     private final ReplyEmailComposer replyEmailComposer;
     private final ReplyRepository replyRepository;
     private final ReportNatureRepository reportNatureRepository;
-    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository) {
+    private final ReportSatisfactionRepository satisfactionRepository;
+
+    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository, ReportSatisfactionRepository satisfactionRepository) {
         this.reportRepository = reportRepository;
         this.reportTypeRepository = reportTypeRepository;
         this.transportSupportRepository = transportSupportRepository;
@@ -100,6 +104,7 @@ public class ReportService {
         this.replyEmailComposer = replyEmailComposer;
         this.replyRepository = replyRepository;
         this.reportNatureRepository = reportNatureRepository;
+        this.satisfactionRepository = satisfactionRepository;
     }
 
 
@@ -185,6 +190,7 @@ public class ReportService {
         }
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        refuseIfClosed(report);
 
         Priority previous = report.getPriority();
         if (previous == newPriority) {
@@ -232,6 +238,7 @@ public class ReportService {
     public ReportResponse updateNature(Long id, Long reportNatureId) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        refuseIfClosed(report);
 
         ReportNature previous = report.getNature();
         Long previousId = previous != null ? previous.getReportNatureId() : null;
@@ -291,6 +298,7 @@ public class ReportService {
     public ReportResponse updateReportType(Long id, Long reportTypeId) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        refuseIfClosed(report);
 
         ReportType previous = report.getReportType();
         Long previousId = previous != null ? previous.getReportTypeId() : null;
@@ -363,7 +371,14 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<ReportResponse> findAll() {
-        return reportRepository.findAll().stream().map(reportMapper::toResponse).collect(Collectors.toList());
+        List<Report> reports = reportRepository.findAll();
+        Map<Long, ReportSatisfaction> satisfactions = satisfactionsByReportId(
+                reports.stream().map(Report::getReportId).toList());
+        return reports.stream().map(report -> {
+            ReportResponse dto = reportMapper.toResponse(report);
+            applySatisfaction(dto, satisfactions.get(report.getReportId()));
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -376,11 +391,13 @@ public class ReportService {
         );
         Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
         Page<Report> entityPage = reportRepository.findAll(spec, pageable);
-        Set<Long> repliedIds = repliedReportIds(
-                entityPage.getContent().stream().map(Report::getReportId).toList());
+        List<Long> ids = entityPage.getContent().stream().map(Report::getReportId).toList();
+        Set<Long> repliedIds = repliedReportIds(ids);
+        Map<Long, ReportSatisfaction> satisfactions = satisfactionsByReportId(ids);
         Page<ReportResponse> page = entityPage.map(report -> {
             ReportResponse dto = reportMapper.toResponse(report);
             dto.setReplied(repliedIds.contains(report.getReportId()));
+            applySatisfaction(dto, satisfactions.get(report.getReportId()));
             return dto;
         });
         return PageResponse.from(page);
@@ -397,7 +414,37 @@ public class ReportService {
         ReportResponse response = reportMapper.toResponse(report);
         response.setAttachments(attachmentService.findByReportId(report.getReportId()));
         response.setReplied(replyRepository.existsByReport_ReportId(report.getReportId()));
+        satisfactionRepository.findByReport_ReportId(report.getReportId())
+                .ifPresent(satisfaction -> applySatisfaction(response, satisfaction));
         return response;
+    }
+
+    private Map<Long, ReportSatisfaction> satisfactionsByReportId(List<Long> reportIds) {
+        if (reportIds == null || reportIds.isEmpty()) {
+            return Map.of();
+        }
+        return satisfactionRepository.findByReport_ReportIdIn(reportIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        satisfaction -> satisfaction.getReport().getReportId(),
+                        satisfaction -> satisfaction,
+                        (left, right) -> left));
+    }
+
+    private static void applySatisfaction(ReportResponse response, ReportSatisfaction satisfaction) {
+        if (satisfaction == null || satisfaction.getLevel() == null) {
+            return;
+        }
+        response.setSatisfactionLevel(satisfaction.getLevel().name());
+        response.setSatisfactionComment(satisfaction.getComment());
+        response.setSatisfactionCreatedAt(satisfaction.getCreatedAt());
+    }
+
+    private static void refuseIfClosed(Report report) {
+        if (ReplyService.isClosed(report)) {
+            throw new BusinessException(
+                    "Le signalement est clôturé et ne peut plus être modifié.",
+                    "REPORT_CLOSED");
+        }
     }
 
     private Set<Long> repliedReportIds(List<Long> reportIds) {

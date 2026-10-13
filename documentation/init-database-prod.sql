@@ -269,6 +269,8 @@ CREATE TABLE report (
     UNIQUE KEY uk_report_uuid (uuid),
     UNIQUE KEY uk_report_reference (reference),
     KEY idx_report_nature (nature_id),
+    KEY idx_report_creation_date (creation_date),
+    KEY idx_report_analysis (creation_date, report_type_id, transport_support_id),
     CONSTRAINT fk_report_support
         FOREIGN KEY (transport_support_id) REFERENCES transport_support (transport_support_id),
     CONSTRAINT fk_report_type
@@ -566,7 +568,6 @@ INSERT INTO app_menu (code, label, url, icon, display_order, permission_code, ac
 ('TRANSPORT_SUPPORTS', 'Supports', '/transport-supports', 'cilList', 30, 'TRANSPORT_SUPPORT_VIEW', 1),
 ('SUPPORT_TYPES', 'Types de support', '/support-types', 'cilList', 40, 'SUPPORT_TYPE_VIEW', 1),
 ('REPORT_TYPES', 'Types de signalement', '/report-types', 'cilSpeech', 50, 'REPORT_TYPE_VIEW', 1),
-('REPORT_NATURES', 'Natures des signalements', '/report-natures', 'cilTags', 55, 'NATURE_VIEW', 1),
 ('USERS', 'Utilisateurs', '/users', 'cilUser', 60, 'USER_VIEW', 1),
 ('ROLES', 'Roles', '/roles', 'cilLockLocked', 70, 'ROLE_VIEW', 1),
 ('PERMISSIONS', 'Permissions', '/permissions', 'cilLockLocked', 80, 'PERMISSION_VIEW', 1),

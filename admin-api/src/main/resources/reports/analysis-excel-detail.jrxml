@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="analysis-excel-detail" pageWidth="1000" pageHeight="700" columnWidth="960"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              isIgnorePagination="true" whenNoDataType="AllSectionsNoDetail">
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+    <property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.auto.filter" value="true"/>
+    <field name="reference" class="java.lang.String"/>
+    <field name="reportTypeLabel" class="java.lang.String"/>
+    <field name="supportTypeLabel" class="java.lang.String"/>
+    <field name="supportLabel" class="java.lang.String"/>
+    <field name="createdAt" class="java.lang.String"/>
+    <columnHeader>
+        <band height="18">
+            <staticText>
+                <reportElement x="0" y="0" width="140" height="18">
+                    <property name="net.sf.jasperreports.export.xls.auto.filter" value="Start"/>
+                </reportElement>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Référence]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="140" y="0" width="180" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Type de signalement]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="320" y="0" width="160" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Type de support]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="480" y="0" width="220" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Support]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="700" y="0" width="140" height="18">
+                    <property name="net.sf.jasperreports.export.xls.auto.filter" value="End"/>
+                </reportElement>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Date]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="16">
+            <textField>
+                <reportElement x="0" y="0" width="140" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{reference}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="140" y="0" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{reportTypeLabel}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="320" y="0" width="160" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{supportTypeLabel}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="480" y="0" width="220" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{supportLabel}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="700" y="0" width="140" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$F{createdAt}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

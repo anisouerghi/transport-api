@@ -39,6 +39,10 @@ public class ReportResponse {
     private StatusResponse status;
     /** true si au moins une réponse agent est enregistrée. */
     private boolean replied;
+    /** Avis voyageur, s'il existe. Absent tant qu'aucun avis n'a été envoyé. */
+    private String satisfactionLevel;
+    private String satisfactionComment;
+    private Instant satisfactionCreatedAt;
     /** Pièces jointes associées (renseignées sur détail / création / suivi). */
     private List<AttachmentResponse> attachments;
 }

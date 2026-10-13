@@ -20,13 +20,13 @@ target/
 .DS_Store
 Thumbs.db
 
-# Configuration locale
-# application-local.properties
-# application-local.yml
-# public-api/src/main/resources/application-dev.properties
-# public-api/src/main/resources/application-prod.properties
-# admin-api/src/main/resources/application-dev.properties
-# admin-api/src/main/resources/application-prod.properties
+Configuration locale
+application-local.properties
+application-local.yml
+public-api/src/main/resources/application-dev.properties
+public-api/src/main/resources/application-prod.properties
+admin-api/src/main/resources/application-dev.properties
+admin-api/src/main/resources/application-prod.properties
 
 # Environment
 .env

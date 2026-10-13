@@ -252,6 +252,8 @@ CREATE TABLE report (
     UNIQUE KEY uk_report_uuid (uuid),
     UNIQUE KEY uk_report_reference (reference),
     KEY idx_report_nature (nature_id),
+    KEY idx_report_creation_date (creation_date),
+    KEY idx_report_analysis (creation_date, report_type_id, transport_support_id),
     CONSTRAINT fk_report_support
         FOREIGN KEY (transport_support_id) REFERENCES transport_support (transport_support_id),
     CONSTRAINT fk_report_type

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="analysis-pdf" pageWidth="595" pageHeight="842" columnWidth="515"
+              leftMargin="40" rightMargin="40" topMargin="32" bottomMargin="32"
+              whenNoDataType="AllSectionsNoDetail">
+    <property name="net.sf.jasperreports.export.xls.ignore.graphics" value="false"/>
+    <style name="Base" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Row" style="Base">
+        <conditionalStyle>
+            <conditionExpression><![CDATA["TOTAL".equals($F{kind})]]></conditionExpression>
+            <style mode="Opaque" backcolor="#003B7F" forecolor="#FFFFFF" isBold="true"/>
+        </conditionalStyle>
+        <conditionalStyle>
+            <conditionExpression><![CDATA["SUBTOTAL".equals($F{kind})]]></conditionExpression>
+            <style mode="Opaque" backcolor="#E8EEF6" forecolor="#003B7F" isBold="true"/>
+        </conditionalStyle>
+    </style>
+    <parameter name="LOGO" class="java.io.InputStream"/>
+    <parameter name="TITLE" class="java.lang.String"/>
+    <parameter name="SUBTITLE" class="java.lang.String"/>
+    <parameter name="PERIOD" class="java.lang.String"/>
+    <parameter name="REPORT_TYPE" class="java.lang.String"/>
+    <parameter name="SUPPORT_TYPE" class="java.lang.String"/>
+    <parameter name="SUPPORT" class="java.lang.String"/>
+    <parameter name="GROUPING" class="java.lang.String"/>
+    <parameter name="TOTAL" class="java.lang.Long"/>
+    <parameter name="GROUP_COUNT" class="java.lang.Integer"/>
+    <parameter name="GENERATED_AT" class="java.lang.String"/>
+    <field name="kind" class="java.lang.String"/>
+    <field name="label" class="java.lang.String"/>
+    <field name="count" class="java.lang.Long"/>
+    <field name="rate" class="java.lang.Double"/>
+    <field name="lastReportAt" class="java.lang.String"/>
+    <title>
+        <band height="196">
+            <image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+                <reportElement x="0" y="0" width="130" height="48"/>
+                <imageExpression><![CDATA[$P{LOGO}]]></imageExpression>
+            </image>
+            <textField>
+                <reportElement x="140" y="4" width="375" height="28"/>
+                <textElement><font fontName="DejaVu Sans" size="14" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{TITLE}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="140" y="32" width="375" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{SUBTITLE}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="58" width="515" height="14" forecolor="#003B7F"/>
+                <textElement><font fontName="DejaVu Sans" size="10" isBold="true"/></textElement>
+                <text><![CDATA[Critères appliqués]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="76" width="515" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA["Période : " + $P{PERIOD}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="90" width="515" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA["Type de signalement : " + $P{REPORT_TYPE}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="104" width="515" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA["Type de support : " + $P{SUPPORT_TYPE}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="118" width="515" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA["Support précis : " + $P{SUPPORT}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="132" width="515" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA["Regroupement : " + $P{GROUPING}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="154" width="250" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="11" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA["Total : " + $P{TOTAL} + " signalement(s)"]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="260" y="154" width="255" height="16"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{GROUP_COUNT} + " groupe(s)  ·  Généré le " + $P{GENERATED_AT}]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="178" width="515" height="1" forecolor="#003B7F"/>
+            </line>
+        </band>
+    </title>
+    <columnHeader>
+        <band height="22">
+            <staticText>
+                <reportElement mode="Opaque" x="0" y="2" width="255" height="18" backcolor="#F4F7FB" forecolor="#003B7F"/>
+                <textElement><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Groupe]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" x="255" y="2" width="80" height="18" backcolor="#F4F7FB" forecolor="#003B7F"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Nombre]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" x="335" y="2" width="70" height="18" backcolor="#F4F7FB" forecolor="#003B7F"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+                <text><![CDATA[%]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" x="405" y="2" width="110" height="18" backcolor="#F4F7FB" forecolor="#003B7F"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Dernier signalement]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="18">
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Row" x="0" y="0" width="255" height="18"/>
+                <textElement><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA["GROUP".equals($F{kind}) ? "    " + $F{label} : $F{label}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Row" x="255" y="0" width="80" height="18"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{count}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.0">
+                <reportElement style="Row" x="335" y="0" width="70" height="18"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement style="Row" x="405" y="0" width="110" height="18"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{lastReportAt}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+    <pageFooter>
+        <band height="22">
+            <line>
+                <reportElement x="0" y="0" width="515" height="1" forecolor="#D0D7E2"/>
+            </line>
+            <staticText>
+                <reportElement x="0" y="4" width="280" height="14"/>
+                <textElement><font fontName="DejaVu Sans" size="8"/></textElement>
+                <text><![CDATA[TRANSTU — document interne d'analyse des signalements]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="300" y="4" width="120" height="14"/>
+                <textElement textAlignment="Right"><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement x="420" y="4" width="95" height="14"/>
+                <textElement textAlignment="Left"><font fontName="DejaVu Sans" size="8"/></textElement>
+                <textFieldExpression><![CDATA[" / " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

@@ -24,7 +24,7 @@ import java.time.Instant;
 
 /**
  * Avis unique du voyageur sur le traitement d'un signalement clôturé.
- * Conservé si le dossier est rouvert : il n'est ni modifié ni supprimé.
+ * Un signalement clôturé n'est plus modifiable. L'avis n'est ni modifié ni supprimé.
  */
 @Entity
 @Table(

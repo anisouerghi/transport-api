@@ -33,6 +33,7 @@ public final class DatabaseSchemaPatcher {
         ensureSixPublicReportTypes(jdbcTemplate);
         ensureReportTypePriority(jdbcTemplate);
         ensureReportTypeIcon(jdbcTemplate);
+        ensureReportAnalysisIndexes(jdbcTemplate);
     }
 
     /**
@@ -398,6 +399,24 @@ public final class DatabaseSchemaPatcher {
                 "ALTER TABLE " + table + " ADD COLUMN label_en VARCHAR(" + maxLen + ") NULL");
         jdbcTemplate.execute(
                 "UPDATE " + table + " SET label_fr = label WHERE label_fr IS NULL OR TRIM(label_fr) = ''");
+    }
+
+    /** Accélère les filtres de période, de type et de support de l'analyse. */
+    private static void ensureReportAnalysisIndexes(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "report")) {
+            return;
+        }
+        try {
+            if (!indexExists(jdbcTemplate, "report", "idx_report_creation_date")) {
+                jdbcTemplate.execute("CREATE INDEX idx_report_creation_date ON report (creation_date)");
+            }
+            if (!indexExists(jdbcTemplate, "report", "idx_report_analysis")) {
+                jdbcTemplate.execute(
+                        "CREATE INDEX idx_report_analysis ON report (creation_date, report_type_id, transport_support_id)");
+            }
+        } catch (Exception ex) {
+            log.warn("Impossible de créer les index d'analyse des signalements : {}", ex.getMessage());
+        }
     }
 
     private static boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) {

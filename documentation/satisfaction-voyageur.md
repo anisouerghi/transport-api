@@ -7,7 +7,7 @@ Un signalement clôturé (`RESOLVED` ou `CLOSED`) peut recevoir un seul avis sur
 - Compte avec suivi (mot de passe ou Google) : le jeton du propriétaire est obligatoire. L'UUID du lien ne suffit pas.
 - Dossier sans compte : le lien de suivi UUID, déjà utilisé pour la consultation, autorise un seul envoi. La recherche par référence ne propose pas l'avis et ne renvoie pas le commentaire.
 - Un second envoi, y compris simultané, est refusé (`SATISFACTION_ALREADY_EXISTS`).
-- Si le dossier est rouvert, l'avis est conservé et ne peut plus être modifié ni remplacé.
+- Un signalement clôturé ne peut plus être modifié (réponse, statut, type, priorité, nature). L'avis déjà enregistré est conservé.
 
 ## API
 

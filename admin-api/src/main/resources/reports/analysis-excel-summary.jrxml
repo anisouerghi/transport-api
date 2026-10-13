@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="analysis-excel-summary" pageWidth="900" pageHeight="700" columnWidth="860"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              isIgnorePagination="true" whenNoDataType="AllSectionsNoDetail">
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+    <property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+    <property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+    <parameter name="TITLE" class="java.lang.String"/>
+    <parameter name="SUBTITLE" class="java.lang.String"/>
+    <parameter name="PERIOD" class="java.lang.String"/>
+    <parameter name="REPORT_TYPE" class="java.lang.String"/>
+    <parameter name="SUPPORT_TYPE" class="java.lang.String"/>
+    <parameter name="SUPPORT" class="java.lang.String"/>
+    <parameter name="GROUPING" class="java.lang.String"/>
+    <parameter name="TOTAL" class="java.lang.Long"/>
+    <parameter name="GROUP_COUNT" class="java.lang.Integer"/>
+    <parameter name="GENERATED_AT" class="java.lang.String"/>
+    <parameter name="DETAIL_NOTE" class="java.lang.String"/>
+    <title>
+        <band height="220">
+            <textField>
+                <reportElement x="0" y="0" width="500" height="22"/>
+                <textElement><font fontName="DejaVu Sans" size="14" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{TITLE}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="24" width="500" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{SUBTITLE}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="48" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Généré le]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="48" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{GENERATED_AT}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="64" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Période]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="64" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{PERIOD}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="80" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Type de signalement]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="80" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{REPORT_TYPE}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="96" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Type de support]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="96" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{SUPPORT_TYPE}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="112" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Support précis]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="112" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{SUPPORT}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="128" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Regroupement]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="128" width="320" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{GROUPING}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="144" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Nombre de signalements]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="144" width="120" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{TOTAL}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="160" width="180" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9" isBold="true"/></textElement>
+                <text><![CDATA[Nombre de groupes]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="180" y="160" width="120" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{GROUP_COUNT}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="184" width="500" height="16"/>
+                <textElement><font fontName="DejaVu Sans" size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{DETAIL_NOTE}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+</jasperReport>

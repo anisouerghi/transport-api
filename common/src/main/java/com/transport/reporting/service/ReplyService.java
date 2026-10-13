@@ -100,15 +100,15 @@ public class ReplyService {
     public ReplyCreateResult create(Long reportId, ReplyRequest request) {
         Report report = reportRepository.findByIdWithPassenger(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
+        if (isClosed(report)) {
+            throw new BusinessException(
+                    "Le signalement est clôturé et ne peut plus être modifié.",
+                    "REPORT_CLOSED");
+        }
 
         AppUser user = resolveActor(request.getUserId());
         ReplyType replyType = resolveAgentReplyType(request);
         if (replyType == ReplyType.COMPLEMENT_REQUEST) {
-            if (isClosed(report)) {
-                throw new BusinessException(
-                        "Le signalement est clôturé : aucune demande de complément ne peut être envoyée.",
-                        "REPORT_CLOSED");
-            }
             if (!hasTrackedPassenger(report)) {
                 throw new BusinessException(
                         "Une demande de complément n'est possible que pour un signalement avec suivi.",

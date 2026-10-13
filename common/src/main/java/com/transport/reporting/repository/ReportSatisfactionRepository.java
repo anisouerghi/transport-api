@@ -8,12 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface ReportSatisfactionRepository extends JpaRepository<ReportSatisfaction, Long> {
 
     Optional<ReportSatisfaction> findByReport_ReportId(Long reportId);
+
+    List<ReportSatisfaction> findByReport_ReportIdIn(Collection<Long> reportIds);
 
     boolean existsByReport_ReportId(Long reportId);
 

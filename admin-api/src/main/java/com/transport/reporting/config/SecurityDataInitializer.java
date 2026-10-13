@@ -257,7 +257,6 @@ public class SecurityDataInitializer {
                 menu("TRANSPORT_SUPPORTS", "Supports", "/transport-supports", "cilList", 30, "TRANSPORT_SUPPORT_VIEW"),
                 menu("SUPPORT_TYPES", "Types de support", "/support-types", "cilList", 40, "SUPPORT_TYPE_VIEW"),
                 menu("REPORT_TYPES", "Types de signalement", "/report-types", "cilSpeech", 50, "REPORT_TYPE_VIEW"),
-                menu("REPORT_NATURES", "Natures des signalements", "/report-natures", "cilTags", 55, "NATURE_VIEW"),
                 menu("USERS", "Utilisateurs", "/users", "cilUser", 60, "USER_VIEW"),
                 menu("ROLES", "Rôles", "/roles", "cilLockLocked", 70, "ROLE_VIEW"),
                 menu("PERMISSIONS", "Permissions", "/permissions", "cilLockLocked", 80, "PERMISSION_VIEW"),
@@ -272,6 +271,12 @@ public class SecurityDataInitializer {
                 appMenuRepository.save(candidate);
                 created++;
             }
+        }
+        AppMenu natures = existing.get("REPORT_NATURES");
+        if (natures != null && natures.isActive()) {
+            natures.setActive(false);
+            appMenuRepository.save(natures);
+            log.info("Menu REPORT_NATURES désactivé (remplacé par Types de signalement).");
         }
         log.info("Admin menus ensured ({} new)", created);
     }
