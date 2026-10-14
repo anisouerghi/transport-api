@@ -83,14 +83,6 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
 
     boolean existsByReference(String reference);
 
-    /**
-     * Dernière référence (ordre lexicographique) partageant le préfixe donné,
-     * typiquement {@code SIG<AA>-}. Sert à déterminer la séquence annuelle…
-     * Les références étant sur 4 chiffres zéro-paddés, l'ordre lexicographique
-     * coïncide avec l'ordre numérique de la séquence.
-     */
-    Optional<Report> findTopByReferenceStartingWithOrderByReferenceDesc(String prefix);
-
 
     boolean existsByTransportSupportTransportSupportId(Long transportSupportId);
 

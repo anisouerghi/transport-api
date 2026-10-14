@@ -45,7 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -452,40 +451,20 @@ public class ReportService {
     }
 
     /**
-     * Génère une référence unique du type {@code SIG<AA>-<NNNN>-<XXXX>} :
-     * année sur 2 chiffres, numéro séquentiel annuel sur 4 chiffres (zéros à
-     * gauche) et suffixe aléatoire de 4 caractères {@code [0-9A-Z]}.
-     * Exemple : {@code SIG26-0001-K8YA}.
+     * Génère une référence unique du type {@code WS-XXXXXXXX} : préfixe
+     * {@code WS-} suivi de 8 caractères aléatoires {@code [0-9A-Z]}.
+     * Exemple : {@code WS-LM482BNC}.
      *
-     * <p>La séquence repart à 1 le 1er janvier (elle est déduite de la plus
-     * grande référence existante de l'année). Le suffixe aléatoire garantit
-     * l'unicité ; en cas de collision (même séquence + même suffixe déjà pris),
-     * on avance à la séquence suivante.</p>
+     * <p>Contrairement à une séquence, le tirage aléatoire rend la référence
+     * non devinable (36^8 combinaisons). En cas de collision — très improbable —
+     * on retire un nouveau suffixe.</p>
      */
     private String generateReference() {
-        String yearPrefix = "SIG" + String.format("%02d", LocalDate.now().getYear() % 100) + "-";
-        long next = reportRepository.findTopByReferenceStartingWithOrderByReferenceDesc(yearPrefix)
-                .map(last -> parseSequence(last.getReference(), yearPrefix.length()) + 1)
-                .orElse(1L);
-        while (true) {
-            String candidate = yearPrefix + String.format("%04d", next) + "-" + randomSuffix(4);
-            if (!reportRepository.existsByReference(candidate)) {
-                return candidate;
-            }
-            next++;
-        }
-    }
-
-    /** Extrait la séquence sur 4 chiffres d'une référence {@code SIG<AA>-<NNNN>-...}. */
-    private static long parseSequence(String reference, int prefixLength) {
-        if (reference == null || reference.length() < prefixLength + 4) {
-            return 0L;
-        }
-        try {
-            return Long.parseLong(reference.substring(prefixLength, prefixLength + 4));
-        } catch (NumberFormatException ex) {
-            return 0L;
-        }
+        String reference;
+        do {
+            reference = "WS-" + randomSuffix(8);
+        } while (reportRepository.existsByReference(reference));
+        return reference;
     }
 
     /** Suffixe aléatoire de {@code length} caractères parmi {@code [0-9A-Z]}. */
