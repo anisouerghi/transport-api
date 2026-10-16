@@ -50,12 +50,11 @@ public class PublicReportController {
 
     /**
      * Format des références métier produites par
-     * {@code ReportService#generateReference()} : {@code SIG<AA>-<NNNN>-<XXXX>}
-     * (année sur 2 chiffres, séquence annuelle sur 4 chiffres, suffixe
-     * aléatoire de 4 caractères {@code [0-9A-Z]}).
+     * {@code ReportService#generateReference()} : {@code WS-XXXXXXXX}
+     * (préfixe {@code WS-} puis 8 caractères {@code [0-9A-Z]}).
      * Validé en amont pour rejeter les requêtes mal formées sans toucher la base.
      */
-    private static final Pattern REFERENCE_PATTERN = Pattern.compile("^SIG\\d{2}-\\d{4}-[0-9A-Z]{4}$");
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile("^WS-[0-9A-Z]{8}$");
 
     private final ReportService reportService;
     private final PublicTrackingService publicTrackingService;
@@ -215,15 +214,15 @@ public class PublicReportController {
     }
 
     /**
-     * Consultation publique par référence métier ({@code SIG<AA>-<NNNN>-<XXXX>}).
+     * Consultation publique par référence métier ({@code WS-XXXXXXXX}).
      * Aucune authentification : la référence seule suffit, comme l'UUID du lien e-mail.
      * Retourne exactement la même projection restreinte que le suivi par UUID.
      */
     @GetMapping("/api/public/signalements/reference/{reference}")
     @Operation(
             summary = "Consulter un signalement par référence",
-            description = "Accès public sans authentification. Référence au format SIG<AA>-<NNNN>-<XXXX> "
-                    + "(ex. SIG26-0001-K8YA). "
+            description = "Accès public sans authentification. Référence au format WS-XXXXXXXX "
+                    + "(ex. WS-LM482BNC). "
                     + "Retourne uniquement les informations destinées au voyageur et les réponses visibles, "
                     + "à l'identique de GET /api/public/signalements/{uuid}/follow-up. "
                     + "Sujet à rate limiting par IP."
@@ -234,7 +233,7 @@ public class PublicReportController {
         if (!REFERENCE_PATTERN.matcher(reference.trim()).matches()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.of(false,
-                            "Référence invalide (attendu SIG<AA>-<NNNN>-<XXXX>).",
+                            "Référence invalide (attendu WS-XXXXXXXX).",
                             "INVALID_REFERENCE", null));
         }
         Long passengerId = principal == null ? null : principal.getPassengerId();
