@@ -33,14 +33,17 @@ public class ReportAnalysisService {
     private static final int EXCEL_HARD_LIMIT = 1_048_576;
 
     private final ReportAnalysisQuery query;
+    private final ReportTypeAccessService reportTypeAccessService;
     private final int detailLimit;
     private final int excelRowLimit;
 
     public ReportAnalysisService(
             ReportAnalysisQuery query,
+            ReportTypeAccessService reportTypeAccessService,
             @Value("${reporting.analysis.detail-limit:5000}") int detailLimit,
             @Value("${reporting.analysis.excel-row-limit:1048576}") int excelRowLimit) {
         this.query = query;
+        this.reportTypeAccessService = reportTypeAccessService;
         this.detailLimit = Math.max(1, detailLimit);
         this.excelRowLimit = Math.min(EXCEL_HARD_LIMIT, Math.max(1, excelRowLimit));
     }
@@ -159,7 +162,7 @@ public class ReportAnalysisService {
         return "Jusqu'au " + DAY.format(to);
     }
 
-    private static ReportAnalysisQuery.Filter filter(ReportAnalysisRequest request) {
+    private ReportAnalysisQuery.Filter filter(ReportAnalysisRequest request) {
         StringBuilder where = new StringBuilder(" WHERE 1 = 1");
         List<Object> args = new ArrayList<>();
         if (request.getFrom() != null) {
@@ -182,6 +185,10 @@ public class ReportAnalysisService {
             where.append(" AND r.transport_support_id = ?");
             args.add(request.getTransportSupportId());
         }
+        // Restreint l'analyse aux types autorisés pour l'agent connecté.
+        ReportTypeAccessService.SqlFilter typeFilter = reportTypeAccessService.sqlFilter("r");
+        where.append(typeFilter.sql());
+        args.addAll(typeFilter.args());
         return new ReportAnalysisQuery.Filter(where.toString(), args);
     }
 

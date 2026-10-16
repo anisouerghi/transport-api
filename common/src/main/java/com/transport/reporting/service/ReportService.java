@@ -84,8 +84,9 @@ public class ReportService {
     private final ReplyRepository replyRepository;
     private final ReportNatureRepository reportNatureRepository;
     private final ReportSatisfactionRepository satisfactionRepository;
+    private final ReportTypeAccessService reportTypeAccessService;
 
-    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository, ReportSatisfactionRepository satisfactionRepository) {
+    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository, ReportSatisfactionRepository satisfactionRepository, ReportTypeAccessService reportTypeAccessService) {
         this.reportRepository = reportRepository;
         this.reportTypeRepository = reportTypeRepository;
         this.transportSupportRepository = transportSupportRepository;
@@ -102,6 +103,7 @@ public class ReportService {
         this.replyRepository = replyRepository;
         this.reportNatureRepository = reportNatureRepository;
         this.satisfactionRepository = satisfactionRepository;
+        this.reportTypeAccessService = reportTypeAccessService;
     }
 
 
@@ -187,6 +189,7 @@ public class ReportService {
         }
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        reportTypeAccessService.requireAccess(report);
         refuseIfClosed(report);
 
         Priority previous = report.getPriority();
@@ -235,6 +238,7 @@ public class ReportService {
     public ReportResponse updateNature(Long id, Long reportNatureId) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        reportTypeAccessService.requireAccess(report);
         refuseIfClosed(report);
 
         ReportNature previous = report.getNature();
@@ -295,6 +299,7 @@ public class ReportService {
     public ReportResponse updateReportType(Long id, Long reportTypeId) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        reportTypeAccessService.requireAccess(report);
         refuseIfClosed(report);
 
         ReportType previous = report.getReportType();
@@ -368,7 +373,8 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<ReportResponse> findAll() {
-        List<Report> reports = reportRepository.findAll();
+        Specification<Report> scope = reportTypeAccessService.asSpecification();
+        List<Report> reports = reportRepository.findAll(scope);
         Map<Long, ReportSatisfaction> satisfactions = satisfactionsByReportId(
                 reports.stream().map(Report::getReportId).toList());
         return reports.stream().map(report -> {
@@ -386,7 +392,8 @@ public class ReportService {
                 "reportId",
                 SORT_FIELDS
         );
-        Specification<Report> spec = ReportSpecification.fromCriteria(criteria);
+        Specification<Report> spec = ReportSpecification.fromCriteria(criteria)
+                .and(reportTypeAccessService.asSpecification());
         Page<Report> entityPage = reportRepository.findAll(spec, pageable);
         List<Long> ids = entityPage.getContent().stream().map(Report::getReportId).toList();
         Set<Long> repliedIds = repliedReportIds(ids);
@@ -404,6 +411,7 @@ public class ReportService {
     public ReportResponse findById(Long id) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        reportTypeAccessService.requireAccess(report);
         return toResponseWithAttachments(report);
     }
 

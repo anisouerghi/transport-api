@@ -36,8 +36,8 @@ public class ReportTypeController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("@perm.has('REPORT_TYPE', 'VIEW') or @perm.has('REPORT', 'VIEW')")
-    @Operation(summary = "Lister les types de signalement actifs")
+    @PreAuthorize("@perm.has('REPORT_TYPE', 'VIEW') or @perm.has('REPORT', 'VIEW') or @perm.has('ROLE', 'VIEW') or @perm.has('ROLE', 'ADD') or @perm.has('ROLE', 'EDIT')")
+    @Operation(summary = "Lister les types de signalement actifs (filtres / rôles)")
     public ResponseEntity<ApiResponse<List<ReportTypeResponse>>> findAllActive() {
         return ResponseEntity.ok(ApiResponse.ok(reportTypeService.findAllActive()));
     }

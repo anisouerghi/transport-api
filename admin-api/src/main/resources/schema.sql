@@ -18,6 +18,8 @@ DROP TABLE IF EXISTS support_type;
 DROP TABLE IF EXISTS audit_log;
 DROP TABLE IF EXISTS user_role;
 DROP TABLE IF EXISTS role_permission;
+DROP TABLE IF EXISTS role_report_type;
+DROP TABLE IF EXISTS role_report_nature;
 DROP TABLE IF EXISTS app_menu;
 DROP TABLE IF EXISTS permission;
 DROP TABLE IF EXISTS role;
@@ -184,6 +186,14 @@ CREATE TABLE role_permission (
     PRIMARY KEY (role_id, permission_id),
     CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES role (role_id),
     CONSTRAINT fk_role_permission_permission FOREIGN KEY (permission_id) REFERENCES permission (permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE role_report_type (
+    role_id        BIGINT NOT NULL,
+    report_type_id BIGINT NOT NULL,
+    PRIMARY KEY (role_id, report_type_id),
+    CONSTRAINT fk_role_report_type_role FOREIGN KEY (role_id) REFERENCES role (role_id),
+    CONSTRAINT fk_role_report_type_type FOREIGN KEY (report_type_id) REFERENCES report_type (report_type_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE app_menu (

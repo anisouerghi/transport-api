@@ -66,6 +66,7 @@ class ReplyConversationTest {
         when(emailService.sendHtml(any(), any(), any())).thenReturn(EmailSendResult.ok("envoyé"));
         when(replyEmailComposer.subject()).thenReturn("Réponse à votre signalement – TRANSTU");
         when(replyEmailComposer.buildHtml(any(), any())).thenReturn("<p>message</p>");
+        ReportTypeAccessService typeAccess = mock(ReportTypeAccessService.class);
         replyService = new ReplyService(
                 replyRepository,
                 reportRepository,
@@ -77,7 +78,8 @@ class ReplyConversationTest {
                 auditLogService,
                 mock(com.transport.reporting.security.PermissionChecker.class),
                 emailService,
-                replyEmailComposer);
+                replyEmailComposer,
+                typeAccess);
         trackingService = new PublicTrackingService(reportRepository, replyRepository, mock(ReportSatisfactionService.class));
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
             Reply reply = invocation.getArgument(0);
@@ -256,7 +258,7 @@ class ReplyConversationTest {
         when(replyRepository.findByReport_ReportIdAndPublicResponseTrueAndReplyTypeNotOrderByReplyDateAscReplyIdAsc(
                 eq(1L), eq(ReplyType.INTERNAL_NOTE)))
                 .thenReturn(List.of(note, visible));
-        when(reportRepository.existsById(1L)).thenReturn(true);
+        when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
         when(replyRepository.findByReport_ReportIdOrderByReplyDateAscReplyIdAsc(1L))
                 .thenReturn(List.of(note, visible));
 

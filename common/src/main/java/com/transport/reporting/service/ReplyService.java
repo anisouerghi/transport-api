@@ -66,7 +66,9 @@ public class ReplyService {
     private final PermissionChecker permissionChecker;
     private final EmailService emailService;
     private final ReplyEmailComposer replyEmailComposer;
-    public ReplyService(ReplyRepository replyRepository, ReportRepository reportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerRepository passengerRepository, StatusRepository statusRepository, ReplyMapper replyMapper, AuditLogService auditLogService, PermissionChecker permissionChecker, EmailService emailService, ReplyEmailComposer replyEmailComposer) {
+    private final ReportTypeAccessService reportTypeAccessService;
+
+    public ReplyService(ReplyRepository replyRepository, ReportRepository reportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerRepository passengerRepository, StatusRepository statusRepository, ReplyMapper replyMapper, AuditLogService auditLogService, PermissionChecker permissionChecker, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReportTypeAccessService reportTypeAccessService) {
         this.replyRepository = replyRepository;
         this.reportRepository = reportRepository;
         this.reportHistoryRepository = reportHistoryRepository;
@@ -78,12 +80,15 @@ public class ReplyService {
         this.permissionChecker = permissionChecker;
         this.emailService = emailService;
         this.replyEmailComposer = replyEmailComposer;
+        this.reportTypeAccessService = reportTypeAccessService;
     }
 
 
     @Transactional(readOnly = true)
     public List<ReplyResponse> findByReportId(Long reportId) {
-        ensureReportExists(reportId);
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
+        reportTypeAccessService.requireAccess(report);
         return chronological(replyRepository.findByReport_ReportIdOrderByReplyDateAscReplyIdAsc(reportId)).stream()
                 .map(replyMapper::toResponse)
                 .collect(Collectors.toList());
@@ -100,6 +105,7 @@ public class ReplyService {
     public ReplyCreateResult create(Long reportId, ReplyRequest request) {
         Report report = reportRepository.findByIdWithPassenger(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
+        reportTypeAccessService.requireAccess(report);
         if (isClosed(report)) {
             throw new BusinessException(
                     "Le signalement est clôturé et ne peut plus être modifié.",

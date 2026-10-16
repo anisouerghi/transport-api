@@ -119,7 +119,9 @@ public class PublicSecurityConfig {
         config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+          // update temporaire anis  config.setAllowCredentials(true);
+        // Autoriser les origines configurées, y compris "*" avec allowedOriginPatterns
+    config.setAllowedOriginPatterns(origins);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

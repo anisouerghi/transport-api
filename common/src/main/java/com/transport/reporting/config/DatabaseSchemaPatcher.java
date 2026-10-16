@@ -34,6 +34,40 @@ public final class DatabaseSchemaPatcher {
         ensureReportTypePriority(jdbcTemplate);
         ensureReportTypeIcon(jdbcTemplate);
         ensureReportAnalysisIndexes(jdbcTemplate);
+        ensureRoleReportTypeTable(jdbcTemplate);
+    }
+
+    /**
+     * Association rôle ↔ types de signalement (filtrage métier des agents).
+     * Remplace l'ancienne table role_report_nature si elle existe encore.
+     */
+    private static void ensureRoleReportTypeTable(JdbcTemplate jdbcTemplate) {
+        if (!tableExists(jdbcTemplate, "role") || !tableExists(jdbcTemplate, "report_type")) {
+            return;
+        }
+        try {
+            if (tableExists(jdbcTemplate, "role_report_nature")) {
+                jdbcTemplate.execute("DROP TABLE role_report_nature");
+                log.info("Table role_report_nature retirée (remplacée par role_report_type).");
+            }
+            if (tableExists(jdbcTemplate, "role_report_type")) {
+                return;
+            }
+            jdbcTemplate.execute("""
+                    CREATE TABLE role_report_type (
+                        role_id        BIGINT NOT NULL,
+                        report_type_id BIGINT NOT NULL,
+                        PRIMARY KEY (role_id, report_type_id),
+                        CONSTRAINT fk_role_report_type_role
+                            FOREIGN KEY (role_id) REFERENCES role (role_id),
+                        CONSTRAINT fk_role_report_type_type
+                            FOREIGN KEY (report_type_id) REFERENCES report_type (report_type_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    """);
+            log.info("Table role_report_type créée.");
+        } catch (Exception ex) {
+            log.warn("Impossible d'assurer role_report_type : {}", ex.getMessage());
+        }
     }
 
     /**

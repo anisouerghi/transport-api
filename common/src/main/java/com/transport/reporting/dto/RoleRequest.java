@@ -24,4 +24,7 @@ public class RoleRequest {
     private Boolean active;
 
     private Set<Long> permissionIds = new HashSet<>();
+
+    /** Types de signalement autorisés pour ce rôle (identifiants report_type). */
+    private Set<Long> reportTypeIds = new HashSet<>();
 }

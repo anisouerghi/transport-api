@@ -15,4 +15,6 @@ public class RoleResponse {
     private String description;
     private boolean active;
     private List<PermissionResponse> permissions;
+    /** Types de signalement affectés au rôle. */
+    private List<ReportTypeResponse> reportTypes;
 }

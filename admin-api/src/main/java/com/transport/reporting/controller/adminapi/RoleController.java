@@ -51,7 +51,7 @@ public class RoleController {
 
     @PutMapping("/{id}")
     @PreAuthorize("@perm.has('ROLE', 'EDIT')")
-    @Operation(summary = "Modifier un rôle et ses permissions")
+    @Operation(summary = "Modifier un rôle, ses permissions et ses types de signalement autorisés")
     public ResponseEntity<ApiResponse<RoleResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody RoleRequest request) {

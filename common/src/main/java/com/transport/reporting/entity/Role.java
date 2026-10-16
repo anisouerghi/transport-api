@@ -44,4 +44,18 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> permissions = new HashSet<>();
+
+    /**
+     * Types de signalement autorisés pour ce rôle.
+     * Ensemble vide = aucun signalement (pas d'accès global implicite).
+     * Le rôle ADMIN conserve un accès global hors de cette relation.
+     */
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "role_report_type",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "report_type_id")
+    )
+    private Set<ReportType> reportTypes = new HashSet<>();
 }
