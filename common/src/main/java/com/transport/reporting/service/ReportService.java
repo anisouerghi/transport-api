@@ -37,6 +37,8 @@ import com.transport.reporting.repository.TransportSupportRepository;
 import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.security.SecurityUtils;
 import com.transport.reporting.specification.ReportSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -58,6 +60,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ReportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReportService.class);
 
     private static final Map<String, String> SORT_FIELDS = Map.of(
             "id", "reportId",
@@ -84,8 +88,27 @@ public class ReportService {
     private final ReportNatureRepository reportNatureRepository;
     private final ReportSatisfactionRepository satisfactionRepository;
     private final ReportTypeAccessService reportTypeAccessService;
+    private final PassengerEmailNotificationGuard emailNotificationGuard;
 
-    public ReportService(ReportRepository reportRepository, ReportTypeRepository reportTypeRepository, TransportSupportRepository transportSupportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerService passengerService, StatusService statusService, ReportMapper reportMapper, AttachmentService attachmentService, FileStorageService fileStorageService, AuditLogService auditLogService, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReplyRepository replyRepository, ReportNatureRepository reportNatureRepository, ReportSatisfactionRepository satisfactionRepository, ReportTypeAccessService reportTypeAccessService) {
+    public ReportService(
+            ReportRepository reportRepository,
+            ReportTypeRepository reportTypeRepository,
+            TransportSupportRepository transportSupportRepository,
+            ReportHistoryRepository reportHistoryRepository,
+            UserRepository userRepository,
+            PassengerService passengerService,
+            StatusService statusService,
+            ReportMapper reportMapper,
+            AttachmentService attachmentService,
+            FileStorageService fileStorageService,
+            AuditLogService auditLogService,
+            EmailService emailService,
+            ReplyEmailComposer replyEmailComposer,
+            ReplyRepository replyRepository,
+            ReportNatureRepository reportNatureRepository,
+            ReportSatisfactionRepository satisfactionRepository,
+            ReportTypeAccessService reportTypeAccessService,
+            PassengerEmailNotificationGuard emailNotificationGuard) {
         this.reportRepository = reportRepository;
         this.reportTypeRepository = reportTypeRepository;
         this.transportSupportRepository = transportSupportRepository;
@@ -103,6 +126,7 @@ public class ReportService {
         this.reportNatureRepository = reportNatureRepository;
         this.satisfactionRepository = satisfactionRepository;
         this.reportTypeAccessService = reportTypeAccessService;
+        this.emailNotificationGuard = emailNotificationGuard;
     }
 
 
@@ -492,6 +516,25 @@ public class ReportService {
      */
     private void sendCreationEmailIfPossible(Report report, Passenger passenger) {
         if (passenger == null || !StringUtils.hasText(passenger.getEmail())) {
+            return;
+        }
+        PassengerEmailNotificationGuard.Decision decision = emailNotificationGuard.evaluate(passenger);
+        if (decision != PassengerEmailNotificationGuard.Decision.ALLOW) {
+            log.info(
+                    "E-mail de confirmation ignoré pour report {} (code={})",
+                    report.getReportId(),
+                    decision.errorCode());
+            auditLogService.record(AuditLogEvent.builder()
+                    .username("PUBLIC")
+                    .userFullName(passenger.getName())
+                    .actionType(AuditAction.EMAIL_SEND)
+                    .module(AuditModule.REPORTS)
+                    .entityName("Report")
+                    .entityId(String.valueOf(report.getReportId()))
+                    .result(AuditResult.FAILURE)
+                    .newValue("to=" + passenger.getEmail().trim() + ";skipped=" + decision.errorCode())
+                    .description(decision.message())
+                    .build());
             return;
         }
         String to = passenger.getEmail().trim();

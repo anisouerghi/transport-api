@@ -67,8 +67,22 @@ public class ReplyService {
     private final EmailService emailService;
     private final ReplyEmailComposer replyEmailComposer;
     private final ReportTypeAccessService reportTypeAccessService;
+    private final PassengerEmailNotificationGuard emailNotificationGuard;
 
-    public ReplyService(ReplyRepository replyRepository, ReportRepository reportRepository, ReportHistoryRepository reportHistoryRepository, UserRepository userRepository, PassengerRepository passengerRepository, StatusRepository statusRepository, ReplyMapper replyMapper, AuditLogService auditLogService, PermissionChecker permissionChecker, EmailService emailService, ReplyEmailComposer replyEmailComposer, ReportTypeAccessService reportTypeAccessService) {
+    public ReplyService(
+            ReplyRepository replyRepository,
+            ReportRepository reportRepository,
+            ReportHistoryRepository reportHistoryRepository,
+            UserRepository userRepository,
+            PassengerRepository passengerRepository,
+            StatusRepository statusRepository,
+            ReplyMapper replyMapper,
+            AuditLogService auditLogService,
+            PermissionChecker permissionChecker,
+            EmailService emailService,
+            ReplyEmailComposer replyEmailComposer,
+            ReportTypeAccessService reportTypeAccessService,
+            PassengerEmailNotificationGuard emailNotificationGuard) {
         this.replyRepository = replyRepository;
         this.reportRepository = reportRepository;
         this.reportHistoryRepository = reportHistoryRepository;
@@ -81,6 +95,7 @@ public class ReplyService {
         this.emailService = emailService;
         this.replyEmailComposer = replyEmailComposer;
         this.reportTypeAccessService = reportTypeAccessService;
+        this.emailNotificationGuard = emailNotificationGuard;
     }
 
 
@@ -169,12 +184,23 @@ public class ReplyService {
 
         EmailSendResult emailResult = null;
         if (canSendEmail) {
-            try {
-                emailResult = sendReplyEmail(report, reply, user, passengerEmail);
-            } catch (Exception ex) {
-                log.error("Echec technique envoi e-mail pour report {}", reportId, ex);
-                emailResult = EmailSendResult.fail("EMAIL_SEND_FAILED",
-                        "L'e-mail n'a pas pu être envoyé. Détail : " + ex.getMessage());
+            PassengerEmailNotificationGuard.Decision emailDecision =
+                    emailNotificationGuard.evaluate(report.getPassenger());
+            if (emailDecision != PassengerEmailNotificationGuard.Decision.ALLOW) {
+                log.info(
+                        "Notification e-mail ignorée pour report {} (code={})",
+                        reportId,
+                        emailDecision.errorCode());
+                emailResult = EmailSendResult.fail(emailDecision.errorCode(), emailDecision.message());
+                auditEmail(user, report, passengerEmail, false, emailDecision.message());
+            } else {
+                try {
+                    emailResult = sendReplyEmail(report, reply, user, passengerEmail);
+                } catch (Exception ex) {
+                    log.error("Echec technique envoi e-mail pour report {}", reportId, ex);
+                    emailResult = EmailSendResult.fail("EMAIL_SEND_FAILED",
+                            "L'e-mail n'a pas pu être envoyé. Détail : " + ex.getMessage());
+                }
             }
         } else if (!publicResponse && Boolean.TRUE.equals(request.getSendEmail())) {
             emailResult = EmailSendResult.fail(
@@ -233,6 +259,18 @@ public class ReplyService {
                     .success(true)
                     .message("Réponse enregistrée. E-mail envoyé à " + passengerEmail
                             + " (— vérifiez les spams).")
+                    .build();
+        }
+
+        // Préférence désactivée / indisponible : la réponse reste un succès métier.
+        if (PassengerEmailNotificationGuard.SKIP_CODE.equals(emailResult.getErrorCode())
+                || PassengerEmailNotificationGuard.ERROR_SKIP_CODE.equals(emailResult.getErrorCode())) {
+            return ReplyCreateResult.builder()
+                    .reply(response)
+                    .replySaved(true)
+                    .success(true)
+                    .message("Réponse enregistrée. " + emailResult.getMessage())
+                    .errorCode(emailResult.getErrorCode())
                     .build();
         }
 

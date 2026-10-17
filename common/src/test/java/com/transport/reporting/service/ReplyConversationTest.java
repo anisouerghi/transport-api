@@ -56,6 +56,7 @@ class ReplyConversationTest {
     private final AuditLogService auditLogService = mock(AuditLogService.class);
 
     private final EmailService emailService = mock(EmailService.class);
+    private final PassengerEmailNotificationGuard emailGuard = mock(PassengerEmailNotificationGuard.class);
     private final ReplyEmailComposer replyEmailComposer = mock(ReplyEmailComposer.class);
 
     private ReplyService replyService;
@@ -67,6 +68,8 @@ class ReplyConversationTest {
         when(replyEmailComposer.subject()).thenReturn("Réponse à votre signalement – TRANSTU");
         when(replyEmailComposer.buildHtml(any(), any())).thenReturn("<p>message</p>");
         ReportTypeAccessService typeAccess = mock(ReportTypeAccessService.class);
+        when(emailGuard.evaluate(any(Passenger.class)))
+                .thenReturn(PassengerEmailNotificationGuard.Decision.ALLOW);
         replyService = new ReplyService(
                 replyRepository,
                 reportRepository,
@@ -79,7 +82,8 @@ class ReplyConversationTest {
                 mock(com.transport.reporting.security.PermissionChecker.class),
                 emailService,
                 replyEmailComposer,
-                typeAccess);
+                typeAccess,
+                emailGuard);
         trackingService = new PublicTrackingService(reportRepository, replyRepository, mock(ReportSatisfactionService.class));
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
             Reply reply = invocation.getArgument(0);
@@ -342,6 +346,38 @@ class ReplyConversationTest {
 
         assertTrue(result.isReplySaved());
         assertTrue(result.isSuccess());
+        verify(emailService, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void passengerEmailPreferenceDisabledSkipsNotification() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+        when(emailGuard.evaluate(any(Passenger.class)))
+                .thenReturn(PassengerEmailNotificationGuard.Decision.DENY_DISABLED);
+
+        ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
+
+        assertTrue(result.isReplySaved());
+        assertTrue(result.isSuccess());
+        assertEquals(PassengerEmailNotificationGuard.SKIP_CODE, result.getErrorCode());
+        verify(emailService, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void preferenceReadErrorSkipsNotificationSafely() {
+        Report report = reportWithEmail("voyageur@example.com");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+        when(emailGuard.evaluate(any(Passenger.class)))
+                .thenReturn(PassengerEmailNotificationGuard.Decision.DENY_ERROR);
+
+        ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
+
+        assertTrue(result.isReplySaved());
+        assertTrue(result.isSuccess());
+        assertEquals(PassengerEmailNotificationGuard.ERROR_SKIP_CODE, result.getErrorCode());
         verify(emailService, never()).sendHtml(any(), any(), any());
     }
 

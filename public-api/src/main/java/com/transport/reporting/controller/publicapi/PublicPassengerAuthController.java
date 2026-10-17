@@ -8,6 +8,8 @@ import com.transport.reporting.dto.OtpVerifyRequest;
 import com.transport.reporting.dto.PassengerAuthResponse;
 import com.transport.reporting.dto.PassengerLoginRequest;
 import com.transport.reporting.dto.PassengerOtpPendingResponse;
+import com.transport.reporting.dto.PassengerPreferenceResponse;
+import com.transport.reporting.dto.PassengerPreferenceUpdateRequest;
 import com.transport.reporting.dto.PassengerProfileUpdateRequest;
 import com.transport.reporting.dto.PassengerRegisterRequest;
 import com.transport.reporting.security.GoogleOAuth2LoginSuccessHandler;
@@ -15,6 +17,7 @@ import com.transport.reporting.security.PassengerPrincipal;
 import com.transport.reporting.security.GoogleOAuthCallbackCodeStore;
 import com.transport.reporting.security.RevokedTokenService;
 import com.transport.reporting.service.PassengerAuthService;
+import com.transport.reporting.service.PassengerPreferenceService;
 import com.transport.reporting.service.TurnstileValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -48,6 +51,7 @@ import java.io.IOException;
 public class PublicPassengerAuthController {
 
     private final PassengerAuthService passengerAuthService;
+    private final PassengerPreferenceService passengerPreferenceService;
     private final GoogleOAuthProperties googleOAuthProperties;
     private final GoogleOAuthCallbackCodeStore callbackCodeStore;
     private final RevokedTokenService revokedTokenService;
@@ -55,11 +59,13 @@ public class PublicPassengerAuthController {
 
     public PublicPassengerAuthController(
             PassengerAuthService passengerAuthService,
+            PassengerPreferenceService passengerPreferenceService,
             GoogleOAuthProperties googleOAuthProperties,
             ObjectProvider<GoogleOAuthCallbackCodeStore> callbackCodeStore,
             RevokedTokenService revokedTokenService,
             TurnstileValidationService turnstileValidationService) {
         this.passengerAuthService = passengerAuthService;
+        this.passengerPreferenceService = passengerPreferenceService;
         this.googleOAuthProperties = googleOAuthProperties;
         this.callbackCodeStore = callbackCodeStore.getIfAvailable();
         this.revokedTokenService = revokedTokenService;
@@ -139,6 +145,33 @@ public class PublicPassengerAuthController {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Profil mis à jour.",
                 passengerAuthService.updateProfile(principal, request)));
+    }
+
+    @GetMapping("/me/preferences")
+    @Operation(summary = "Récupérer les préférences du voyageur connecté",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<PassengerPreferenceResponse>> getPreferences(
+            @AuthenticationPrincipal PassengerPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(false, "Authentification requise.", "UNAUTHORIZED", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(passengerPreferenceService.getForCurrent(principal)));
+    }
+
+    @PutMapping("/me/preferences")
+    @Operation(summary = "Mettre à jour les préférences du voyageur connecté",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<PassengerPreferenceResponse>> updatePreferences(
+            @AuthenticationPrincipal PassengerPrincipal principal,
+            @Valid @RequestBody PassengerPreferenceUpdateRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(false, "Authentification requise.", "UNAUTHORIZED", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Préférences mises à jour.",
+                passengerPreferenceService.updateForCurrent(principal, request)));
     }
 
     @GetMapping("/google")

@@ -12,6 +12,8 @@ DROP TABLE IF EXISTS district;
 DROP TABLE IF EXISTS report_nature;
 
 DROP TABLE IF EXISTS report_type;
+DROP TABLE IF EXISTS passenger_preference;
+DROP TABLE IF EXISTS passenger_otp_challenge;
 DROP TABLE IF EXISTS passenger;
 DROP TABLE IF EXISTS report_status;
 DROP TABLE IF EXISTS support_type;
@@ -109,11 +111,30 @@ CREATE TABLE passenger (
     gps_accuracy         DOUBLE NULL,
     gps_captured_at      DATETIME(6) NULL,
     last_auth_at         DATETIME(6) NULL,
+    notifications        JSON NULL,
+    language             VARCHAR(2) NULL,
     PRIMARY KEY (passenger_id),
     UNIQUE KEY uk_passenger_google_subject (google_subject(191)),
     KEY idx_passenger_active (active),
     KEY idx_passenger_email (email(191))
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE passenger_preference (
+    preference_id    BIGINT NOT NULL AUTO_INCREMENT,
+    passenger_id     BIGINT NOT NULL,
+    language         VARCHAR(2) NOT NULL DEFAULT 'FR',
+    notify_platform  TINYINT(1) NOT NULL DEFAULT 1,
+    notify_email     TINYINT(1) NOT NULL DEFAULT 1,
+    notify_sms       TINYINT(1) NOT NULL DEFAULT 0,
+    notify_whatsapp  TINYINT(1) NOT NULL DEFAULT 0,
+    created_at       DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at       DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+                     ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (preference_id),
+    UNIQUE KEY uk_passenger_preference_passenger (passenger_id),
+    CONSTRAINT fk_passenger_preference_passenger
+        FOREIGN KEY (passenger_id) REFERENCES passenger (passenger_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE passenger_otp_challenge (
     challenge_id   BIGINT NOT NULL AUTO_INCREMENT,

@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * Authentification publique des voyageurs.
@@ -34,16 +33,19 @@ public class PassengerAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final PassengerOtpService passengerOtpService;
+    private final PassengerPreferenceService passengerPreferenceService;
 
     public PassengerAuthService(
             PassengerRepository passengerRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            PassengerOtpService passengerOtpService) {
+            PassengerOtpService passengerOtpService,
+            PassengerPreferenceService passengerPreferenceService) {
         this.passengerRepository = passengerRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.passengerOtpService = passengerOtpService;
+        this.passengerPreferenceService = passengerPreferenceService;
     }
 
     public PassengerOtpPendingResponse register(PassengerRegisterRequest request) {
@@ -88,7 +90,16 @@ public class PassengerAuthService {
         passenger.setEmailVerified(false);
         applyRequestMetadata(passenger);
         applyOptionalGps(passenger, request.getLatitude(), request.getLongitude(), request.getGpsAccuracy());
+        // Défauts compte : langue FR + notification e-mail (persistés dès l'inscription).
+        if (passenger.getLanguage() == null) {
+            passenger.setLanguage(PassengerLanguage.FR);
+        }
+        if (passenger.getNotifications() == null) {
+            passenger.setNotifications(
+                    com.transport.reporting.common.enums.PassengerNotificationChannel.defaultIds());
+        }
         passenger = passengerRepository.save(passenger);
+        passengerPreferenceService.seedAccountDefaults(passenger);
         return passengerOtpService.startChallenge(passenger);
     }
 
@@ -109,7 +120,9 @@ public class PassengerAuthService {
         passenger.setEmailVerified(true);
         applyRequestMetadata(passenger);
         passenger.setLastAuthAt(Instant.now());
-        passengerRepository.save(passenger);
+        passenger = passengerRepository.save(passenger);
+        // Sécurité : si l'inscription n'avait pas encore créé la ligne de préférences.
+        passengerPreferenceService.seedAccountDefaults(passenger);
         return toAuthResponse(passenger);
     }
 
@@ -163,7 +176,15 @@ public class PassengerAuthService {
 
         applyRequestMetadata(passenger);
         passenger.setLastAuthAt(Instant.now());
+        if (passenger.getLanguage() == null) {
+            passenger.setLanguage(PassengerLanguage.FR);
+        }
+        if (passenger.getNotifications() == null) {
+            passenger.setNotifications(
+                    com.transport.reporting.common.enums.PassengerNotificationChannel.defaultIds());
+        }
         passenger = passengerRepository.save(passenger);
+        passengerPreferenceService.seedAccountDefaults(passenger);
         return toAuthResponse(passenger);
     }
 
@@ -236,8 +257,9 @@ public class PassengerAuthService {
             throw new BusinessException("Authentification requise.");
         }
 
-        Passenger passenger = passengerRepository.findById(principal.getPassengerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Passenger", principal.getPassengerId()));
+        final Long passengerId = principal.getPassengerId();
+        Passenger passenger = passengerRepository.findById(passengerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger", passengerId));
         if (!passenger.isActive() || !isRegisteredAccount(passenger)) {
             throw new BusinessException("Session invalide. Veuillez vous reconnecter.");
         }
@@ -245,7 +267,7 @@ public class PassengerAuthService {
         if (StringUtils.hasText(request.getEmail())) {
             String email = request.getEmail().trim().toLowerCase();
             passengerRepository.findByEmailIgnoreCase(email)
-                    .filter(existing -> !existing.getPassengerId().equals(passenger.getPassengerId()))
+                    .filter(existing -> !existing.getPassengerId().equals(passengerId))
                     .ifPresent(existing -> {
                         throw new BusinessException("Un compte existe déjà avec cet e-mail.");
                     });
@@ -259,13 +281,13 @@ public class PassengerAuthService {
                     StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null);
         }
 
-        // Préférences optionnelles : champ absent = inchangé.
-        // [] vide = désactivation explicite des notifications ; "" = langue effacée.
-        if (request.getNotifications() != null) {
-            passenger.setNotifications(List.copyOf(request.getNotifications()));
-        }
-        if (request.getLanguage() != null) {
-            passenger.setLanguage(PassengerLanguage.normalizeOrThrow(request.getLanguage()));
+        // Préférences → table passenger_preference (source de vérité).
+        if (request.getNotifications() != null || request.getLanguage() != null) {
+            PassengerPreferenceUpdateRequest prefs = new PassengerPreferenceUpdateRequest();
+            prefs.setLanguage(request.getLanguage());
+            prefs.setNotifications(request.getNotifications());
+            passengerPreferenceService.updateForCurrent(principal, prefs);
+            passenger = passengerRepository.findById(passengerId).orElse(passenger);
         }
 
         if (StringUtils.hasText(request.getPassword())) {
@@ -287,6 +309,15 @@ public class PassengerAuthService {
     PassengerAuthResponse toAuthResponse(Passenger passenger) {
         PassengerPrincipal principal = toPrincipal(passenger);
         String token = jwtService.generatePassengerToken(principal);
+        PassengerPreferenceResponse prefs = isRegisteredAccount(passenger)
+                ? passengerPreferenceService.snapshotForPassenger(passenger)
+                : PassengerPreferenceResponse.builder()
+                        .passengerId(passenger.getPassengerId())
+                        .language(PassengerLanguage.FR)
+                        .notifications(com.transport.reporting.common.enums.PassengerNotificationChannel.defaultIds())
+                        .notifyPlatform(true)
+                        .notifyEmail(true)
+                        .build();
         PassengerAuthResponse response = new PassengerAuthResponse();
         response.setToken(token);
         response.setTokenType("Bearer");
@@ -298,8 +329,8 @@ public class PassengerAuthService {
         response.setProfilePictureUrl(passenger.getProfilePictureUrl());
         response.setAuthProvider(
                 passenger.getAuthProvider() != null ? passenger.getAuthProvider().name() : null);
-        response.setNotifications(passenger.getNotifications());
-        response.setLanguage(passenger.getLanguage());
+        response.setNotifications(prefs.getNotifications());
+        response.setLanguage(prefs.getLanguage());
         return response;
     }
 
