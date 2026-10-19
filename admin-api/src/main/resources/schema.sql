@@ -89,6 +89,7 @@ CREATE TABLE report_status (
     label_ar      VARCHAR(100) NULL COMMENT 'Libelle du statut en arabe',
     label_en      VARCHAR(100) NULL COMMENT 'Libelle du statut en anglais',
     display_order INT          NOT NULL,
+    statut_public VARCHAR(150) NULL COMMENT 'Libelle public voyageur',
     PRIMARY KEY (status_id),
     UNIQUE KEY uk_report_status_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -280,6 +281,7 @@ CREATE TABLE report (
     nature_id            BIGINT       NULL,
     passenger_id         BIGINT       NULL,
     status_id            BIGINT       NOT NULL,
+    last_notified_public_status VARCHAR(150) NULL COMMENT 'Dernier statut public notifie au voyageur',
     PRIMARY KEY (report_id),
     UNIQUE KEY uk_report_uuid (uuid),
     UNIQUE KEY uk_report_reference (reference),

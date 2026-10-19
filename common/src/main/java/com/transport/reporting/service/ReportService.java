@@ -545,6 +545,8 @@ public class ReportService {
         if (result.isSuccess()) {
             report.setSendEmail(true);
             report.setSendEmailDate(java.time.Instant.now());
+            // Évite une seconde notification « Reçu » lors d'un futur traitement.
+            report.setLastNotifiedPublicStatus(PublicStatusMapper.RECEIVED);
             reportRepository.save(report);
         }
         auditLogService.record(AuditLogEvent.builder()

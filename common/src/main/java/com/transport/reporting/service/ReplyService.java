@@ -52,6 +52,9 @@ import java.util.stream.Collectors;
 public class ReplyService {
 
     private static final Set<String> CLOSED_STATUS_CODES = Set.of("RESOLVED", "CLOSED");
+    /** Demande d'info voyageur : complément et clarification partagent le même cycle métier. */
+    private static final Set<String> COMPLEMENT_STATUS_CODES = Set.of(
+            "DEMANDE_COMPLEMENT", "DEMANDE_CLARIFICATION");
     private static final String STATUS_COMPLEMENT = "DEMANDE_COMPLEMENT";
     private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
 
@@ -68,6 +71,7 @@ public class ReplyService {
     private final ReplyEmailComposer replyEmailComposer;
     private final ReportTypeAccessService reportTypeAccessService;
     private final PassengerEmailNotificationGuard emailNotificationGuard;
+    private final PublicStatusMapper publicStatusMapper;
 
     public ReplyService(
             ReplyRepository replyRepository,
@@ -82,7 +86,8 @@ public class ReplyService {
             EmailService emailService,
             ReplyEmailComposer replyEmailComposer,
             ReportTypeAccessService reportTypeAccessService,
-            PassengerEmailNotificationGuard emailNotificationGuard) {
+            PassengerEmailNotificationGuard emailNotificationGuard,
+            PublicStatusMapper publicStatusMapper) {
         this.replyRepository = replyRepository;
         this.reportRepository = reportRepository;
         this.reportHistoryRepository = reportHistoryRepository;
@@ -96,6 +101,7 @@ public class ReplyService {
         this.replyEmailComposer = replyEmailComposer;
         this.reportTypeAccessService = reportTypeAccessService;
         this.emailNotificationGuard = emailNotificationGuard;
+        this.publicStatusMapper = publicStatusMapper;
     }
 
 
@@ -128,26 +134,37 @@ public class ReplyService {
         }
 
         AppUser user = resolveActor(request.getUserId());
-        ReplyType replyType = resolveAgentReplyType(request);
+        Status previousStatus = report.getStatus();
+        String previousPublic = publicStatusMapper.publicLabel(previousStatus);
+        // Le type de message n'est plus saisi : il découle du statut cible (et d'une note interne explicite).
+        ReplyType replyType = resolveAgentReplyType(request, request.getStatusId());
         if (replyType == ReplyType.COMPLEMENT_REQUEST) {
             if (!hasTrackedPassenger(report)) {
                 throw new BusinessException(
                         "Une demande de complément n'est possible que pour un signalement avec suivi.",
                         "COMPLEMENT_NOT_ALLOWED");
             }
+            if (!StringUtils.hasText(request.getMessage())) {
+                throw new BusinessException(
+                        "Le message est obligatoire pour une demande de complément.",
+                        "COMPLEMENT_MESSAGE_REQUIRED");
+            }
         }
 
-        if (replyType != ReplyType.COMPLEMENT_REQUEST
-                && request.getStatusId() != null
+        boolean statusChanged = false;
+        if (replyType == ReplyType.COMPLEMENT_REQUEST) {
+            Long beforeId = report.getStatus() != null ? report.getStatus().getStatusId() : null;
+            // Conserve DEMANDE_CLARIFICATION si choisi ; sinon DEMANDE_COMPLEMENT par défaut.
+            applyComplementRequestStatus(report, user, request.getMessage(), request.getStatusId());
+            statusChanged = !Objects.equals(beforeId,
+                    report.getStatus() != null ? report.getStatus().getStatusId() : null);
+        } else if (request.getStatusId() != null
                 && (report.getStatus() == null || !Objects.equals(report.getStatus().getStatusId(), request.getStatusId()))) {
             if (!permissionChecker.has("REPORT", "CLOSE") && !permissionChecker.has("REPORT", "EDIT")) {
                 throw new BusinessException("Permission REPORT_CLOSE or REPORT_EDIT required to change status");
             }
             applyStatusChange(report, request.getStatusId(), user, request.getMessage());
-        }
-
-        if (replyType == ReplyType.COMPLEMENT_REQUEST) {
-            applyComplementRequestStatus(report, user, request.getMessage());
+            statusChanged = true;
         }
 
         if (request.getPublish() != null) {
@@ -164,14 +181,24 @@ public class ReplyService {
         report.setPublicResponse(publicResponse);
         report.setPublicResponseDate(publicResponse ? Instant.now() : null);
 
+        String newPublic = publicStatusMapper.publicLabel(report.getStatus());
+        // AFFECTE → IN_PROGRESS : même statut public → pas de notification de transition.
+        boolean notifyStatusTransition = statusChanged
+                && publicStatusMapper.publicStatusChanged(previousPublic, newPublic)
+                && publicStatusMapper.publicStatusChanged(report.getLastNotifiedPublicStatus(), newPublic);
+        // Nouvelle demande de complément avec message, même si le statut interne était déjà celui-ci.
+        boolean notifyComplementMessage = replyType == ReplyType.COMPLEMENT_REQUEST && publicResponse;
+
         String passengerEmail = resolvePassengerEmail(report);
-        // Un message visible part par e-mail dès qu'une adresse est valide.
-        // sendEmail=false reste le refus explicite déjà proposé dans la fenêtre de traitement.
-        boolean emailRequested = publicResponse && !Boolean.FALSE.equals(request.getSendEmail());
+        // E-mail si message public (comportement historique) ou transition de statut public.
+        boolean emailRequested = replyType != ReplyType.INTERNAL_NOTE
+                && publicResponse
+                && !Boolean.FALSE.equals(request.getSendEmail());
         boolean canSendEmail = emailRequested && isDeliverableEmail(passengerEmail);
 
+        String agentMessage = request.getMessage().trim();
         Reply reply = Reply.builder()
-                .message(request.getMessage().trim())
+                .message(agentMessage)
                 .emailSent(false)
                 .publicResponse(publicResponse)
                 .replyType(replyType)
@@ -195,7 +222,14 @@ public class ReplyService {
                 auditEmail(user, report, passengerEmail, false, emailDecision.message());
             } else {
                 try {
-                    emailResult = sendReplyEmail(report, reply, user, passengerEmail);
+                    String mailBody = resolveNotificationBody(
+                            agentMessage, notifyStatusTransition || notifyComplementMessage, newPublic);
+                    emailResult = sendReplyEmail(report, reply, user, passengerEmail, newPublic, mailBody);
+                    if (emailResult.isSuccess() && (notifyStatusTransition || notifyComplementMessage)
+                            && StringUtils.hasText(newPublic)) {
+                        // Mémorise le statut public notifié pour bloquer les doublons AFFECTE/EN_COURS.
+                        report.setLastNotifiedPublicStatus(newPublic);
+                    }
                 } catch (Exception ex) {
                     log.error("Echec technique envoi e-mail pour report {}", reportId, ex);
                     emailResult = EmailSendResult.fail("EMAIL_SEND_FAILED",
@@ -211,7 +245,7 @@ public class ReplyService {
             auditEmail(user, report, passengerEmail, false, emailResult.getMessage());
         } else if (publicResponse && Boolean.FALSE.equals(request.getSendEmail())) {
             emailResult = null;
-        } else if (publicResponse) {
+        } else if (publicResponse && !isDeliverableEmail(passengerEmail)) {
             emailResult = EmailSendResult.fail("EMAIL_NO_RECIPIENT",
                     "La réponse a été enregistrée, mais aucun e-mail voyageur n'est renseigné : aucun envoi effectué.");
             log.warn("Réponse visible pour le report {} sans adresse e-mail voyageur", reportId);
@@ -340,8 +374,14 @@ public class ReplyService {
                 "COMMENT_RESERVED_FOR_CLOSED");
     }
 
-    private EmailSendResult sendReplyEmail(Report report, Reply reply, AppUser user, String passengerEmail) {
-        String html = replyEmailComposer.buildHtml(report, reply);
+    private EmailSendResult sendReplyEmail(
+            Report report,
+            Reply reply,
+            AppUser user,
+            String passengerEmail,
+            String publicStatusLabel,
+            String notificationBody) {
+        String html = replyEmailComposer.buildHtml(report, reply, publicStatusLabel, notificationBody);
         EmailSendResult result = emailService.sendHtml(passengerEmail, replyEmailComposer.subject(), html);
         reply.setEmailSent(result.isSuccess());
         replyRepository.save(reply);
@@ -352,6 +392,20 @@ public class ReplyService {
         auditEmail(user, report, passengerEmail, result.isSuccess(),
                 result.isSuccess() ? null : result.getMessage());
         return result;
+    }
+
+    /**
+     * Corps de la notification : message agent s'il est public, sinon texte adapté au statut public.
+     * Jamais une note interne.
+     */
+    private String resolveNotificationBody(String agentMessage, boolean statusOriented, String publicLabel) {
+        if (StringUtils.hasText(agentMessage)) {
+            return agentMessage.trim();
+        }
+        if (statusOriented) {
+            return publicStatusMapper.defaultNotificationMessage(publicLabel);
+        }
+        return agentMessage;
     }
 
     private void auditEmail(AppUser user, Report report, String recipient, boolean success, String errorMessage) {
@@ -484,18 +538,35 @@ public class ReplyService {
     }
 
     /**
-     * Passe le signalement en demande de complément et trace le changement
-     * dans l'historique des statuts. Si le statut est déjà celui-ci, l'historique
-     * n'est pas dupliqué.
+     * Passe le signalement en demande de complément ou de clarification.
+     * Les deux codes ouvrent le même cycle voyageur ({@link ReplyType#COMPLEMENT_REQUEST}).
+     * Si le statut cible est déjà atteint, l'historique n'est pas dupliqué.
      */
-    private void applyComplementRequestStatus(Report report, AppUser user, String comments) {
-        if (report.getStatus() != null && STATUS_COMPLEMENT.equals(report.getStatus().getCode())) {
+    private void applyComplementRequestStatus(Report report, AppUser user, String comments, Long requestedStatusId) {
+        Status waiting = resolveComplementTargetStatus(requestedStatusId);
+        if (report.getStatus() != null
+                && Objects.equals(report.getStatus().getStatusId(), waiting.getStatusId())) {
             return;
         }
-        Status waiting = statusRepository.findByCode(STATUS_COMPLEMENT)
+        applyStatusChange(report, waiting.getStatusId(), user, comments);
+    }
+
+    private Status resolveComplementTargetStatus(Long requestedStatusId) {
+        if (requestedStatusId != null) {
+            Status requested = statusRepository.findById(requestedStatusId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Status", requestedStatusId));
+            if (isComplementStatus(requested)) {
+                return requested;
+            }
+        }
+        return statusRepository.findByCode(STATUS_COMPLEMENT)
                 .orElseThrow(() -> new BusinessException(
                         "Statut DEMANDE_COMPLEMENT introuvable.", "STATUS_MISSING"));
-        applyStatusChange(report, waiting.getStatusId(), user, comments);
+    }
+
+    static boolean isComplementStatus(Status status) {
+        return status != null && status.getCode() != null
+                && COMPLEMENT_STATUS_CODES.contains(status.getCode());
     }
 
     /**
@@ -511,14 +582,30 @@ public class ReplyService {
         applyStatusChange(report, inProgress.getStatusId(), null, comments);
     }
 
-    private ReplyType resolveAgentReplyType(ReplyRequest request) {
+    /**
+     * Déduit le type d'événement : {@code DEMANDE_COMPLEMENT} ou {@code DEMANDE_CLARIFICATION}
+     * → demande d'information voyageur. {@code INTERNAL_NOTE} reste possible si envoyé explicitement.
+     */
+    private ReplyType resolveAgentReplyType(ReplyRequest request, Long statusId) {
         ReplyType type = request.getReplyType() == null ? ReplyType.RESPONSE : request.getReplyType();
         if (type == ReplyType.COMPLEMENT_RESPONSE) {
             throw new BusinessException(
                     "Ce type de message ne peut pas être créé par un agent.",
                     "REPLY_TYPE_FORBIDDEN");
         }
-        return type;
+        if (type == ReplyType.INTERNAL_NOTE) {
+            return type;
+        }
+        if (statusId != null) {
+            Status target = statusRepository.findById(statusId).orElse(null);
+            if (isComplementStatus(target)) {
+                return ReplyType.COMPLEMENT_REQUEST;
+            }
+        }
+        if (type == ReplyType.COMPLEMENT_REQUEST) {
+            return ReplyType.COMPLEMENT_REQUEST;
+        }
+        return ReplyType.RESPONSE;
     }
 
     private AppUser resolveActor(Long requestedUserId) {

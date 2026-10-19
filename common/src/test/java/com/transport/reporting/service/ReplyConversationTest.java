@@ -67,9 +67,11 @@ class ReplyConversationTest {
         when(emailService.sendHtml(any(), any(), any())).thenReturn(EmailSendResult.ok("envoyé"));
         when(replyEmailComposer.subject()).thenReturn("Réponse à votre signalement – TRANSTU");
         when(replyEmailComposer.buildHtml(any(), any())).thenReturn("<p>message</p>");
+        when(replyEmailComposer.buildHtml(any(), any(), any(), any())).thenReturn("<p>message</p>");
         ReportTypeAccessService typeAccess = mock(ReportTypeAccessService.class);
         when(emailGuard.evaluate(any(Passenger.class)))
                 .thenReturn(PassengerEmailNotificationGuard.Decision.ALLOW);
+        PublicStatusMapper publicStatusMapper = new PublicStatusMapper();
         replyService = new ReplyService(
                 replyRepository,
                 reportRepository,
@@ -83,8 +85,10 @@ class ReplyConversationTest {
                 emailService,
                 replyEmailComposer,
                 typeAccess,
-                emailGuard);
-        trackingService = new PublicTrackingService(reportRepository, replyRepository, mock(ReportSatisfactionService.class));
+                emailGuard,
+                publicStatusMapper);
+        trackingService = new PublicTrackingService(
+                reportRepository, replyRepository, mock(ReportSatisfactionService.class), publicStatusMapper);
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
             Reply reply = invocation.getArgument(0);
             if (reply.getReplyId() == null) {
@@ -133,6 +137,25 @@ class ReplyConversationTest {
         assertEquals("AGENT", result.getReply().getAuthorType());
         assertTrue(result.getReply().isPublicResponse());
         assertEquals("DEMANDE_COMPLEMENT", report.getStatus().getCode());
+        verify(reportHistoryRepository).save(any());
+    }
+
+    @Test
+    void clarificationStatusBehavesLikeComplementRequest() {
+        Report report = openReport();
+        report.setPassenger(trackedPassenger());
+        Status clarification = status("DEMANDE_CLARIFICATION", 5L);
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+        when(statusRepository.findById(5L)).thenReturn(Optional.of(clarification));
+
+        ReplyRequest request = request(null);
+        request.setStatusId(5L);
+        ReplyCreateResult result = replyService.create(1L, request);
+
+        assertEquals("COMPLEMENT_REQUEST", result.getReply().getReplyType());
+        assertTrue(result.getReply().isPublicResponse());
+        assertEquals("DEMANDE_CLARIFICATION", report.getStatus().getCode());
         verify(reportHistoryRepository).save(any());
     }
 

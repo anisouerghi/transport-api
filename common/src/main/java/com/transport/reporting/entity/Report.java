@@ -111,6 +111,13 @@ public class Report {
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
 
+    /**
+     * Dernier statut public notifié au voyageur.
+     * Sert à éviter un second e-mail identique (ex. AFFECTE → IN_PROGRESS).
+     */
+    @Column(name = "last_notified_public_status", length = 150)
+    private String lastNotifiedPublicStatus;
+
     @PrePersist
     public void prePersist() {
         if (uuid == null) {

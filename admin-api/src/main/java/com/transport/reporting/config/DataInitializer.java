@@ -50,8 +50,10 @@ public class DataInitializer {
                 statusRepository.save(i18nStatus("CLOSED", "Clôturé", "مغلق", "Closed", 4));
                 log.info("✅ Status initialized");
             }
+            ensureStatus(statusRepository, "AFFECTE", "Affecté", "مُسند", "Assigned", 2);
             ensureStatus(statusRepository, "DEMANDE_COMPLEMENT", "Demande de complément", "طلب استكمال", "Request for additional information", 4);
             ensureStatus(statusRepository, "DEMANDE_CLARIFICATION", "Demande de clarification", "طلب توضيح", "Request for clarification", 5);
+            ensureStatus(statusRepository, "REJETE", "Rejeté", "مرفوض", "Rejected", 8);
 
             // ============ INITIALISATION DES TYPES DE SUPPORT ============
             if (supportTypeRepository.count() == 0) {

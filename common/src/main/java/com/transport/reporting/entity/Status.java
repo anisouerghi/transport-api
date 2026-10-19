@@ -41,4 +41,11 @@ public class Status {
     /** Ordre d'affichage dans le workflow / listes. */
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
+
+    /**
+     * Libellé visible du voyageur (ex. « En cours de traitement »).
+     * Calculé / renseigné côté serveur ; distinct du libellé interne agent.
+     */
+    @Column(name = "statut_public", length = 150)
+    private String statutPublic;
 }

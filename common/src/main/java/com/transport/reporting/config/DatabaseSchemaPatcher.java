@@ -31,11 +31,31 @@ public final class DatabaseSchemaPatcher {
         ensureReportSatisfactionTable(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
         ensureI18nLabelColumns(jdbcTemplate);
+        ensurePublicStatusColumns(jdbcTemplate);
         // report_type (INSERT + i18n/priority/icon) → ReportTypeDataInitializer (common)
         ensureReportTypePriority(jdbcTemplate);
         ensureReportTypeIcon(jdbcTemplate);
         ensureReportAnalysisIndexes(jdbcTemplate);
         ensureRoleReportTypeTable(jdbcTemplate);
+    }
+
+    /**
+     * Statut public voyageur (catalogue) + dernier statut public notifié (anti-doublon).
+     * Ajouts non destructifs.
+     */
+    private static void ensurePublicStatusColumns(JdbcTemplate jdbcTemplate) {
+        try {
+            if (tableExists(jdbcTemplate, "report_status")) {
+                addColumnIfMissing(jdbcTemplate, "report_status", "statut_public",
+                        "ALTER TABLE report_status ADD COLUMN statut_public VARCHAR(150) NULL");
+            }
+            if (tableExists(jdbcTemplate, "report")) {
+                addColumnIfMissing(jdbcTemplate, "report", "last_notified_public_status",
+                        "ALTER TABLE report ADD COLUMN last_notified_public_status VARCHAR(150) NULL");
+            }
+        } catch (Exception ex) {
+            log.warn("Impossible de préparer statut_public / last_notified_public_status : {}", ex.getMessage());
+        }
     }
 
     /**
