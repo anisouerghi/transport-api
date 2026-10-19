@@ -1,9 +1,7 @@
 package com.transport.reporting.config;
 
-import com.transport.reporting.entity.ReportType;
 import com.transport.reporting.entity.Status;
 import com.transport.reporting.entity.SupportType;
-import com.transport.reporting.repository.ReportTypeRepository;
 import com.transport.reporting.repository.StatusRepository;
 import com.transport.reporting.repository.SupportTypeRepository;
 import org.slf4j.Logger;
@@ -17,7 +15,8 @@ import org.springframework.util.StringUtils;
 import java.util.Map;
 
 /**
- * Complète label_fr / label_ar / label_en sur les catalogues connus (idempotent).
+ * Complète label_fr / label_ar / label_en sur support_type et status (idempotent).
+ * Les report_type sont gérés uniquement par {@link com.transport.reporting.config.ReportTypeDataInitializer}.
  */
 @Configuration
 public class CatalogI18nDataInitializer {
@@ -29,15 +28,6 @@ public class CatalogI18nDataInitializer {
             "METRO", new String[]{"Métro", "مترو", "Metro"},
             "TRAIN", new String[]{"Train", "قطار", "Train"},
             "STATION", new String[]{"Station", "محطة", "Station"}
-    );
-
-    private static final Map<String, String[]> REPORT_TYPES = Map.of(
-            "COMPLAINT", new String[]{"Réclamation", "شكوى", "Complaint"},
-            "ASSAULT", new String[]{"Agression", "اعتداء", "Assault"},
-            "INCIDENT", new String[]{"Incident", "حادث", "Incident"},
-            "SUGGESTION", new String[]{"Suggestion", "اقتراح", "Suggestion"},
-            "THANKS", new String[]{"Remerciement", "شكر", "Thank you"},
-            "OTHER", new String[]{"Autre", "أخرى", "Other"}
     );
 
     private static final Map<String, String[]> STATUSES = Map.of(
@@ -53,7 +43,6 @@ public class CatalogI18nDataInitializer {
     @Order(3)
     CommandLineRunner patchCatalogI18n(
             SupportTypeRepository supportTypeRepository,
-            ReportTypeRepository reportTypeRepository,
             StatusRepository statusRepository) {
         return args -> {
             int n = 0;
@@ -64,16 +53,6 @@ public class CatalogI18nDataInitializer {
                     n++;
                 } else if (ensureFrMirror(entity)) {
                     supportTypeRepository.save(entity);
-                    n++;
-                }
-            }
-            for (ReportType entity : reportTypeRepository.findAll()) {
-                String[] t = REPORT_TYPES.get(entity.getCode());
-                if (t != null && patch(entity, t)) {
-                    reportTypeRepository.save(entity);
-                    n++;
-                } else if (ensureFrMirror(entity)) {
-                    reportTypeRepository.save(entity);
                     n++;
                 }
             }
@@ -92,27 +71,6 @@ public class CatalogI18nDataInitializer {
     }
 
     private static boolean patch(SupportType entity, String[] frArEn) {
-        boolean changed = false;
-        if (!StringUtils.hasText(entity.getLabelFr())) {
-            entity.setLabelFr(frArEn[0]);
-            changed = true;
-        }
-        if (!StringUtils.hasText(entity.getLabelAr())) {
-            entity.setLabelAr(frArEn[1]);
-            changed = true;
-        }
-        if (!StringUtils.hasText(entity.getLabelEn())) {
-            entity.setLabelEn(frArEn[2]);
-            changed = true;
-        }
-        if (!StringUtils.hasText(entity.getLabel()) && StringUtils.hasText(entity.getLabelFr())) {
-            entity.setLabel(entity.getLabelFr());
-            changed = true;
-        }
-        return changed;
-    }
-
-    private static boolean patch(ReportType entity, String[] frArEn) {
         boolean changed = false;
         if (!StringUtils.hasText(entity.getLabelFr())) {
             entity.setLabelFr(frArEn[0]);
@@ -155,14 +113,6 @@ public class CatalogI18nDataInitializer {
     }
 
     private static boolean ensureFrMirror(SupportType entity) {
-        if (!StringUtils.hasText(entity.getLabelFr()) && StringUtils.hasText(entity.getLabel())) {
-            entity.setLabelFr(entity.getLabel());
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean ensureFrMirror(ReportType entity) {
         if (!StringUtils.hasText(entity.getLabelFr()) && StringUtils.hasText(entity.getLabel())) {
             entity.setLabelFr(entity.getLabel());
             return true;

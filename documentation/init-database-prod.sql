@@ -31,6 +31,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS reply;
 DROP TABLE IF EXISTS report_history;
 DROP TABLE IF EXISTS attachment;
+DROP TABLE IF EXISTS report_satisfaction;
 DROP TABLE IF EXISTS report;
 DROP TABLE IF EXISTS transport_support;
 DROP TABLE IF EXISTS district;

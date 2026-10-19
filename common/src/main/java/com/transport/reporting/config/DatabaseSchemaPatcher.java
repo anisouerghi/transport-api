@@ -31,7 +31,7 @@ public final class DatabaseSchemaPatcher {
         ensureReportSatisfactionTable(jdbcTemplate);
         ensureReportSupportNullable(jdbcTemplate);
         ensureI18nLabelColumns(jdbcTemplate);
-        ensureSixPublicReportTypes(jdbcTemplate);
+        // report_type (INSERT + i18n/priority/icon) → ReportTypeDataInitializer (common)
         ensureReportTypePriority(jdbcTemplate);
         ensureReportTypeIcon(jdbcTemplate);
         ensureReportAnalysisIndexes(jdbcTemplate);
@@ -72,63 +72,6 @@ public final class DatabaseSchemaPatcher {
     }
 
     /**
-     * Garantit les 6 natures voyageur dans {@code report_type} (idempotent).
-     * Nécessaire car public-api peut démarrer sans passer par les seeders admin-only.
-     */
-    private static void ensureSixPublicReportTypes(JdbcTemplate jdbcTemplate) {
-        if (!tableExists(jdbcTemplate, "report_type")) {
-            return;
-        }
-        try {
-            insertReportTypeIfMissing(jdbcTemplate, "COMPLAINT", "Réclamation", "شكوى", "Complaint",
-                    "Réclamation voyageur");
-            insertReportTypeIfMissing(jdbcTemplate, "ASSAULT", "Agression", "اعتداء", "Assault",
-                    "Signalement d'agression ou de violence");
-            insertReportTypeIfMissing(jdbcTemplate, "INCIDENT", "Incident", "حادث", "Incident",
-                    "Incident technique ou sécurité");
-            insertReportTypeIfMissing(jdbcTemplate, "SUGGESTION", "Suggestion", "اقتراح", "Suggestion",
-                    "Suggestion d'amélioration");
-            insertReportTypeIfMissing(jdbcTemplate, "THANKS", "Remerciement", "شكر", "Thank you",
-                    "Remerciement");
-            insertReportTypeIfMissing(jdbcTemplate, "OTHER", "Autre", "أخرى", "Other",
-                    "Autre nature de signalement");
-        } catch (Exception ex) {
-            log.warn("Impossible d'assurer les 6 report_type publics : {}", ex.getMessage());
-        }
-    }
-
-    private static void insertReportTypeIfMissing(
-            JdbcTemplate jdbcTemplate,
-            String code,
-            String labelFr,
-            String labelAr,
-            String labelEn,
-            String description) {
-        Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM report_type WHERE code = ?",
-                Integer.class,
-                code);
-        if (count != null && count > 0) {
-            jdbcTemplate.update(
-                    "UPDATE report_type SET active = 1 WHERE code = ? AND active = 0",
-                    code);
-            return;
-        }
-        boolean hasI18n = columnExists(jdbcTemplate, "report_type", "label_fr");
-        if (hasI18n) {
-            jdbcTemplate.update(
-                    "INSERT INTO report_type (code, label, label_fr, label_ar, label_en, description, active) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, 1)",
-                    code, labelFr, labelFr, labelAr, labelEn, description);
-        } else {
-            jdbcTemplate.update(
-                    "INSERT INTO report_type (code, label, description, active) VALUES (?, ?, ?, 1)",
-                    code, labelFr, description);
-        }
-        log.info("report_type {} créé (nature voyageur).", code);
-    }
-
-    /**
      * Ajoute {@code report_type.priority} et renseigne l'ordre initial
      * uniquement lorsque la valeur est encore vide.
      */
@@ -142,12 +85,13 @@ public final class DatabaseSchemaPatcher {
                 log.info("Colonne report_type.priority ajoutée.");
             }
             jdbcTemplate.update("UPDATE report_type SET priority = 1 WHERE code = 'URGENCE' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 2 WHERE code = 'COMPLAINT' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 3 WHERE code = 'INCIDENT' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 4 WHERE code = 'SUGGESTION' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 5 WHERE code = 'THANKS' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 6 WHERE code = 'OTHER' AND priority IS NULL");
-            jdbcTemplate.update("UPDATE report_type SET priority = 7 WHERE code = 'ASSAULT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 2 WHERE code = 'HARCELEMENT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 3 WHERE code = 'COMPLAINT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 4 WHERE code = 'INCIDENT' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 5 WHERE code = 'SUGGESTION' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 6 WHERE code = 'THANKS' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 7 WHERE code = 'OTHER' AND priority IS NULL");
+            jdbcTemplate.update("UPDATE report_type SET priority = 8 WHERE code = 'ASSAULT' AND priority IS NULL");
             jdbcTemplate.update("UPDATE report_type SET priority = 100 WHERE priority IS NULL");
             jdbcTemplate.execute("ALTER TABLE report_type MODIFY COLUMN priority INT NOT NULL DEFAULT 100");
         } catch (Exception ex) {
@@ -166,6 +110,7 @@ public final class DatabaseSchemaPatcher {
                 log.info("Colonne report_type.icon ajoutée.");
             }
             setIconIfBlank(jdbcTemplate, "URGENCE", "crisis_alert");
+            setIconIfBlank(jdbcTemplate, "HARCELEMENT", "crisis_alert");
             setIconIfBlank(jdbcTemplate, "COMPLAINT", "rate_review");
             setIconIfBlank(jdbcTemplate, "INCIDENT", "photo_camera");
             setIconIfBlank(jdbcTemplate, "SUGGESTION", "tips_and_updates");
