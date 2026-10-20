@@ -44,16 +44,16 @@ public class DataInitializer {
         return args -> {
             // ============ INITIALISATION DES STATUS ============
             if (statusRepository.count() == 0) {
-                statusRepository.save(i18nStatus("NEW", "Nouveau", "جديد", "New", 1));
-                statusRepository.save(i18nStatus("IN_PROGRESS", "En cours", "قيد المعالجة", "In progress", 2));
-                statusRepository.save(i18nStatus("RESOLVED", "Résolu", "محلول", "Resolved", 3));
-                statusRepository.save(i18nStatus("CLOSED", "Clôturé", "مغلق", "Closed", 4));
+                statusRepository.save(i18nStatus("NEW", "Nouveau", "جديد", "New", 1, "Reçu"));
+                statusRepository.save(i18nStatus("IN_PROGRESS", "En cours", "قيد المعالجة", "In progress", 2, "En cours de traitement"));
+                statusRepository.save(i18nStatus("RESOLVED", "Résolu", "محلول", "Resolved", 3, "Traité"));
+                statusRepository.save(i18nStatus("CLOSED", "Clôturé", "مغلق", "Closed", 4, "Clôturé"));
                 log.info("✅ Status initialized");
             }
-            ensureStatus(statusRepository, "AFFECTE", "Affecté", "مُسند", "Assigned", 2);
-            ensureStatus(statusRepository, "DEMANDE_COMPLEMENT", "Demande de complément", "طلب استكمال", "Request for additional information", 4);
-            ensureStatus(statusRepository, "DEMANDE_CLARIFICATION", "Demande de clarification", "طلب توضيح", "Request for clarification", 5);
-            ensureStatus(statusRepository, "REJETE", "Rejeté", "مرفوض", "Rejected", 8);
+            ensureStatus(statusRepository, "AFFECTE", "Affecté", "مُسند", "Assigned", 2, "En cours de traitement");
+            ensureStatus(statusRepository, "DEMANDE_COMPLEMENT", "Demande de complément", "طلب استكمال", "Request for additional information", 4, "Informations complémentaires demandées");
+            ensureStatus(statusRepository, "DEMANDE_CLARIFICATION", "Demande de clarification", "طلب توضيح", "Request for clarification", 5, "Informations complémentaires demandées");
+            ensureStatus(statusRepository, "REJETE", "Rejeté", "مرفوض", "Rejected", 8, "Non retenu");
 
             // ============ INITIALISATION DES TYPES DE SUPPORT ============
             if (supportTypeRepository.count() == 0) {
@@ -247,15 +247,16 @@ public class DataInitializer {
             String fr,
             String ar,
             String en,
-            int order) {
+            int order,
+            String statutPublic) {
         if (statusRepository.findByCode(code).isPresent()) {
             return;
         }
-        statusRepository.save(i18nStatus(code, fr, ar, en, order));
+        statusRepository.save(i18nStatus(code, fr, ar, en, order, statutPublic));
         log.info("✅ Status {} inserted", code);
     }
 
-    private static Status i18nStatus(String code, String fr, String ar, String en, int order) {
+    private static Status i18nStatus(String code, String fr, String ar, String en, int order, String statutPublic) {
         return Status.builder()
                 .code(code)
                 .label(fr)
@@ -263,6 +264,7 @@ public class DataInitializer {
                 .labelAr(ar)
                 .labelEn(en)
                 .displayOrder(order)
+                .statutPublic(statutPublic)
                 .build();
     }
 
