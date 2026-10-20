@@ -27,6 +27,9 @@ public-api/src/main/resources/application-dev.properties
 public-api/src/main/resources/application-prod.properties
 admin-api/src/main/resources/application-dev.properties
 admin-api/src/main/resources/application-prod.properties
+public-api/src/main/resources/application.properties
+public-api/src/main/resources/application-prod.properties
+public-api/src/main/resources/application-dev.properties
 
 # Environment
 .env
