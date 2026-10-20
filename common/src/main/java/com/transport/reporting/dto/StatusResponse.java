@@ -17,4 +17,6 @@ public class StatusResponse {
     private String labelAr;
     private String labelEn;
     private Integer displayOrder;
+    /** Statut public voyageur, calculé / stocké côté serveur. */
+    private String statutPublic;
 }

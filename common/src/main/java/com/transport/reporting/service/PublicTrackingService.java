@@ -47,14 +47,21 @@ public class PublicTrackingService {
     private final ReportRepository reportRepository;
     private final ReplyRepository replyRepository;
     private final ReportSatisfactionService satisfactionService;
+    private final PublicStatusMapper publicStatusMapper;
 
     public PublicTrackingService(
             ReportRepository reportRepository,
             ReplyRepository replyRepository,
-            ReportSatisfactionService satisfactionService) {
+            ReportSatisfactionService satisfactionService,
+            PublicStatusMapper publicStatusMapper) {
         this.reportRepository = reportRepository;
         this.replyRepository = replyRepository;
         this.satisfactionService = satisfactionService;
+        this.publicStatusMapper = publicStatusMapper;
+    }
+
+    private String publicStatusLabel(Report report) {
+        return publicStatusMapper.publicLabel(report.getStatus());
     }
 
 
@@ -120,7 +127,8 @@ public class PublicTrackingService {
                 .reportTypeLabel(report.getReportType() != null ? LocalizedLabels.of(report.getReportType()) : null)
                 .supportLabel(supportLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
-                .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
+                .statusLabel(publicStatusLabel(report))
+                .publicStatusLabel(publicStatusLabel(report))
                 .canPassengerReply(!ReplyService.isClosed(report) && ReplyService.hasPendingComplement(visible))
                 .canPassengerComment(false)
                 .satisfaction(satisfactionVisible ? satisfactionService.findForReport(report.getReportId()) : null)
@@ -299,7 +307,7 @@ public class PublicTrackingService {
                 .supportLabel(supportLabel)
                 .supportTypeLabel(supportTypeLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
-                .statusLabel(report.getStatus() != null ? LocalizedLabels.of(report.getStatus()) : null)
+                .statusLabel(publicStatusLabel(report))
                 .build();
     }
 

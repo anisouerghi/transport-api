@@ -31,6 +31,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS reply;
 DROP TABLE IF EXISTS report_history;
 DROP TABLE IF EXISTS attachment;
+DROP TABLE IF EXISTS report_satisfaction;
 DROP TABLE IF EXISTS report;
 DROP TABLE IF EXISTS transport_support;
 DROP TABLE IF EXISTS district;
@@ -102,6 +103,7 @@ CREATE TABLE report_status (
     code          VARCHAR(50)  NOT NULL,
     label         VARCHAR(100) NOT NULL,
     display_order INT          NOT NULL,
+    statut_public VARCHAR(150) NULL,
     PRIMARY KEY (status_id),
     UNIQUE KEY uk_report_status_code (code)
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -293,6 +295,7 @@ CREATE TABLE report (
     nature_id            BIGINT       NULL,
     passenger_id         BIGINT       NULL,
     status_id            BIGINT       NOT NULL,
+    last_notified_public_status VARCHAR(150) NULL,
     PRIMARY KEY (report_id),
     UNIQUE KEY uk_report_uuid (uuid),
     UNIQUE KEY uk_report_reference (reference),
@@ -409,11 +412,14 @@ CREATE TABLE audit_log (
 -- INSERT - referentiels metier (ASCII only : compatible Workbench sans utf8mb4 client)
 -- -----------------------------------------------------------------------------
 
-INSERT INTO report_status (code, label, display_order) VALUES
-('NEW', 'Nouveau', 1),
-('IN_PROGRESS', 'En cours', 2),
-('RESOLVED', 'Resolu', 3),
-('CLOSED', 'Cloture', 4);
+INSERT INTO report_status (code, label, display_order, statut_public) VALUES
+('NEW', 'Nouveau', 1, 'Recu'),
+('AFFECTE', 'Affecte', 2, 'En cours de traitement'),
+('IN_PROGRESS', 'En cours', 3, 'En cours de traitement'),
+('DEMANDE_COMPLEMENT', 'Demande de complement', 4, 'Informations complementaires demandees'),
+('RESOLVED', 'Resolu', 6, 'Traite'),
+('CLOSED', 'Cloture', 7, 'Cloture'),
+('REJETE', 'Rejete', 8, 'Non retenu');
 
 INSERT INTO support_type (code, label) VALUES
 ('BUS', 'Bus'),

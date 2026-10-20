@@ -50,10 +50,27 @@ public class ReplyEmailComposer {
     }
 
     public String buildHtml(Report report, Reply reply) {
+        return buildHtml(report, reply, null, reply != null ? reply.getMessage() : null);
+    }
+
+    /**
+     * @param publicStatusLabel statut public voyageur (jamais le libellé interne agent)
+     * @param notificationBody  texte transmis au voyageur (message agent ou texte métier)
+     */
+    public String buildHtml(Report report, Reply reply, String publicStatusLabel, String notificationBody) {
         String trackingUrl = trackingUrl(report);
-        String replyDate = reply.getReplyDate() != null ? DATE_FMT.format(reply.getReplyDate()) : "";
-        String status = report.getStatus() == null ? "" : frenchLabel(report.getStatus().getLabelFr(), report.getStatus().getLabel());
-        String messageHtml = escapeHtml(reply.getMessage()).replace("\n", "<br/>");
+        String replyDate = reply != null && reply.getReplyDate() != null
+                ? DATE_FMT.format(reply.getReplyDate())
+                : DATE_FMT.format(java.time.Instant.now());
+        String status = StringUtilsHasText(publicStatusLabel)
+                ? publicStatusLabel.trim()
+                : (report.getStatus() == null
+                        ? ""
+                        : frenchLabel(report.getStatus().getLabelFr(), report.getStatus().getLabel()));
+        String body = StringUtilsHasText(notificationBody)
+                ? notificationBody
+                : (reply != null ? reply.getMessage() : "");
+        String messageHtml = escapeHtml(body == null ? "" : body).replace("\n", "<br/>");
         String safeUrl = escapeHtml(trackingUrl);
         return replyTemplate
                 .replace("{{LOGO_CID}}", LOGO_CONTENT_ID)
@@ -62,6 +79,10 @@ public class ReplyEmailComposer {
                 .replace("{{STATUS}}", escapeHtml(status))
                 .replace("{{MESSAGE}}", messageHtml)
                 .replace("{{TRACKING_URL}}", safeUrl);
+    }
+
+    private static boolean StringUtilsHasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     public String buildConfirmationHtml(Report report) {

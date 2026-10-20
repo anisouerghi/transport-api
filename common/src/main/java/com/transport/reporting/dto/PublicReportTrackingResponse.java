@@ -29,8 +29,15 @@ public class PublicReportTrackingResponse {
     private String description;
     private String reportTypeLabel;
     private String supportLabel;
+    /** Conservé pour filtres / compatibilité ; ne pas afficher tel quel au voyageur. */
     private String statusCode;
+    /**
+     * Libellé public voyageur (ex. « En cours de traitement »).
+     * Remplace l'affichage du statut interne agent.
+     */
     private String statusLabel;
+    /** Même valeur que {@link #statusLabel}, explicite pour les clients récents. */
+    private String publicStatusLabel;
     /**
      * Vrai lorsqu'un cycle de complément est ouvert et que le signalement
      * n'est pas clôturé. Calculé par le serveur, indépendamment du client.

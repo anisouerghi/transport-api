@@ -545,6 +545,10 @@ public class ReportService {
         if (result.isSuccess()) {
             report.setSendEmail(true);
             report.setSendEmailDate(java.time.Instant.now());
+            // Mémorise le statut public réel (colonne), pas un libellé inventé en code.
+            if (report.getStatus() != null && StringUtils.hasText(report.getStatus().getStatutPublic())) {
+                report.setLastNotifiedPublicStatus(report.getStatus().getStatutPublic().trim());
+            }
             reportRepository.save(report);
         }
         auditLogService.record(AuditLogEvent.builder()

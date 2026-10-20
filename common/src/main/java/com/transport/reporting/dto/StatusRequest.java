@@ -27,4 +27,8 @@ public class StatusRequest {
 
     @NotNull(message = "L'ordre d'affichage est obligatoire")
     private Integer displayOrder;
+
+    /** Libellé public voyageur (colonne {@code report_status.statut_public}). */
+    @Size(max = 150)
+    private String statutPublic;
 }

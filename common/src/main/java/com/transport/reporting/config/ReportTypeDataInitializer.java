@@ -13,9 +13,8 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 /**
- * Assure le référentiel public des types de signalement (7 natures voyageur, FR/AR/EN).
- * Exécuté par public-api et admin-api (module common).
- * Idempotent : crée les codes manquants, complète les libellés i18n vides.
+ * Source unique des types de signalement publics (INSERT + i18n + priority + icon).
+ * Exécuté par public-api et admin-api (module common). Idempotent.
  */
 @Configuration
 public class ReportTypeDataInitializer {
@@ -24,20 +23,22 @@ public class ReportTypeDataInitializer {
 
     /** Ordre d'affichage souhaité côté formulaire public. */
     private static final List<TypeSeed> SEEDS = List.of(
-            new TypeSeed("COMPLAINT", "Réclamation", "شكوى", "Complaint",
-                    "Réclamation voyageur", 2, "rate_review"),
-            new TypeSeed("ASSAULT", "Agression", "اعتداء", "Assault",
-                    "Signalement d'agression ou de violence", 7, "shield"),
-            new TypeSeed("INCIDENT", "Incident", "حادث", "Incident",
-                    "Incident technique ou sécurité", 3, "photo_camera"),
-            new TypeSeed("SUGGESTION", "Suggestion", "اقتراح", "Suggestion",
-                    "Suggestion d'amélioration", 4, "tips_and_updates"),
-            new TypeSeed("THANKS", "Remerciement", "شكر", "Thank you",
-                    "Remerciement", 5, "thumb_up"),
-            new TypeSeed("OTHER", "Autre", "أخرى", "Other",
-                    "Autre nature de signalement", 6, "contact_support"),
             new TypeSeed("URGENCE", "Urgence", "حالة طارئة أو خطر مباشر؟", "Emergency",
-                    "Appel d'urgence 197 / 198", 1, "crisis_alert")
+                    "Appel d'urgence 197 / 198", 1, "crisis_alert"),
+            new TypeSeed("HARCELEMENT", "Harcèlement sexuel", "تحرش جنسي", "Sexual harassment",
+                    "Harcèlement sexuel", 2, "crisis_alert"),
+            new TypeSeed("COMPLAINT", "Réclamation", "شكوى", "Complaint",
+                    "Réclamation voyageur", 3, "rate_review"),
+            new TypeSeed("INCIDENT", "Incident", "حادث", "Incident",
+                    "Incident technique ou sécurité", 4, "photo_camera"),
+            new TypeSeed("SUGGESTION", "Suggestion", "اقتراح", "Suggestion",
+                    "Suggestion d'amélioration", 5, "tips_and_updates"),
+            new TypeSeed("THANKS", "Remerciement", "شكر", "Thank you",
+                    "Remerciement", 6, "thumb_up"),
+            new TypeSeed("OTHER", "Autre", "أخرى", "Other",
+                    "Autre nature de signalement", 7, "contact_support"),
+            new TypeSeed("ASSAULT", "Agression", "اعتداء", "Assault",
+                    "Signalement d'agression ou de violence", 8, "shield")
     );
 
     @Bean
