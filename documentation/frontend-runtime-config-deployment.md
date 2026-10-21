@@ -29,7 +29,9 @@ Il peut être **modifié après déploiement** sans rebuild (URL API, locale, et
   "apiBaseUrl": "http://192.168.1.55:8081",
   "googleClientId": "805628985152-kkg4l131p8jmpi7bek764icsp5ikmso7.apps.googleusercontent.com",
   "cloudflareEnabled": true,
-  "cloudflareSiteKey": ""
+  "cloudflareSiteKey": "",
+  "notificationsPollingEnabled": true,
+  "notificationsPollingIntervalMs": 30000
 }
 ```
 
@@ -37,6 +39,8 @@ Il peut être **modifié après déploiement** sans rebuild (URL API, locale, et
 - **PROD** (build) : `src/assets/config/production/config.json` → embarqué dans `dist/.../assets/config/config.json`
 - `googleClientId` : public uniquement — voir `documentation/google-oauth-passenger.md`
 - `cloudflareEnabled` / `cloudflareSiteKey` : site key publique uniquement (jamais la secret) — voir `documentation/cloudflare-turnstile-config.md`
+- `notificationsPollingEnabled` : active le polling de la cloche (défaut `true`). **Ne désactive pas** les e-mails.
+- `notificationsPollingIntervalMs` : intervalle en ms (défaut `30000`). Côté Angular, valeurs &lt; 5000 sont rejetées (repli sur 30000).
 
 ### Admin
 

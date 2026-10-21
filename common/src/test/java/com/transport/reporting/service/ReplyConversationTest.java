@@ -58,6 +58,10 @@ class ReplyConversationTest {
     private final EmailService emailService = mock(EmailService.class);
     private final PassengerEmailNotificationGuard emailGuard = mock(PassengerEmailNotificationGuard.class);
     private final ReplyEmailComposer replyEmailComposer = mock(ReplyEmailComposer.class);
+    private final PassengerNotificationService passengerNotificationService =
+            mock(PassengerNotificationService.class);
+    private final com.transport.reporting.security.PermissionChecker permissionChecker =
+            mock(com.transport.reporting.security.PermissionChecker.class);
 
     private ReplyService replyService;
     private PublicTrackingService trackingService;
@@ -71,6 +75,7 @@ class ReplyConversationTest {
         ReportTypeAccessService typeAccess = mock(ReportTypeAccessService.class);
         when(emailGuard.evaluate(any(Passenger.class)))
                 .thenReturn(PassengerEmailNotificationGuard.Decision.ALLOW);
+        when(permissionChecker.has(any(), any())).thenReturn(true);
         PublicStatusMapper publicStatusMapper = new PublicStatusMapper();
         replyService = new ReplyService(
                 replyRepository,
@@ -81,12 +86,13 @@ class ReplyConversationTest {
                 statusRepository,
                 new ReplyMapper(),
                 auditLogService,
-                mock(com.transport.reporting.security.PermissionChecker.class),
+                permissionChecker,
                 emailService,
                 replyEmailComposer,
                 typeAccess,
                 emailGuard,
-                publicStatusMapper);
+                publicStatusMapper,
+                passengerNotificationService);
         trackingService = new PublicTrackingService(
                 reportRepository, replyRepository, mock(ReportSatisfactionService.class), publicStatusMapper);
         when(replyRepository.save(any(Reply.class))).thenAnswer(invocation -> {
@@ -138,6 +144,8 @@ class ReplyConversationTest {
         assertTrue(result.getReply().isPublicResponse());
         assertEquals("DEMANDE_COMPLEMENT", report.getStatus().getCode());
         verify(reportHistoryRepository).save(any());
+        verify(passengerNotificationService).createForStatusOrComplement(
+                eq(report), eq("COMPLEMENT_REQUEST"), any(), eq(50L));
     }
 
     @Test
@@ -194,6 +202,26 @@ class ReplyConversationTest {
         ReplyCreateResult result = replyService.create(1L, request(ReplyType.RESPONSE));
 
         assertEquals("RESPONSE", result.getReply().getReplyType());
+        verify(passengerNotificationService, never()).createForStatusOrComplement(any(), any(), any(), any());
+    }
+
+    @Test
+    void publicStatusChangeCreatesPlatformNotification() {
+        Report report = openReport();
+        report.setPassenger(trackedPassenger());
+        report.getStatus().setStatutPublic("Recu");
+        Status resolved = status("RESOLVED", 6L);
+        resolved.setStatutPublic("Traite");
+        when(reportRepository.findByIdWithPassenger(1L)).thenReturn(Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(agent()));
+        when(statusRepository.findById(6L)).thenReturn(Optional.of(resolved));
+
+        ReplyRequest request = request(ReplyType.RESPONSE);
+        request.setStatusId(6L);
+        replyService.create(1L, request);
+
+        verify(passengerNotificationService).createForStatusOrComplement(
+                eq(report), eq("STATUS_PUBLIC_CHANGED"), eq("Traite"), eq(null));
     }
 
     @Test

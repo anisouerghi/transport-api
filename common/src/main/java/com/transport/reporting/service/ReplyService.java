@@ -12,6 +12,7 @@ import com.transport.reporting.dto.ReplyRequest;
 import com.transport.reporting.dto.ReplyResponse;
 import com.transport.reporting.entity.AppUser;
 import com.transport.reporting.entity.Passenger;
+import com.transport.reporting.entity.PassengerNotification;
 import com.transport.reporting.entity.Reply;
 import com.transport.reporting.entity.Report;
 import com.transport.reporting.entity.ReportHistory;
@@ -72,6 +73,7 @@ public class ReplyService {
     private final ReportTypeAccessService reportTypeAccessService;
     private final PassengerEmailNotificationGuard emailNotificationGuard;
     private final PublicStatusMapper publicStatusMapper;
+    private final PassengerNotificationService passengerNotificationService;
 
     public ReplyService(
             ReplyRepository replyRepository,
@@ -87,7 +89,8 @@ public class ReplyService {
             ReplyEmailComposer replyEmailComposer,
             ReportTypeAccessService reportTypeAccessService,
             PassengerEmailNotificationGuard emailNotificationGuard,
-            PublicStatusMapper publicStatusMapper) {
+            PublicStatusMapper publicStatusMapper,
+            PassengerNotificationService passengerNotificationService) {
         this.replyRepository = replyRepository;
         this.reportRepository = reportRepository;
         this.reportHistoryRepository = reportHistoryRepository;
@@ -102,6 +105,7 @@ public class ReplyService {
         this.reportTypeAccessService = reportTypeAccessService;
         this.emailNotificationGuard = emailNotificationGuard;
         this.publicStatusMapper = publicStatusMapper;
+        this.passengerNotificationService = passengerNotificationService;
     }
 
 
@@ -208,6 +212,10 @@ public class ReplyService {
                 .build();
 
         reply = replyRepository.save(reply);
+
+        // Notification plateforme : même point métier que l'e-mail, indépendant du SMTP.
+        createPlatformNotificationIfNeeded(
+                report, reply, notifyStatusTransition, notifyComplementMessage, newPublic);
 
         EmailSendResult emailResult = null;
         if (canSendEmail) {
@@ -392,6 +400,39 @@ public class ReplyService {
         auditEmail(user, report, passengerEmail, result.isSuccess(),
                 result.isSuccess() ? null : result.getMessage());
         return result;
+    }
+
+    /**
+     * Une seule notification cohérente par opération : priorité au complément si demandé,
+     * sinon transition de statut public. Ne concerne que les comptes authentifiés (service).
+     */
+    private void createPlatformNotificationIfNeeded(
+            Report report,
+            Reply reply,
+            boolean notifyStatusTransition,
+            boolean notifyComplementMessage,
+            String newPublic) {
+        if (!notifyStatusTransition && !notifyComplementMessage) {
+            return;
+        }
+        try {
+            if (notifyComplementMessage) {
+                passengerNotificationService.createForStatusOrComplement(
+                        report,
+                        PassengerNotification.EVENT_COMPLEMENT_REQUEST,
+                        newPublic,
+                        reply.getReplyId());
+            } else {
+                passengerNotificationService.createForStatusOrComplement(
+                        report,
+                        PassengerNotification.EVENT_STATUS_PUBLIC_CHANGED,
+                        newPublic,
+                        null);
+            }
+        } catch (Exception ex) {
+            // Ne jamais faire échouer le traitement agent / e-mail à cause de l'inbox.
+            log.error("Échec création notification plateforme pour report {}", report.getReportId(), ex);
+        }
     }
 
     /**
