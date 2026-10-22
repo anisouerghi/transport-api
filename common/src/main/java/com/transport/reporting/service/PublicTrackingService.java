@@ -300,14 +300,26 @@ public class PublicTrackingService {
                 supportTypeLabel = LocalizedLabels.of(report.getTransportSupport().getSupportType());
             }
         }
+        String reportTypeCode = null;
+        String reportTypeLabel = null;
+        String reportTypeIcon = null;
+        if (report.getReportType() != null) {
+            reportTypeCode = report.getReportType().getCode();
+            reportTypeLabel = LocalizedLabels.of(report.getReportType());
+            reportTypeIcon = report.getReportType().getIcon();
+        }
         return PublicReportListItemResponse.builder()
                 .uuid(report.getUuid())
                 .reference(report.getReference())
                 .creationDate(report.getCreationDate())
+                .description(report.getDescription())
                 .supportLabel(supportLabel)
                 .supportTypeLabel(supportTypeLabel)
                 .statusCode(report.getStatus() != null ? report.getStatus().getCode() : null)
                 .statusLabel(publicStatusLabel(report))
+                .reportTypeCode(reportTypeCode)
+                .reportTypeLabel(reportTypeLabel)
+                .reportTypeIcon(reportTypeIcon)
                 .build();
     }
 

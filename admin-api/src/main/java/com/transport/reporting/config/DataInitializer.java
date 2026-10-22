@@ -14,8 +14,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 @Configuration
@@ -23,7 +21,6 @@ import java.time.temporal.ChronoUnit;
 public class DataInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final QrCodeService qrCodeService;
 
@@ -172,12 +169,11 @@ public class DataInitializer {
                 .emailVerified(true)
                 .build());
 
-        String today = LocalDate.now().format(DATE_FORMAT);
         Instant now = Instant.now();
 
         // Rapport 1 - Incident critique
         reportRepository.save(Report.builder()
-                .reference("SIG-" + today + "-100001")
+                .reference("WS-DEMO0001")
                 .description("Porte arrière bloquée à l'arrêt République.")
                 .priority(Priority.HIGH)
                 .creationDate(now.minus(2, ChronoUnit.HOURS))
@@ -189,7 +185,7 @@ public class DataInitializer {
 
         // Rapport 2 - Réclamation
         reportRepository.save(Report.builder()
-                .reference("SIG-" + today + "-100002")
+                .reference("WS-DEMO0002")
                 .description("Climatisation défaillante dans le véhicule.")
                 .priority(Priority.MEDIUM)
                 .creationDate(now.minus(1, ChronoUnit.DAYS))
@@ -201,7 +197,7 @@ public class DataInitializer {
 
         // Rapport 3 - Suggestion
         reportRepository.save(Report.builder()
-                .reference("SIG-" + today + "-100003")
+                .reference("WS-DEMO0003")
                 .description("Affichage Num Bus peu lisible le soir.")
                 .priority(Priority.LOW)
                 .creationDate(now.minus(3, ChronoUnit.DAYS))
@@ -214,7 +210,7 @@ public class DataInitializer {
 
         // Rapport 4 - Incident critique
         reportRepository.save(Report.builder()
-                .reference("SIG-" + today + "-100004")
+                .reference("WS-DEMO0004")
                 .description("Comportement agressif signalé à bord.")
                 .priority(Priority.CRITICAL)
                 .creationDate(now.minus(5, ChronoUnit.DAYS))
@@ -227,7 +223,7 @@ public class DataInitializer {
 
         // Rapport 5 - Réclamation récente
         reportRepository.save(Report.builder()
-                .reference("SIG-" + today + "-100005")
+                .reference("WS-DEMO0005")
                 .description("Retard important sans information voyageurs.")
                 .priority(Priority.MEDIUM)
                 .creationDate(now.minus(6, ChronoUnit.HOURS))
